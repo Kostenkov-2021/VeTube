@@ -501,6 +501,8 @@ class sherpaSpeak:
 
     def speak(self, text):
         if not text: return
+        # Puente cerrado porque se pasó al otro motor: nada que sintetizar.
+        if not self._inicializado: return
         # Sin voz pedida no hay nada que esperar: _speak_task_inner aguanta 12
         # segundos a que termine de cargar, y eso solo tiene sentido si hay
         # alguna voz en camino.
@@ -656,3 +658,14 @@ class sherpaSpeak:
                 pass
 
         self._inicializado = False
+
+
+def detener_puente():
+    """Cierra el servidor de este motor si hay uno vivo.
+
+    Se llama al pasar al otro motor: cada puente tiene su propio proceso y
+    basta con uno a la vez. Si nunca se usó Kokoro no crea nada, y si ya
+    estaba cerrado no hace nada (close() deja _inicializado en False).
+    """
+    if _INSTANCIA_SHERPA is not None and getattr(_INSTANCIA_SHERPA, "_inicializado", False):
+        _INSTANCIA_SHERPA.close()

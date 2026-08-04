@@ -180,9 +180,8 @@ class AjustesController:
                 model_path = obtener_ruta_voz(lista_voces_piper[voz_index])
                 reader._lector.load_model(model_path)
             else:
-                # Sin voces de Piper no hay nada que cargar, y el puente es el
-                # mismo proceso: hay que soltar la voz de Kokoro que pudiera
-                # quedar cargada, o el chat se leería con ella.
+                # Sin voces de Piper no hay nada que cargar: soltar la voz para
+                # que el chat no intente leerse con la que quedara de antes.
                 reader._lector.unload_model()
             self._mostrar_voces(lista_voces_piper)
             # Sincronizar volumen, tono y velocidad de Piper
@@ -199,8 +198,8 @@ class AjustesController:
             if config_kokoro is not None:
                 reader._lector.load_model(config_kokoro)
             else:
-                # Mismo caso al revés: sin el paquete de Kokoro hay que soltar
-                # la voz de Piper que estuviera cargada en el puente.
+                # Mismo caso al revés: sin el paquete de Kokoro no hay voz que
+                # cargar en su puente.
                 reader._lector.unload_model()
                 if event is not None:
                     # Avisar en voz alta en lugar de callar, pero no al

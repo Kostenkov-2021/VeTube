@@ -20,9 +20,10 @@ if voices_leer:
 
 # Configurar el lector principal según el motor elegido
 if config['sistemaTTS'] in ("piper", "kokoro"):
-    # El puente sherpa guarda los parámetros y los aplica en cada speak; la
-    # voz se carga en run_main_window. Misma escala que app_utilitys.
-    # porcentaje_a_escala (no se importa para no crear un import circular).
+    # Los dos puentes (sonata para Piper, sherpa para Kokoro) guardan los
+    # parámetros y los aplican en cada speak; la voz se carga en
+    # run_main_window. Misma escala que app_utilitys.porcentaje_a_escala (no se
+    # importa para no crear un import circular).
     reader._lector.set_rate(1.25 + config['speed'] * 0.125)
     reader._lector.set_pitch(config['tono'])
     reader._lector.set_volume(config['volume'])
