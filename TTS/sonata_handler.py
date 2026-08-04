@@ -87,6 +87,9 @@ class piperSpeak:
         self.bass_stream = None
         # Generación de habla: silence() la incrementa para invalidar síntesis en curso o pendientes.
         self._speak_generation = 0
+        # close() lo levanta: el arranque del servidor es asíncrono y puede
+        # seguir en marcha cuando ya se ha pedido cerrar este puente.
+        self._cerrado = False
         # True mientras se está generando audio: lo consulta is_playing() para
         # el botón «Detener» de los Ajustes, que aún no tiene nada que sonar.
         self._sintetizando = False
@@ -125,24 +128,28 @@ class piperSpeak:
             pass
 
     def _cleanup_own_orphans(self):
-        """Mata procesos sonata-grpc.exe que se estén ejecutando desde nuestra propia carpeta de binarios."""
+        """Mata procesos sonata-grpc.exe huérfanos, pero SOLO los lanzados desde
+        nuestra propia carpeta de binarios: matar por nombre acabaría también
+        con el puente de otra instalación de VeTube abierta a la vez.
+
+        Con psutil en vez del sondeo por PowerShell que había antes: lanzar
+        PowerShell costaba 370 ms medidos, y esto ya no ocurre solo al abrir
+        VeTube sino en cada cambio de motor, con el hilo de la interfaz
+        parado mientras tanto. Con psutil son 2 ms, y es lo que usa el otro
+        puente desde el PR #100."""
         try:
-            # Comando PowerShell para obtener PID y Ruta de todos los sonata-grpc.exe
-            cmd = 'powershell -NoProfile -Command "Get-Process sonata-grpc -ErrorAction SilentlyContinue | Select-Object Id, Path | ConvertTo-Json"'
-            output = subprocess.check_output(cmd, shell=True).decode('utf-8', errors='ignore')
-            if not output or "sonata-grpc" not in output: return
-
-            import json
-            data = json.loads(output)
-            if isinstance(data, dict): data = [data] # Si hay uno solo, JSON lo devuelve como dict
-
-            my_exe_path = str(self.exe).lower()
-            for proc in data:
-                p_path = proc.get('Path', '')
-                if p_path and p_path.lower() == my_exe_path:
-                    p_id = proc.get('Id')
-                    if p_id:
-                        subprocess.run(['taskkill', '/F', '/PID', str(p_id)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            import psutil
+            ruta_propia = os.path.normcase(os.path.abspath(str(self.exe)))
+            for proc in psutil.process_iter(['pid', 'name', 'exe']):
+                try:
+                    nombre = (proc.info.get('name') or '').lower()
+                    if nombre != "sonata-grpc.exe":
+                        continue
+                    ruta = proc.info.get('exe')
+                    if ruta and os.path.normcase(ruta) == ruta_propia:
+                        proc.kill()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
         except:
             pass
 
@@ -159,11 +166,16 @@ class piperSpeak:
                 return s.getsockname()[1]
 
     async def _start_server(self):
+        # Puede haberse pedido el cierre mientras esta corrutina esperaba turno:
+        # cambiar de motor cierra este puente, y arrancar un servidor después
+        # dejaría un proceso que ya no es de nadie.
+        if self._cerrado:
+            return
         self.port = self._find_free_port()
         env = os.environ.copy()
         env["SONATA_GRPC_SERVER_PORT"] = str(self.port)
         env["SONATA_ESPEAKNG_DATA_DIRECTORY"] = str(os.path.abspath(self.espeak_dir))
-        
+
         self.process = subprocess.Popen(
             [str(self.exe)],
             cwd=str(self.bin_dir),
@@ -172,7 +184,18 @@ class piperSpeak:
             stderr=subprocess.DEVNULL,
             creationflags=(subprocess.CREATE_NO_WINDOW | CREATE_BREAKAWAY_FROM_JOB) if sys.platform == "win32" else 0
         )
-        
+
+        # Si el cierre llegó justo mientras arrancábamos, close() ya no tenía
+        # nada que matar (self.process aún era None) y el Job Object está
+        # cerrado: hay que matarlo aquí o queda huérfano para siempre.
+        if self._cerrado:
+            try:
+                self.process.kill()
+            except Exception:
+                pass
+            self.process = None
+            return
+
         # Asignar proceso al Job Object
         if sys.platform == "win32" and self.job_handle and self.process:
             res = AssignProcessToJobObject(self.job_handle, self.process._handle)
@@ -215,6 +238,11 @@ class piperSpeak:
                 model_path = json_path
         
         self.current_voice_path = model_path
+        # Invalidar la voz anterior antes de pedir la nueva: mientras el puente
+        # carga, un mensaje que llegue no debe salir con la voz de antes (es lo
+        # que hacía el botón de prueba del descargador, que carga y habla
+        # seguido).
+        self.voice_id = None
         asyncio.run_coroutine_threadsafe(self._load_voice_task(model_path), self.loop)
 
     async def _load_voice_task(self, model_path):
@@ -291,6 +319,10 @@ class piperSpeak:
         if not text: return
         # Puente cerrado porque se pasó al otro motor: nada que sintetizar.
         if not self._inicializado: return
+        # Sin voz pedida no hay nada que esperar: _speak_task_inner aguanta 12
+        # segundos a que termine de cargar, y eso solo tiene sentido si hay
+        # alguna voz en camino.
+        if not self.current_voice_path: return
         self.silence()
         self._sintetizando = True
         asyncio.run_coroutine_threadsafe(self._speak_task(text, self._speak_generation), self.loop)
@@ -331,6 +363,16 @@ class piperSpeak:
                 self._sintetizando = False
 
     async def _speak_task_inner(self, text, gen):
+        # Si el puente aún está arrancando o cargando el modelo, esperamos en
+        # lugar de callar: antes esto solo pasaba al abrir VeTube, pero ahora
+        # el puente también arranca al cambiar de motor, y la primera lectura
+        # se perdía en un silencio mudo (revisión de accesibilidad).
+        espera = 0.0
+        while (not self.voice_id or not self.channel) and espera < 12.0:
+            if gen != self._speak_generation:
+                return  # silenciado mientras esperábamos
+            await asyncio.sleep(0.2)
+            espera += 0.2
         if not self.voice_id or not self.channel:
             return
         if gen != self._speak_generation:
@@ -392,8 +434,11 @@ class piperSpeak:
             print(f"Error en síntesis Sonata: {e}")
 
     def close(self):
-        # Invalidar primero las síntesis en curso: así el cierre del canal no
-        # se confunde con un error de síntesis en las tareas aún a la escucha.
+        # Avisar cuanto antes: el servidor puede estar arrancando todavía en el
+        # otro hilo y no debe quedarse vivo detrás de nosotros.
+        self._cerrado = True
+        # Invalidar las síntesis en curso: así el cierre del canal no se
+        # confunde con un error de síntesis en las tareas aún a la escucha.
         self.silence()
 
         if self.channel:

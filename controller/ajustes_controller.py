@@ -183,6 +183,11 @@ class AjustesController:
                 # Sin voces de Piper no hay nada que cargar: soltar la voz para
                 # que el chat no intente leerse con la que quedara de antes.
                 reader._lector.unload_model()
+                if event is not None:
+                    # Igual que en la rama de Kokoro: avisar en voz alta en vez
+                    # de quedarse mudo sin explicación. Con el event a None
+                    # (revert de Cancelar) no se anuncia nada.
+                    reader._leer.speak(_("No hay voces instaladas"))
             self._mostrar_voces(lista_voces_piper)
             # Sincronizar volumen, tono y velocidad de Piper
             reader._lector.set_volume(config['volume'])

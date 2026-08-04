@@ -277,6 +277,9 @@ class sherpaSpeak:
         # con el estado del stream BASS permite saber si aún se está hablando
         # (botón «Detener prueba» de los Ajustes).
         self._sintetizando = False
+        # close() lo levanta: el arranque del servidor es asíncrono y puede
+        # seguir en marcha cuando ya se ha pedido cerrar este puente.
+        self._cerrado = False
 
         # Iniciar Job Object en Windows
         if sys.platform == "win32":
@@ -345,6 +348,11 @@ class sherpaSpeak:
                 return s.getsockname()[1]
 
     async def _start_server(self):
+        # Puede haberse pedido el cierre mientras esta corrutina esperaba turno:
+        # cambiar de motor cierra este puente, y arrancar un servidor después
+        # dejaría un proceso que ya no es de nadie.
+        if self._cerrado:
+            return
         self.port = self._find_free_port()
         env = os.environ.copy()
         env["SONATA_GRPC_SERVER_PORT"] = str(self.port)
@@ -357,6 +365,17 @@ class sherpaSpeak:
             stderr=subprocess.DEVNULL,
             creationflags=(subprocess.CREATE_NO_WINDOW | CREATE_BREAKAWAY_FROM_JOB) if sys.platform == "win32" else 0
         )
+
+        # Si el cierre llegó justo mientras arrancábamos, close() ya no tenía
+        # nada que matar (self.process aún era None) y el Job Object está
+        # cerrado: hay que matarlo aquí o queda huérfano para siempre.
+        if self._cerrado:
+            try:
+                self.process.kill()
+            except Exception:
+                pass
+            self.process = None
+            return
 
         # Asignar proceso al Job Object
         if sys.platform == "win32" and self.job_handle and self.process:
@@ -617,8 +636,11 @@ class sherpaSpeak:
                 print(f"Error en síntesis del puente sherpa: {e}")
 
     def close(self):
-        # Invalidar primero las síntesis en curso: así el cierre del canal no
-        # se confunde con un error de síntesis en las tareas aún a la escucha.
+        # Avisar cuanto antes: el servidor puede estar arrancando todavía en el
+        # otro hilo y no debe quedarse vivo detrás de nosotros.
+        self._cerrado = True
+        # Invalidar las síntesis en curso: así el cierre del canal no se
+        # confunde con un error de síntesis en las tareas aún a la escucha.
         self.silence()
 
         if self.channel:
