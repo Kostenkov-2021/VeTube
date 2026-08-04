@@ -1,63 +1,24 @@
 import os
-import glob
 import asyncio
 import traceback
+import tarfile
+import tempfile
+import shutil
 from .base_downloader import BaseDownloader
 from setup import network
 
 PIPER_VOICE_LIST_URL = "https://huggingface.co/rhasspy/piper-voices/raw/v1.0.0/voices.json"
 PIPER_VOICE_DOWNLOAD_URL_PREFIX = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0"
 PIPER_SAMPLES_URL_PREFIX = "https://rhasspy.github.io/piper-samples/samples"
-
-# Ficheros de las antiguas voces RT. La variante se retiró del catálogo: el
-# motor sherpa no puede usar esos modelos partidos, y cada voz RT existe
-# también en versión estándar (misma calidad de sonido).
-_FICHEROS_RT = ("encoder.onnx", "decoder.onnx")
-
-def _es_json_rt(nombre):
-    """Los paquetes RT de mush42 llevan «+RT» en el nombre de su .json
-    (por ejemplo fr_FR-mls+RT-medium.json)."""
-    return nombre.endswith(".json") and "+RT" in nombre
-
-def voces_rt_instaladas():
-    """Recorre voices/ y clasifica las carpetas con restos de la variante RT.
-
-    Devuelve (puras, mixtas): claves de voz cuya carpeta SOLO tiene los
-    ficheros RT (hay que descargar la variante estándar para no perder la
-    voz) y claves que ya tienen un modelo estándar además de los restos RT
-    (basta con limpiarlas).
-    """
-    puras, mixtas = [], []
-    if not os.path.isdir("voices"):
-        return puras, mixtas
-    for carpeta in os.listdir("voices"):
-        ruta = os.path.join("voices", carpeta)
-        if not (carpeta.startswith("voice-") and os.path.isdir(ruta)):
-            continue
-        onnx = [os.path.basename(m).lower() for m in glob.glob(os.path.join(ruta, "*.onnx"))]
-        if not any(f in onnx for f in _FICHEROS_RT):
-            continue
-        clave = carpeta[len("voice-"):]
-        if any(f not in _FICHEROS_RT for f in onnx):
-            mixtas.append(clave)
-        else:
-            puras.append(clave)
-    return puras, mixtas
-
-def limpiar_ficheros_rt(voice_key):
-    """Borra los ficheros de la variante RT de la carpeta de una voz."""
-    ruta = os.path.join("voices", f"voice-{voice_key}")
-    try:
-        for nombre in os.listdir(ruta):
-            if nombre.lower() in _FICHEROS_RT or _es_json_rt(nombre):
-                os.remove(os.path.join(ruta, nombre))
-    except OSError:
-        traceback.print_exc()
+# URLs para variantes rápidas (RT)
+RT_VOICE_LIST_URL = "https://huggingface.co/datasets/mush42/piper-rt/raw/main/voices.json"
+RT_VOICE_DOWNLOAD_URL_PREFIX = "https://huggingface.co/datasets/mush42/piper-rt/resolve/main"
 
 class PiperManager(BaseDownloader):
     def __init__(self):
         super().__init__()
         self.voices_data = {}
+        self.rt_mapping = {} # Mapeo de { "nombre_base": "clave_rt" }
         self.languages = {} # { "code": { "name_native": "...", "voices": [] } }
         self.cancelado = False
 
@@ -66,13 +27,25 @@ class PiperManager(BaseDownloader):
         self.cancelado = True
 
     async def cargar_catalogo(self):
-        """Descarga y procesa el catálogo de voces."""
+        """Descarga y procesa el catálogo de voces estándar y RT."""
         try:
+            # Descargamos catálogo estándar
             res_std = await network.client.get(PIPER_VOICE_LIST_URL)
             if res_std.status_code != 200:
                 return {'success': False, 'data': f"Error HTTP {res_std.status_code} en catálogo estándar"}
 
             self.voices_data = res_std.json()
+
+            # Descargamos catálogo RT para saber qué voces tienen variante rápida
+            try:
+                res_rt = await network.client.get(RT_VOICE_LIST_URL)
+                if res_rt.status_code == 200:
+                    rt_data = res_rt.json()
+                    # Mapeamos el 'base' (ej: es_ES-carlota-medium) con la clave del JSON RT
+                    self.rt_mapping = {v['base']: rt_key for rt_key, v in rt_data.items() if 'base' in v}
+            except:
+                traceback.print_exc()
+
             self._procesar_idiomas()
             return {'success': True}
         except Exception as e:
@@ -102,7 +75,8 @@ class PiperManager(BaseDownloader):
                 'quality': data.get('quality', ''),
                 'files': data.get('files', {}),
                 'num_speakers': data.get('num_speakers', 1),
-                'sample_url': self._generar_sample_url(data)
+                'sample_url': self._generar_sample_url(data),
+                'has_rt': key in self.rt_mapping
             }
             self.languages[lang_code]['voices'].append(voice_entry)
 
@@ -180,25 +154,60 @@ class PiperManager(BaseDownloader):
                 except OSError:
                     pass
             return next(r for r in results if not r['success'])
-        # Renombrado y preparación van dentro del try: un fallo aquí (fichero
-        # retenido por el antivirus, voz que se está reinstalando) reventaba la
-        # corrutina y dejaba el descargador congelado sin decir nada.
+        # El renombrado va dentro del try: un fallo aquí (fichero retenido por
+        # el antivirus, voz que se está reinstalando) reventaba la corrutina y
+        # dejaba el descargador congelado sin decir nada.
         try:
             for parte, final in partes:
                 os.replace(parte, final)
-
-            # El motor sherpa necesita el tokens.txt y los metadatos del .onnx:
-            # se preparan desde el .json recién descargado (equivalente a lo que
-            # traen de fábrica los paquetes oficiales k2-fsa). forzar=True
-            # porque al reinstalar una voz el tokens.txt anterior sigue ahí y el
-            # .onnx nuevo se quedaría sin metadatos.
-            from TTS.sherpa_handler import preparar_voz_piper
-            for rel_path in archivos.keys():
-                if rel_path.endswith(".onnx.json"):
-                    preparar_voz_piper(os.path.join(dest_dir, os.path.basename(rel_path)),
-                                       forzar=True)
         except Exception as e:
             traceback.print_exc()
             return {'success': False, 'data': str(e)}
 
         return {'success': True, 'data': dest_dir}
+
+    async def instalar_voz_rt(self, voice_key, progress_callback=None):
+        """
+        Descarga y extrae la variante rápida (RT) de una voz (.tar.gz).
+        """
+        rt_key = self.rt_mapping.get(voice_key)
+        if not rt_key:
+            return {'success': False, 'data': 'No existe variante RT para esta voz.'}
+
+        url = f"{RT_VOICE_DOWNLOAD_URL_PREFIX}/{rt_key}.tar.gz"
+        temp_dir = tempfile.mkdtemp()
+        tar_path = os.path.join(temp_dir, f"{rt_key}.tar.gz")
+
+        try:
+            # Descargar el comprimido
+            res = await self.download_file(url, tar_path, progress_callback,
+                                           cancel_check=lambda: self.cancelado)
+            if not res['success']: return res
+
+            # Extraer
+            dest_dir = os.path.join("voices", f"voice-{voice_key}")
+            self.ensure_dir(dest_dir)
+
+            try:
+                # Primero intentamos como 'gz' que es lo más común
+                with tarfile.open(tar_path, 'r:gz') as tar:
+                    for member in tar.getmembers():
+                        if member.isfile():
+                            # Extraemos solo el nombre del archivo para aplanarlo
+                            member.name = os.path.basename(member.name)
+                            tar.extract(member, dest_dir)
+            except tarfile.ReadError:
+                # Si falla, podría ser un tar no comprimido
+                with tarfile.open(tar_path, 'r:') as tar:
+                    for member in tar.getmembers():
+                        if member.isfile():
+                            # Extraemos solo el nombre del archivo para aplanarlo
+                            member.name = os.path.basename(member.name)
+                            tar.extract(member, dest_dir)
+
+            return {'success': True, 'data': dest_dir}
+        except Exception as e:
+            traceback.print_exc()
+            return {'success': False, 'data': str(e)}
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
