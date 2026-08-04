@@ -282,6 +282,9 @@ class sherpaSpeak:
         # close() lo levanta: el arranque del servidor es asíncrono y puede
         # seguir en marcha cuando ya se ha pedido cerrar este puente.
         self._cerrado = False
+        # Idioma de la voz Kokoro que tiene cargada el servidor: mientras no
+        # sepa cambiarlo en caliente, cambiar de idioma obliga a reiniciarlo.
+        self._idioma_cargado = None
 
         # Iniciar Job Object en Windows
         if sys.platform == "win32":
@@ -456,6 +459,19 @@ class sherpaSpeak:
             self.unload_model()
             return
 
+        # El servidor guarda el modelo Kokoro en caché por su ruta, y con él el
+        # idioma de la PRIMERA voz que se cargó: pedir después una voz de otro
+        # idioma cambia el timbre pero sigue fonemizando con el anterior — una
+        # voz francesa con acento español, muy audible. Mientras el puente no
+        # sepa cambiar de idioma en caliente, se reinicia: cuesta ~2 s y solo
+        # ocurre al cambiar de idioma de voz, no al cambiar de voz.
+        idioma_nuevo = self._idioma_de_ruta(model_path)
+        if (idioma_nuevo and self._idioma_cargado
+                and idioma_nuevo != self._idioma_cargado):
+            self.close()
+            self.__init__()
+        self._idioma_cargado = idioma_nuevo or self._idioma_cargado
+
         self.current_voice_path = model_path
         # Invalidar la voz anterior antes de pedir la nueva: mientras el puente
         # responde, un mensaje del chat encontraría el identificador viejo, no
@@ -463,6 +479,15 @@ class sherpaSpeak:
         # usuario acaba de abandonar, incluso la del otro motor.
         self.voice_id = None
         asyncio.run_coroutine_threadsafe(self._load_voice_task(model_path), self.loop)
+
+    @staticmethod
+    def _idioma_de_ruta(model_path):
+        """Idioma pedido en una ruta de Kokoro («carpeta?sid=N&lang=xx»)."""
+        if "?" not in model_path:
+            return None
+        from urllib.parse import parse_qs
+        valores = parse_qs(model_path.split("?", 1)[1]).get("lang")
+        return valores[0] if valores else None
 
     async def _load_voice_task(self, model_path):
         while self.channel is None:

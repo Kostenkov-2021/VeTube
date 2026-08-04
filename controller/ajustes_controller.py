@@ -44,6 +44,7 @@ class AjustesController:
         'sapi', 'reader', 'traducir', 'interface', 'updates', 'salir', 'donations',
         'sonidos', 'directorio', 'sistemaTTS', 'dispositivo', 'voz', 'volume',
         'tono', 'tono_onecore', 'speed', 'reproducir', 'tiempo', 'volumen', 'cambiovolumen',
+        'voz_piper', 'voz_kokoro',
     ]
 
     def __init__(self, dialog):
@@ -160,6 +161,26 @@ class AjustesController:
         self.dialog.seleccionar_TTS.Enable(not event.IsChecked())
         self.actualizar_visibilidad_instalador()
 
+    @staticmethod
+    def _clave_voz(motor):
+        """Los dos motores con puente propio guardan su voz aparte. Los demás
+        (auto, sapi5, onecore) comparten las voces del sistema y siguen como
+        estaban."""
+        return f"voz_{motor}" if motor in ("piper", "kokoro") else None
+
+    def _recordar_voz(self, motor):
+        clave = self._clave_voz(motor)
+        if clave:
+            config[clave] = config.get('voz', 0)
+
+    def _recuperar_voz(self, motor):
+        clave = self._clave_voz(motor)
+        if clave:
+            # Sin nada guardado todavía se empieza por la primera voz, que en
+            # Kokoro es la francesa: heredar la posición del otro motor era
+            # justo lo que hacía hablar en español sin haberlo pedido.
+            config['voz'] = config.get(clave, 0)
+
     def cambiar_sintetizador(self, event):
         if self.play_timer.IsRunning():
             self.play_timer.Stop()
@@ -167,7 +188,15 @@ class AjustesController:
         self.dialog.boton_prueva.SetLabel(_("&Reproducir prueba."))
         self.reproduciendo_prueba = False
 
+        motor_anterior = config['sistemaTTS']
         config['sistemaTTS'] = self.dialog.seleccionar_TTS.GetStringSelection()
+        if motor_anterior != config['sistemaTTS']:
+            # config['voz'] es UNA sola posición para listas de voces que ya no
+            # tienen nada que ver: la 3ª voz de Piper es una voz española en
+            # Kokoro. Al cambiar de motor se guarda la voz del que sale y se
+            # recupera la del que entra, así cada uno vuelve donde lo dejaste.
+            self._recordar_voz(motor_anterior)
+            self._recuperar_voz(config['sistemaTTS'])
         reader.set_tts(config['sistemaTTS'])
         if config['sistemaTTS'] in ("piper", "kokoro"):
             # Cada motor tiene su propio puente y el que entra arranca de cero,
