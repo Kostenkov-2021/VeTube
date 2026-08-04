@@ -336,8 +336,20 @@ class piperSpeak:
         if gen != self._speak_generation:
             return  # silenciado antes de empezar
 
-        rate_val = int(self.length_scale * 40)
-        if rate_val < 5: rate_val = 5
+        # El cursor de velocidad tiene que sonar igual en los dos motores: si no,
+        # pasar de Piper a Kokoro cambiaría la velocidad de golpe sin haber
+        # tocado nada. Los dos reciben la misma escala (porcentaje_a_escala:
+        # 0 a 2,5, con 1,25 en el centro) y cada puente la traduce a lo que
+        # espera su servidor.
+        #
+        # Sonata interpreta rate como length_scale = 15/rate (medido en banco:
+        # la duración sigue 187/(rate+8,9) con los silencios fijos aparte).
+        # Enviaba length_scale * 40, o sea rate 50 en el centro, que resulta ser
+        # length_scale 0,3: tres veces la velocidad natural de la voz. Con 12 el
+        # centro cae en length_scale 1,0 —la velocidad que trae el modelo— y el
+        # tope del cursor en 0,5, el doble de rápido, igual que en sherpa.
+        rate_val = int(round(self.length_scale * 12))
+        if rate_val < 1: rate_val = 1
         if rate_val > 200: rate_val = 200
 
         utterance = sonata_grpc_pb2.Utterance(
