@@ -6,7 +6,7 @@ import shutil
 from setup import network, player, reader
 from servicios.piper_manager import PiperManager
 from ui.piper_downloader import PiperDownloaderDialog
-from TTS.list_voices import piper_list_voices, obtener_ruta_voz
+from TTS.list_voices import piper_list_voices, obtener_ruta_voz, es_voz_rt
 
 class PiperDownloaderController:
     def __init__(self, parent):
@@ -57,7 +57,12 @@ class PiperDownloaderController:
         self.voces_locales = piper_list_voices()
         self.view.list_instaladas.Clear()
         if self.voces_locales:
-            self.view.list_instaladas.Set(self.voces_locales)
+            # Se marca la variante en la etiqueta: las dos crean una carpeta con
+            # el mismo nombre y no se distinguían de ninguna manera. La lista
+            # voces_locales guarda el nombre real, que es lo que usan probar y
+            # eliminar.
+            self.view.list_instaladas.Set([
+                f"{v} (RT)" if es_voz_rt(v) else v for v in self.voces_locales])
         else:
             self.view.list_instaladas.Append(_("No hay voces instaladas"))
 
@@ -129,6 +134,7 @@ class PiperDownloaderController:
             self.view.voice_list.InsertItem(i, v['name'])
             self.view.voice_list.SetItem(i, 1, v['quality'])
             self.view.voice_list.SetItem(i, 2, v['lang_code'])
+            self.view.voice_list.SetItem(i, 3, "RT" if v.get('has_rt') else "")
 
     def on_reproducir(self, event):
         if self.reproduciendo_muestra:

@@ -47,6 +47,10 @@ class PiperDownloaderDialog(wx.Dialog):
         self.voice_list.InsertColumn(0, _("Voz"), width=200)
         self.voice_list.InsertColumn(1, _("Calidad"), width=100)
         self.voice_list.InsertColumn(2, _("Idioma"), width=80)
+        # La calidad (low/medium/high) es la del modelo base, no dice nada de la
+        # variante: sin esta columna no había forma de saber qué voces tienen
+        # versión rápida antes de descargarlas.
+        self.voice_list.InsertColumn(3, _("Variante rápida"), width=110)
         self.voice_list.EnableCheckBoxes()
         descargar_sizer.Add(self.voice_list, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 10)
         

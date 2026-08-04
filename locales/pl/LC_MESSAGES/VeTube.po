@@ -1963,3 +1963,7 @@ msgstr "Pobierz szybkie warianty (RT), jeśli są dostępne"
 #: controller/piper_downloader_controller.py:189
 msgid "Descargar variantes de Calidad Normal (Alta)"
 msgstr "Pobierz warianty o normalnej jakości (wysoka)"
+
+#: ui/piper_downloader.py:53
+msgid "Variante rápida"
+msgstr "Szybki wariant"

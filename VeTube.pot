@@ -1877,3 +1877,7 @@ msgstr ""
 #: controller/piper_downloader_controller.py:189
 msgid "Descargar variantes de Calidad Normal (Alta)"
 msgstr ""
+
+#: ui/piper_downloader.py:53
+msgid "Variante rápida"
+msgstr ""

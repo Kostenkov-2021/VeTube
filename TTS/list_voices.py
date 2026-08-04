@@ -28,6 +28,13 @@ def install_piper_voice(config, reader):
 	abrir_tar.Destroy()
 	return config, reader
 
+def es_voz_rt(nombre_carpeta):
+	"""True si la voz instalada es la variante rápida (RT). Las dos variantes
+	crean una carpeta con el MISMO nombre, así que sin mirar dentro no hay
+	forma de distinguirlas: la RT es la que trae el modelo partido en
+	encoder.onnx + decoder.onnx."""
+	return os.path.exists(os.path.join("voices", nombre_carpeta, "decoder.onnx"))
+
 def piper_list_voices():
 	if not os.path.exists("voices"):
 		return []
