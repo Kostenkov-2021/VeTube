@@ -323,17 +323,32 @@ class sherpaSpeak:
         self._inicializado = True
 
     def _run_loop(self):
-        asyncio.set_event_loop(self.loop)
+        # Guardar el loop en una variable local: self.loop apunta a otro en
+        # cuanto el puente se reinicia, y limpiar «el loop de self» acabaría
+        # cancelando las tareas del puente NUEVO en vez de las del viejo.
+        loop = self.loop
+        asyncio.set_event_loop(loop)
         try:
-            self.loop.run_forever()
+            loop.run_forever()
         except:
             pass
         finally:
             # Cerrarlo aquí, ya fuera de run_forever: cada cambio de motor crea
             # un loop nuevo, y los anteriores se quedaban abiertos con su
-            # socketpair interno hasta el final de la sesión.
+            # socketpair interno hasta el final de la sesión. Antes de cerrar
+            # hay que cancelar lo que quedara en vuelo, o Python avisa por la
+            # salida de error de cada tarea destruida a medias.
             try:
-                self.loop.close()
+                tareas = asyncio.all_tasks(loop)
+                for tarea in tareas:
+                    tarea.cancel()
+                if tareas:
+                    loop.run_until_complete(
+                        asyncio.gather(*tareas, return_exceptions=True))
+            except Exception:
+                pass
+            try:
+                loop.close()
             except Exception:
                 pass
 
@@ -373,8 +388,12 @@ class sherpaSpeak:
     async def _start_server(self):
         # Puede haberse pedido el cierre mientras esta corrutina esperaba turno:
         # cambiar de motor cierra este puente, y arrancar un servidor después
-        # dejaría un proceso que ya no es de nadie.
-        if self._cerrado:
+        # dejaría un proceso que ya no es de nadie. No basta con mirar
+        # _cerrado: si el puente ya se ha vuelto a abrir, __init__ lo ha puesto
+        # otra vez en False y esta corrutina vieja se creería vigente. El loop
+        # sí distingue una encarnación de la siguiente.
+        mi_loop = asyncio.get_running_loop()
+        if self._cerrado or self.loop is not mi_loop:
             return
         self.port = self._find_free_port()
         env = os.environ.copy()
@@ -392,12 +411,14 @@ class sherpaSpeak:
         # Si el cierre llegó justo mientras arrancábamos, close() ya no tenía
         # nada que matar (self.process aún era None) y el Job Object está
         # cerrado: hay que matarlo aquí o queda huérfano para siempre.
-        if self._cerrado:
+        proceso = self.process
+        if self._cerrado or self.loop is not mi_loop:
             try:
-                self.process.kill()
+                proceso.kill()
             except Exception:
                 pass
-            self.process = None
+            if self.process is proceso:
+                self.process = None
             return
 
         # Asignar proceso al Job Object
@@ -406,6 +427,12 @@ class sherpaSpeak:
 
         max_retries = 15
         for i in range(max_retries):
+            # El canal queda atado al loop donde se crea: si el puente ya se
+            # ha reiniciado, publicarlo aquí se lo daría al puente nuevo, que
+            # lo usaría desde OTRO loop («attached to a different loop») y no
+            # conseguiría cargar ninguna voz.
+            if self._cerrado or self.loop is not mi_loop:
+                return
             try:
                 self.channel = Channel('127.0.0.1', self.port)
                 await asyncio.sleep(2)
@@ -490,8 +517,19 @@ class sherpaSpeak:
         return valores[0] if valores else None
 
     async def _load_voice_task(self, model_path):
+        # Si el puente se reinicia (cambio de idioma) mientras esta tarea
+        # esperaba, su loop ya no es el del puente: hay que salir en vez de
+        # hablarle a un servidor que ya no existe, que era lo que llenaba el
+        # registro de «Connection closed» al recorrer la lista de voces.
+        mi_loop = asyncio.get_running_loop()
+        def vigente():
+            return not self._cerrado and self.loop is mi_loop
         while self.channel is None:
+            if not vigente():
+                return
             await asyncio.sleep(0.5)
+        if not vigente():
+            return
 
         req = sonata_grpc_pb2.VoicePath(config_path=model_path if "?" in model_path else os.path.abspath(model_path))
         try:
