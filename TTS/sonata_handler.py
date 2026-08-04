@@ -4,18 +4,15 @@ import asyncio
 import subprocess
 import socket
 import threading
-import time
 import atexit
 import ctypes
 from pathlib import Path
-from sound_lib import stream, output
-from sound_lib.main import BassError
+from sound_lib import stream
 from grpclib.client import Channel
 import grpclib.const
 
 # Configuración de Job Objects para Windows
 if sys.platform == "win32":
-    GetCurrentProcess = ctypes.windll.kernel32.GetCurrentProcess
     CreateJobObject = ctypes.windll.kernel32.CreateJobObjectW
     SetInformationJobObject = ctypes.windll.kernel32.SetInformationJobObject
     AssignProcessToJobObject = ctypes.windll.kernel32.AssignProcessToJobObject
@@ -49,6 +46,8 @@ from .sonata_protos import sonata_grpc_pb2
 
 # Instancia global para el Singleton
 _INSTANCIA_PIPER = None
+# El barrido de procesos huérfanos solo hace falta una vez por sesión.
+_ORFANOS_LIMPIADOS = False
 
 class piperSpeak:
     def __new__(cls, *args, **kwargs):
@@ -101,9 +100,14 @@ class piperSpeak:
             info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
             SetInformationJobObject(self.job_handle, JobObjectExtendedLimitInformation, ctypes.pointer(info), ctypes.sizeof(info))
 
-        # Limpiar instancias huérfanas de NUESTRA carpeta antes de empezar
-        if sys.platform == "win32":
+        # Limpiar instancias huérfanas de NUESTRA carpeta antes de empezar.
+        # Solo la primera vez de la sesión: sirve para barrer los restos de un
+        # cierre anterior, y a partir del segundo arranque (cambio de motor)
+        # acabamos de matar nosotros mismos el único proceso que podía haber.
+        global _ORFANOS_LIMPIADOS
+        if sys.platform == "win32" and not _ORFANOS_LIMPIADOS:
             self._cleanup_own_orphans()
+            _ORFANOS_LIMPIADOS = True
 
         # Iniciar loop asíncrono
         self.loop = asyncio.new_event_loop()
@@ -113,7 +117,12 @@ class piperSpeak:
         # Lanzar servidor
         asyncio.run_coroutine_threadsafe(self._start_server(), self.loop)
         
-        atexit.register(self.close)
+        # Solo la primera vez: __init__ se vuelve a ejecutar en cada cambio de
+        # motor (close() deja _inicializado en False) y se acumulaba un
+        # atexit por cada ida y vuelta.
+        if not getattr(self, "_atexit_puesto", False):
+            atexit.register(self.close)
+            self._atexit_puesto = True
         
         if model_path:
             self.load_model(model_path)
@@ -126,6 +135,14 @@ class piperSpeak:
             self.loop.run_forever()
         except:
             pass
+        finally:
+            # Cerrarlo aquí, ya fuera de run_forever: cada cambio de motor crea
+            # un loop nuevo, y los anteriores se quedaban abiertos con su
+            # socketpair interno hasta el final de la sesión.
+            try:
+                self.loop.close()
+            except Exception:
+                pass
 
     def _cleanup_own_orphans(self):
         """Mata procesos sonata-grpc.exe huérfanos, pero SOLO los lanzados desde
@@ -198,7 +215,7 @@ class piperSpeak:
 
         # Asignar proceso al Job Object
         if sys.platform == "win32" and self.job_handle and self.process:
-            res = AssignProcessToJobObject(self.job_handle, self.process._handle)
+            AssignProcessToJobObject(self.job_handle, self.process._handle)
 
         max_retries = 15
         for i in range(max_retries):
@@ -214,23 +231,36 @@ class piperSpeak:
             model_path = self.current_voice_path
         if not model_path: return
         
-        # Si el archivo ONNX no existe en la ruta dada (debido a diferencias de nombres de carpeta),
-        # lo buscamos dinámicamente dentro de subcarpetas de voices/
+        # Si el archivo ONNX no existe en la ruta dada (debido a diferencias de
+        # nombres de carpeta), lo buscamos dinámicamente dentro de voices/.
+        # Solo en las carpetas «voice-*»: desde que existe Kokoro, en voices/
+        # vive también su paquete (voices/kokoro-multi-lang-v1_0/model.onnx), y
+        # este fichero es anterior a esa vecindad. Mismo criterio que el otro
+        # puente.
         if not os.path.exists(model_path):
             import glob
             filename = os.path.basename(model_path)
-            coincidencias = glob.glob(os.path.join("voices", "*", filename))
+            coincidencias = glob.glob(os.path.join("voices", "voice-*", filename))
             if coincidencias:
                 model_path = coincidencias[0]
         
         if model_path.endswith(".onnx"):
             json_path = model_path + ".json"
             if not os.path.exists(json_path):
-                # Para voces RT o cuando el JSON tiene un nombre diferente
+                # Para voces RT o cuando el JSON tiene un nombre diferente.
+                # Los paquetes RT de mush42 llevan «+RT» en el nombre de su
+                # .json, y una misma carpeta puede tener las dos variantes (se
+                # descargan en el mismo sitio): hay que emparejar la config con
+                # el modelo pedido en vez de coger el primer .json que salga,
+                # que depende del orden del sistema de ficheros.
                 import glob
                 dir_name = os.path.dirname(model_path)
+                es_rt = os.path.basename(model_path).lower() in ("encoder.onnx", "decoder.onnx")
                 jsons = glob.glob(os.path.join(dir_name, "*.json"))
-                if jsons:
+                propios = [j for j in jsons if ("+RT" in os.path.basename(j)) == es_rt]
+                if propios:
+                    model_path = propios[0]
+                elif jsons:
                     model_path = jsons[0]
                 else:
                     model_path = json_path
@@ -318,7 +348,11 @@ class piperSpeak:
     def speak(self, text):
         if not text: return
         # Puente cerrado porque se pasó al otro motor: nada que sintetizar.
-        if not self._inicializado: return
+        # Se mira _cerrado y no _inicializado porque close() levanta el primero
+        # nada más empezar y solo baja el segundo al final: entre medias detiene
+        # el loop, y programar ahí una síntesis reventaría con «Event loop is
+        # closed» en el hilo de la interfaz.
+        if self._cerrado: return
         # Sin voz pedida no hay nada que esperar: _speak_task_inner aguanta 12
         # segundos a que termine de cargar, y eso solo tiene sentido si hay
         # alguna voz en camino.
@@ -415,7 +449,12 @@ class piperSpeak:
                 except: pass
                 return
             self.bass_stream = local_stream
-            local_stream.play()
+
+            # play() se llama tras empujar el primer bloque: un stream arrancado
+            # sin datos queda STALLED y puede darse por terminado antes de sonar
+            # —y is_playing() apagaría el botón «Detener prueba» sin que se haya
+            # oído nada.
+            primero = True
 
             async with self.channel.request(
                 '/sonata_grpc.sonata_grpc/SynthesizeUtterance',
@@ -429,9 +468,15 @@ class piperSpeak:
                         break  # silenciado: dejar de empujar audio
                     if result.wav_samples:
                         local_stream.push(result.wav_samples)
+                        if primero:
+                            primero = False
+                            local_stream.play()
 
         except Exception as e:
-            print(f"Error en síntesis Sonata: {e}")
+            # Un corte voluntario (silence()/cierre) también rompe el stream:
+            # solo es un error de verdad si NADIE ha invalidado esta síntesis.
+            if gen == self._speak_generation:
+                print(f"Error en síntesis Sonata: {e}")
 
     def close(self):
         # Avisar cuanto antes: el servidor puede estar arrancando todavía en el

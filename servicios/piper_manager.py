@@ -14,17 +14,37 @@ PIPER_SAMPLES_URL_PREFIX = "https://rhasspy.github.io/piper-samples/samples"
 RT_VOICE_LIST_URL = "https://huggingface.co/datasets/mush42/piper-rt/raw/main/voices.json"
 RT_VOICE_DOWNLOAD_URL_PREFIX = "https://huggingface.co/datasets/mush42/piper-rt/resolve/main"
 
+# Ficheros propios de cada variante. Las dos se descargan en la MISMA carpeta
+# (voices/voice-<clave>), así que al instalar una hay que retirar la otra: si
+# conviven, obtener_ruta_voz da siempre prioridad a decoder.onnx y la voz recién
+# descargada se queda inalcanzable, sin ningún aviso y sin vuelta atrás desde la
+# interfaz.
+_FICHEROS_RT = ("encoder.onnx", "decoder.onnx")
+
+
+def _limpiar_variante(dest_dir, quitar_rt):
+    """Borra de la carpeta los ficheros de la variante que no se acaba de
+    instalar. Con quitar_rt, los de la RT; si no, el modelo estándar."""
+    try:
+        for nombre in os.listdir(dest_dir):
+            bajo = nombre.lower()
+            es_rt = bajo in _FICHEROS_RT or (bajo.endswith(".json") and "+rt" in bajo)
+            if not (bajo.endswith(".onnx") or bajo.endswith(".json")):
+                continue
+            if es_rt == quitar_rt:
+                try:
+                    os.remove(os.path.join(dest_dir, nombre))
+                except OSError:
+                    pass
+    except OSError:
+        traceback.print_exc()
+
 class PiperManager(BaseDownloader):
     def __init__(self):
         super().__init__()
         self.voices_data = {}
         self.rt_mapping = {} # Mapeo de { "nombre_base": "clave_rt" }
         self.languages = {} # { "code": { "name_native": "...", "voices": [] } }
-        self.cancelado = False
-
-    def cancelar(self):
-        """Corta la descarga en curso en el siguiente bloque recibido."""
-        self.cancelado = True
 
     async def cargar_catalogo(self):
         """Descarga y procesa el catálogo de voces estándar y RT."""
@@ -143,8 +163,7 @@ class PiperManager(BaseDownloader):
             # instante y volvería a bajar (los pitidos de NVDA dirían
             # «terminado» nada más empezar).
             cb = progress_callback if file_name.endswith(".onnx") else None
-            tasks.append(self.download_file(url, local_path + ".part", cb,
-                                            cancel_check=lambda: self.cancelado))
+            tasks.append(self.download_file(url, local_path + ".part", cb))
 
         results = await asyncio.gather(*tasks)
         if not all(r['success'] for r in results):
@@ -160,6 +179,8 @@ class PiperManager(BaseDownloader):
         try:
             for parte, final in partes:
                 os.replace(parte, final)
+            # Esta carpeta pudo tener antes la variante RT de la misma voz.
+            _limpiar_variante(dest_dir, quitar_rt=True)
         except Exception as e:
             traceback.print_exc()
             return {'success': False, 'data': str(e)}
@@ -180,8 +201,7 @@ class PiperManager(BaseDownloader):
 
         try:
             # Descargar el comprimido
-            res = await self.download_file(url, tar_path, progress_callback,
-                                           cancel_check=lambda: self.cancelado)
+            res = await self.download_file(url, tar_path, progress_callback)
             if not res['success']: return res
 
             # Extraer
@@ -205,6 +225,8 @@ class PiperManager(BaseDownloader):
                             member.name = os.path.basename(member.name)
                             tar.extract(member, dest_dir)
 
+            # Esta carpeta pudo tener antes la variante estándar de la misma voz.
+            _limpiar_variante(dest_dir, quitar_rt=False)
             return {'success': True, 'data': dest_dir}
         except Exception as e:
             traceback.print_exc()

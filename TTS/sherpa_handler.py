@@ -238,6 +238,8 @@ from .sonata_protos import sonata_grpc_pb2
 # el mismo proceso puente (el servidor mantiene cada modelo cargado residente,
 # así que alternar entre motores no recarga nada).
 _INSTANCIA_SHERPA = None
+# El barrido de procesos huérfanos solo hace falta una vez por sesión.
+_ORFANOS_LIMPIADOS = False
 
 class sherpaSpeak:
     def __new__(cls, *args, **kwargs):
@@ -288,9 +290,14 @@ class sherpaSpeak:
             info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
             SetInformationJobObject(self.job_handle, JobObjectExtendedLimitInformation, ctypes.pointer(info), ctypes.sizeof(info))
 
-        # Limpiar instancias huérfanas de NUESTRO puente antes de empezar
-        if sys.platform == "win32":
+        # Limpiar instancias huérfanas de NUESTRO puente antes de empezar.
+        # Solo la primera vez de la sesión: sirve para barrer los restos de un
+        # cierre anterior, y a partir del segundo arranque (cambio de motor)
+        # acabamos de matar nosotros mismos el único proceso que podía haber.
+        global _ORFANOS_LIMPIADOS
+        if sys.platform == "win32" and not _ORFANOS_LIMPIADOS:
             self._cleanup_own_orphans()
+            _ORFANOS_LIMPIADOS = True
 
         # Iniciar loop asíncrono
         self.loop = asyncio.new_event_loop()
@@ -300,7 +307,12 @@ class sherpaSpeak:
         # Lanzar servidor
         asyncio.run_coroutine_threadsafe(self._start_server(), self.loop)
 
-        atexit.register(self.close)
+        # Solo la primera vez: __init__ se vuelve a ejecutar en cada cambio de
+        # motor (close() deja _inicializado en False) y se acumulaba un
+        # atexit por cada ida y vuelta.
+        if not getattr(self, "_atexit_puesto", False):
+            atexit.register(self.close)
+            self._atexit_puesto = True
 
         if model_path:
             self.load_model(model_path)
@@ -313,6 +325,14 @@ class sherpaSpeak:
             self.loop.run_forever()
         except:
             pass
+        finally:
+            # Cerrarlo aquí, ya fuera de run_forever: cada cambio de motor crea
+            # un loop nuevo, y los anteriores se quedaban abiertos con su
+            # socketpair interno hasta el final de la sesión.
+            try:
+                self.loop.close()
+            except Exception:
+                pass
 
     def _cleanup_own_orphans(self):
         """Mata instancias del puente que hayan quedado huérfanas, pero SOLO las
@@ -521,7 +541,11 @@ class sherpaSpeak:
     def speak(self, text):
         if not text: return
         # Puente cerrado porque se pasó al otro motor: nada que sintetizar.
-        if not self._inicializado: return
+        # Se mira _cerrado y no _inicializado porque close() levanta el primero
+        # nada más empezar y solo baja el segundo al final: entre medias detiene
+        # el loop, y programar ahí una síntesis reventaría con «Event loop is
+        # closed» en el hilo de la interfaz.
+        if self._cerrado: return
         # Sin voz pedida no hay nada que esperar: _speak_task_inner aguanta 12
         # segundos a que termine de cargar, y eso solo tiene sentido si hay
         # alguna voz en camino.

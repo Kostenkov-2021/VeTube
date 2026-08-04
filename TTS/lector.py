@@ -12,10 +12,23 @@ Esto es un gestionador de TTS. Permite manejar el uso de diferentes motores de t
 2. Sonata (motor Piper gRPC): las voces Piper, incluidas las variantes RT.
 3. Puente sherpa-onnx (habla el mismo protocolo sonata_grpc): el modelo Kokoro.
 
-Cada motor tiene su propio servidor y solo uno vive a la vez: al cambiar de
-motor se cierra el del otro para no dejar dos procesos ocupando memoria.
+Cada motor tiene su propio servidor y solo uno vive a la vez: al elegir un
+lector se cierran los puentes de todos los demás. Eso incluye elegir un lector
+que no usa ninguno (auto, sapi5, onecore): si no, el servidor del motor
+anterior se quedaba en memoria con su modelo cargado hasta cerrar VeTube.
 """
+# Motores con servidor propio: nombre en config['sistemaTTS'] -> módulo puente.
+# Basta añadir una línea aquí para un motor nuevo; la regla «solo uno vivo»
+# se cumple sola en vez de tener que acordarse de cerrar los otros uno por uno.
+PUENTES = {
+	"piper": sonata_handler,
+	"kokoro": sherpa_handler,
+}
+
 def configurar_tts(lector):
+	for nombre, puente in PUENTES.items():
+		if nombre != lector:
+			puente.detener_puente()
 	if lector == "auto":
 		return PrismBackendWrapper(is_best=True)
 	elif lector == "sapi5":
@@ -23,10 +36,8 @@ def configurar_tts(lector):
 	elif lector == "onecore":
 		return PrismBackendWrapper(BackendId.ONE_CORE)
 	elif lector == "piper":
-		sherpa_handler.detener_puente()
 		return sonata_handler.piperSpeak()
 	elif lector == "kokoro":
-		sonata_handler.detener_puente()
 		return sherpa_handler.sherpaSpeak()
 	else:
 		raise Exception("Lector no soportado.")

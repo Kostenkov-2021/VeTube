@@ -169,6 +169,13 @@ class AjustesController:
 
         config['sistemaTTS'] = self.dialog.seleccionar_TTS.GetStringSelection()
         reader.set_tts(config['sistemaTTS'])
+        if config['sistemaTTS'] in ("piper", "kokoro"):
+            # Cada motor tiene su propio puente y el que entra arranca de cero,
+            # con la salida de audio por defecto. Antes los dos compartían un
+            # único puente que ya la tenía puesta, así que nadie la volvía a
+            # fijar aquí: sin esta línea, cambiar de motor devolvía la voz a los
+            # altavoces de Windows aunque los ajustes dijeran otra cosa.
+            app_utilitys.fijar_dispositivo_lector()
         self.actualizar_filtro_idioma()
         if config['sistemaTTS'] == "piper":
             if lista_voces_piper and lista_voces_piper[0] != _("No hay voces instaladas"):
