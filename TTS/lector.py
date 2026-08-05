@@ -3,8 +3,11 @@ from . import sonata_handler
 from . import sherpa_handler
 import glob
 import os
+from logging import getLogger
 from helpers.reader_handler import PrismBackendWrapper
 from prism import BackendId
+
+logger = getLogger(__name__)
 
 """
 Esto es un gestionador de TTS. Permite manejar el uso de diferentes motores de texto a voz como:
@@ -40,7 +43,11 @@ def configurar_tts(lector):
 	elif lector == "kokoro":
 		return sherpa_handler.sherpaSpeak()
 	else:
-		raise Exception("Lector no soportado.")
+		# Un sistemaTTS que no reconocemos (config de una versión anterior,
+		# data.json editado a mano) no debe impedir arrancar: se cae en el
+		# mejor lector disponible, que es lo que hacía quien nos llama.
+		logger.warning("Sistema TTS no soportado (%s): se usa el mejor lector disponible.", lector)
+		return PrismBackendWrapper(is_best=True)
 
 def detect_onnx_models(path):
     # Solo las carpetas «voice-*», que son las de Piper: en voices/ vive también
