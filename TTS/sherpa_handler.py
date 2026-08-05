@@ -499,8 +499,15 @@ class sherpaSpeak:
         idioma_nuevo = self._idioma_de_ruta(model_path)
         if (idioma_nuevo and self._idioma_cargado
                 and idioma_nuevo != self._idioma_cargado):
+            # __init__() devuelve los parámetros de audio a sus valores por
+            # defecto (dispositivo -1, volumen 100, velocidad y tono a 1), pero
+            # esos son del usuario y no tienen por qué cambiar porque el puente
+            # se reinicie: el volumen y la velocidad volvían al centro cada vez
+            # que se cambiaba de idioma de voz.
+            ajustes_audio = (self.device, self.volume, self.length_scale, self.pitch_ratio)
             self.close()
             self.__init__()
+            (self.device, self.volume, self.length_scale, self.pitch_ratio) = ajustes_audio
         self._idioma_cargado = idioma_nuevo or self._idioma_cargado
 
         self.current_voice_path = model_path
