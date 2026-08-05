@@ -1,6 +1,7 @@
 # lector:
 from . import sonata_handler
 from . import sherpa_handler
+from . import edge_handler
 import glob
 import os
 from logging import getLogger
@@ -14,11 +15,14 @@ Esto es un gestionador de TTS. Permite manejar el uso de diferentes motores de t
 1. Prism Accessibility Library
 2. Sonata (motor Piper gRPC): las voces Piper, incluidas las variantes RT.
 3. Puente sherpa-onnx (habla el mismo protocolo sonata_grpc): el modelo Kokoro.
+4. Edge TTS (edge-tts): voces de Microsoft Edge por red.
 
-Cada motor tiene su propio servidor y solo uno vive a la vez: al elegir un
-lector se cierran los puentes de todos los demás. Eso incluye elegir un lector
-que no usa ninguno (auto, sapi5, onecore): si no, el servidor del motor
-anterior se quedaba en memoria con su modelo cargado hasta cerrar VeTube.
+Los motores con servidor propio están en PUENTES y solo uno vive a la vez: al
+elegir un lector se cierran los puentes de todos los demás. Eso incluye elegir
+un lector que no tiene ninguno (auto, sapi5, onecore, edge): si no, el servidor
+del motor anterior se quedaba en memoria con su modelo cargado hasta cerrar
+VeTube. Edge no está en PUENTES porque no levanta ningún servidor: habla por
+red y solo mantiene un hilo, así que elegirlo cierra los otros dos y ya está.
 """
 # Motores con servidor propio: nombre en config['sistemaTTS'] -> módulo puente.
 # Basta añadir una línea aquí para un motor nuevo; la regla «solo uno vivo»
@@ -42,6 +46,8 @@ def configurar_tts(lector):
 		return sonata_handler.piperSpeak()
 	elif lector == "kokoro":
 		return sherpa_handler.sherpaSpeak()
+	elif lector == "edge":
+		return edge_handler.edgeSpeak()
 	else:
 		# Un sistemaTTS que no reconocemos (config de una versión anterior,
 		# data.json editado a mano) no debe impedir arrancar: se cae en el

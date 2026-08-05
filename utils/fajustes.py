@@ -10,6 +10,7 @@ configuraciones ={
 	# Ajustes las deja en None (ver CLAVES_EN_CALIENTE en ajustes_controller).
 	'voz_piper': 0,
 	'voz_kokoro': 0,
+	'voz_edge': 0,
 	"tono": 0,
 	'tono_onecore': 0,
 	"volume": 100,

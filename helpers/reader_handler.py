@@ -91,6 +91,8 @@ class ReaderHandler:
         # ningún puente: es ahí donde se cierran los puentes de los demás. Si
         # sapi5/onecore/auto se construyeran aquí, el servidor del motor
         # anterior seguiría vivo con su modelo cargado hasta cerrar VeTube.
+        # De paso, un motor nuevo (como edge) ya no hay que apuntarlo también
+        # en esta lista: basta con añadirlo en configurar_tts.
         from TTS.lector import configurar_tts
         self._lector = configurar_tts(sistema)
 
@@ -125,7 +127,7 @@ class ReaderHandler:
             self.leer_auto(mensaje)
 
     def leer_sapi(self, mensaje):
-        if config['sistemaTTS'] in ("piper", "kokoro"):
+        if config['sistemaTTS'] in ("piper", "kokoro", "edge"):
             self.leer_auto(mensaje)
         else:
             self._leer.speak(mensaje)

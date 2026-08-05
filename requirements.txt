@@ -16,3 +16,4 @@ python-vlc
 wxPython
 pywin32
 discord.py
+edge-tts
