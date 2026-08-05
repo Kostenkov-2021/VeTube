@@ -291,7 +291,8 @@ class AjustesController:
             "es": _("Español"),
             "fr": _("Francés"),
             "en-us": _("Inglés (Estados Unidos)"),
-            "en-gb": _("Inglés (Reino Unido)"),
+            # «en» a secas es el inglés británico de espeak-ng (ver VOCES_KOKORO).
+            "en": _("Inglés (Reino Unido)"),
             "it": _("Italiano"),
             "pt-br": _("Portugués (Brasil)"),
             "hi": _("Hindi"),

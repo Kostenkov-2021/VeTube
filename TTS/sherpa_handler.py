@@ -61,15 +61,19 @@ VOCES_KOKORO = [
     ("am_onyx (inglés)", 17, "en-us"),
     ("am_puck (inglés)", 18, "en-us"),
     ("am_santa (inglés)", 19, "en-us"),
-    # Inglés británico
-    ("bf_alice (inglés británico)", 20, "en-gb"),
-    ("bf_emma (inglés británico)", 21, "en-gb"),
-    ("bf_isabella (inglés británico)", 22, "en-gb"),
-    ("bf_lily (inglés británico)", 23, "en-gb"),
-    ("bm_daniel (inglés británico)", 24, "en-gb"),
-    ("bm_fable (inglés británico)", 25, "en-gb"),
-    ("bm_george (inglés británico)", 26, "en-gb"),
-    ("bm_lewis (inglés británico)", 27, "en-gb"),
+    # Inglés británico. OJO: el código es «en» a secas, NO «en-gb». En espeak-ng
+    # el inglés británico es la variante por defecto y se llama «en»; «en-gb» no
+    # existe (sí en-GB-scotland, en-GB-x-rp...). Pedirlo tumbaba el servidor:
+    # ninguna voz británica sonaba y el puente se quedaba mudo hasta el
+    # siguiente cambio de idioma, que lo reinicia.
+    ("bf_alice (inglés británico)", 20, "en"),
+    ("bf_emma (inglés británico)", 21, "en"),
+    ("bf_isabella (inglés británico)", 22, "en"),
+    ("bf_lily (inglés británico)", 23, "en"),
+    ("bm_daniel (inglés británico)", 24, "en"),
+    ("bm_fable (inglés británico)", 25, "en"),
+    ("bm_george (inglés británico)", 26, "en"),
+    ("bm_lewis (inglés británico)", 27, "en"),
     # Hindi
     ("hf_alpha (hindi)", 31, "hi"),
     ("hf_beta (hindi)", 32, "hi"),
