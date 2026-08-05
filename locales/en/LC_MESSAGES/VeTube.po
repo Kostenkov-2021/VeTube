@@ -1963,3 +1963,11 @@ msgstr "Download Normal Quality (High) variants"
 #: ui/piper_downloader.py:53
 msgid "Variante rápida"
 msgstr "Fast variant"
+
+#: controller/piper_downloader_controller.py:228
+msgid "Normal"
+msgstr "Normal"
+
+#: controller/piper_downloader_controller.py:125
+msgid "Catálogo cargado, pero no se pudo consultar la lista de variantes rápidas (RT). Selecciona idiomas para ver las voces."
+msgstr "Catalog loaded, but the list of fast (RT) variants could not be retrieved. Select languages to view voices."

@@ -1946,3 +1946,11 @@ msgstr "Stáhnout varianty v normální kvalitě (vysoká)"
 #: ui/piper_downloader.py:53
 msgid "Variante rápida"
 msgstr "Rychlá varianta"
+
+#: controller/piper_downloader_controller.py:228
+msgid "Normal"
+msgstr "Normální"
+
+#: controller/piper_downloader_controller.py:125
+msgid "Catálogo cargado, pero no se pudo consultar la lista de variantes rápidas (RT). Selecciona idiomas para ver las voces."
+msgstr "Katalog načten, ale seznam rychlých variant (RT) se nepodařilo načíst. Vyberte jazyky pro zobrazení hlasů."

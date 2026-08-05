@@ -1968,3 +1968,11 @@ msgstr "Unduh varian Kualitas Normal (Tinggi)"
 #: ui/piper_downloader.py:53
 msgid "Variante rápida"
 msgstr "Varian cepat"
+
+#: controller/piper_downloader_controller.py:228
+msgid "Normal"
+msgstr "Normal"
+
+#: controller/piper_downloader_controller.py:125
+msgid "Catálogo cargado, pero no se pudo consultar la lista de variantes rápidas (RT). Selecciona idiomas para ver las voces."
+msgstr "Katalog dimuat, tetapi daftar varian cepat (RT) tidak dapat diambil. Pilih bahasa untuk melihat suara."

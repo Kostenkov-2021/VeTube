@@ -4,8 +4,11 @@ import traceback
 import tarfile
 import tempfile
 import shutil
+from logging import getLogger
 from .base_downloader import BaseDownloader
 from setup import network
+
+logger = getLogger(__name__)
 
 PIPER_VOICE_LIST_URL = "https://huggingface.co/rhasspy/piper-voices/raw/v1.0.0/voices.json"
 PIPER_VOICE_DOWNLOAD_URL_PREFIX = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0"
@@ -44,6 +47,9 @@ class PiperManager(BaseDownloader):
         super().__init__()
         self.voices_data = {}
         self.rt_mapping = {} # Mapeo de { "nombre_base": "clave_rt" }
+        # False mientras no se haya podido leer el catálogo RT: la interfaz lo
+        # dice, para que una columna vacía no se confunda con «no hay variante».
+        self.rt_disponible = False
         self.languages = {} # { "code": { "name_native": "...", "voices": [] } }
 
     async def cargar_catalogo(self):
@@ -56,15 +62,23 @@ class PiperManager(BaseDownloader):
 
             self.voices_data = res_std.json()
 
-            # Descargamos catálogo RT para saber qué voces tienen variante rápida
+            # Descargamos catálogo RT para saber qué voces tienen variante rápida.
+            # Si falla no abortamos —el catálogo estándar sirve igual—, pero hay
+            # que DECIRLO: sin este mapeo ninguna voz sale marcada como rápida y
+            # la columna queda vacía, que es exactamente lo que se ve cuando de
+            # verdad no hay variante. Callarlo deja al usuario sin forma de
+            # distinguir «no hay RT» de «no se pudo consultar».
             try:
                 res_rt = await network.client.get(RT_VOICE_LIST_URL)
                 if res_rt.status_code == 200:
                     rt_data = res_rt.json()
                     # Mapeamos el 'base' (ej: es_ES-carlota-medium) con la clave del JSON RT
                     self.rt_mapping = {v['base']: rt_key for rt_key, v in rt_data.items() if 'base' in v}
-            except:
-                traceback.print_exc()
+                    self.rt_disponible = True
+                else:
+                    logger.warning("El catálogo de voces RT respondió HTTP %s", res_rt.status_code)
+            except Exception:
+                logger.exception("No se pudo descargar el catálogo de voces RT")
 
             self._procesar_idiomas()
             return {'success': True}

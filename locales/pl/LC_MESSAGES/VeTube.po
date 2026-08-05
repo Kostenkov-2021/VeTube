@@ -1967,3 +1967,11 @@ msgstr "Pobierz warianty o normalnej jakości (wysoka)"
 #: ui/piper_downloader.py:53
 msgid "Variante rápida"
 msgstr "Szybki wariant"
+
+#: controller/piper_downloader_controller.py:228
+msgid "Normal"
+msgstr "Normalny"
+
+#: controller/piper_downloader_controller.py:125
+msgid "Catálogo cargado, pero no se pudo consultar la lista de variantes rápidas (RT). Selecciona idiomas para ver las voces."
+msgstr "Katalog załadowany, ale nie udało się pobrać listy szybkich wariantów (RT). Wybierz języki, aby wyświetlić głosy."

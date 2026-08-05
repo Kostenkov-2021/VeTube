@@ -117,7 +117,12 @@ class PiperDownloaderController:
         for i, info in enumerate(self.idiomas_data):
             self.view.lang_list.InsertItem(i, info['display'])
         
-        self.view.set_status(_("Catálogo cargado. Selecciona idiomas para ver las voces."))
+        if self.manager.rt_disponible:
+            self.view.set_status(_("Catálogo cargado. Selecciona idiomas para ver las voces."))
+        else:
+            # Sin catálogo RT la columna «Variante rápida» sale vacía en todas
+            # las voces, igual que si ninguna tuviera variante: hay que avisar.
+            self.view.set_status(_("Catálogo cargado, pero no se pudo consultar la lista de variantes rápidas (RT). Selecciona idiomas para ver las voces."))
 
     def on_lang_checked(self, event):
         codigos_seleccionados = []
@@ -217,7 +222,10 @@ class PiperDownloaderController:
         
         for voice in voces:
             usar_rt = preferir_rt and voice.get('has_rt')
-            tipo_str = "RT" if usar_rt else "Normal"
+            # «RT» se deja tal cual (es la sigla, como en la lista de instaladas),
+            # pero «Normal» es una palabra y tiene que traducirse: se lee en voz
+            # alta dentro de un mensaje que sí está traducido.
+            tipo_str = "RT" if usar_rt else _("Normal")
             
             wx.CallAfter(self.view.set_status, _("Descargando %s (%s) [%d/%d]...") % (voice['name'], tipo_str, completadas + 1, total))
             
