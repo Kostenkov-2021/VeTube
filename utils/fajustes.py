@@ -4,6 +4,12 @@ configuraciones ={
 	"salir": True,
 	"sistemaTTS": "auto",
 	'voz': 0,
+	# La voz de cada motor con puente propio, para que cambiar de motor no se
+	# lleve por delante la voz elegida en el otro. Tienen que estar aquí: son
+	# claves que Cancelar revierte, y sin valor por defecto la instantánea de
+	# Ajustes las deja en None (ver CLAVES_EN_CALIENTE en ajustes_controller).
+	'voz_piper': 0,
+	'voz_kokoro': 0,
 	"tono": 0,
 	'tono_onecore': 0,
 	"volume": 100,
