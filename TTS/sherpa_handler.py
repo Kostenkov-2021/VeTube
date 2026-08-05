@@ -246,6 +246,14 @@ _INSTANCIA_SHERPA = None
 _ORFANOS_LIMPIADOS = False
 
 class sherpaSpeak:
+    # Cerrojo del stream BASS. Va en la CLASE, no en la instancia: __init__ se
+    # vuelve a ejecutar cada vez que el puente se reinicia, y un cerrojo nuevo
+    # no protegería de la tarea que quedó viva de la encarnación anterior.
+    # Hace falta porque silence()/close() liberan el stream desde el hilo de la
+    # interfaz mientras _speak_task_inner sigue empujando audio desde el hilo
+    # asíncrono: sin él, push() puede escribir en un handle ya liberado.
+    _bass_lock = threading.Lock()
+
     def __new__(cls, *args, **kwargs):
         global _INSTANCIA_SHERPA
         if _INSTANCIA_SHERPA is None:
@@ -632,12 +640,16 @@ class sherpaSpeak:
         # Invalida cualquier síntesis en curso o pendiente y corta el audio actual.
         self._speak_generation += 1
         self._sintetizando = False
-        if self.bass_stream is not None:
-            try:
-                self.bass_stream.stop()
-                self.bass_stream.free()
-            except: pass
-            self.bass_stream = None
+        # Bajo cerrojo: el hilo asíncrono puede estar empujando audio en este
+        # mismo stream, y liberarlo bajo sus pies es un uso después de liberar
+        # dentro de una biblioteca nativa.
+        with self._bass_lock:
+            if self.bass_stream is not None:
+                try:
+                    self.bass_stream.stop()
+                    self.bass_stream.free()
+                except: pass
+                self.bass_stream = None
 
     def is_playing(self):
         """True mientras la voz sigue sonando o generando (para el botón de
@@ -701,11 +713,15 @@ class sherpaSpeak:
             if self.device != -1:
                 try: local_stream.set_device(self.device)
                 except: pass
-            if gen != self._speak_generation:
-                try: local_stream.free()
-                except: pass
-                return
-            self.bass_stream = local_stream
+            # Comprobar y publicar en el mismo cerrojo: si se comprueba fuera,
+            # un silence() que entre justo aquí deja este stream sin dueño (ya
+            # no es self.bass_stream) y nadie lo libera nunca.
+            with self._bass_lock:
+                if gen != self._speak_generation:
+                    try: local_stream.free()
+                    except: pass
+                    return
+                self.bass_stream = local_stream
 
             # play() se llama tras empujar el primer bloque: un stream arrancado
             # sin datos queda STALLED y puede darse por terminado antes de sonar.
@@ -722,10 +738,17 @@ class sherpaSpeak:
                     if gen != self._speak_generation:
                         break  # silenciado: dejar de empujar audio
                     if result.wav_samples:
-                        local_stream.push(result.wav_samples)
-                        if primero:
-                            primero = False
-                            local_stream.play()
+                        # La generación se vuelve a mirar DENTRO del cerrojo: es
+                        # lo que hace segura la escritura. Comprobarla fuera deja
+                        # una rendija en la que silence() libera el handle entre
+                        # la comprobación y el push, y BASS reutiliza los handles.
+                        with self._bass_lock:
+                            if gen != self._speak_generation:
+                                break
+                            local_stream.push(result.wav_samples)
+                            if primero:
+                                primero = False
+                                local_stream.play()
 
         except Exception as e:
             # Un corte voluntario (silence()/cierre) también rompe el stream:
