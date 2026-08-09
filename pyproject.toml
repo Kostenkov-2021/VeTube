@@ -166,9 +166,7 @@ include_files = [
 # - Cambiar product_code en cada versión
 
 [tool.cxfreeze.bdist_msi]
-publisher = "VeTube Team"
 upgrade_code = "{A41D2ECB-3DAE-4275-A644-038DD79BF765}"
-product_code = "{21EBC38D-037B-4077-952E-6A235944BA77}"
 add_to_path = false
 initial_target_dir = '[ProgramFilesFolder]\\VeTube'
 
