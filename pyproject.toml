@@ -1,0 +1,181 @@
+[project]
+name = "vetube"
+version = "3.94"
+description = "Aplicación VeTube"
+readme = "README.md"
+authors = [
+    { name = "Cesar Verastegui", email = "37036927+metalalchemist@users.noreply.github.com" },
+]
+maintainers = [
+    { name = "Cesar Verastegui", email = "37036927+metalalchemist@users.noreply.github.com" },
+    { name = "Rowell Urbaez Reyes", email = "167712855+Row0902@users.noreply.github.com" },
+]
+requires-python = ">=3.14"
+dependencies = [
+    "audioop-lts>=0.2.2",
+    "chat-downloader",
+    "cx-freeze>=8.6.4",
+    "discord-py>=2.7.1",
+    "googletrans-py",
+    "grpclib>=0.4.9",
+    "httpx>=0.28.1",
+    "kick-py",
+    "prismatoid>=0.17.3",
+    "protobuf>=7.35.1",
+    "psutil>=7.2.2",
+    "pyperclip>=1.11.0",
+    "pytchat",
+    "python-vlc>=3.0.21203",
+    "pywin32>=312",
+    "sound-lib",
+    "tiktoklive>=6.6.6",
+    "uiautomation>=2.0.29",
+    "wxpython>=4.3.1",
+    "yt-dlp[curl-cffi,default]>=2026.7.4",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+kick-py = { git = "https://github.com/iamoverit/kick.py" }
+chat-downloader = { git = "https://github.com/owsombra/chat-downloader" }
+sound-lib = { git = "https://github.com/accessibleapps/sound_lib" }
+googletrans-py = { git = "https://github.com/rmcpantoja/googletrans.git" }
+pytchat = { git = "https://github.com/KaitoCross/pytchat" }
+
+
+# ==============================================================================
+# CONFIGURACIÓN CX_FREEZE v8+
+# ==============================================================================
+# Documentación: https://cx-freeze.readthedocs.io/
+# Skill: cxfreeze-config (referencias completas en assets/ y references/)
+
+[tool.cxfreeze]
+# name y version se toman automáticamente de [project]
+
+[[tool.cxfreeze.executables]]
+script = "run_main_window.py"
+base = "gui"                          # GUI app sin ventana de consola
+target_name = "VeTube.exe"
+# icon = "assets/icon.ico"            # TODO: Agregar icono cuando esté disponible
+shortcut_name = "VeTube"
+shortcut_dir = "DesktopFolder"
+copyright = "Copyright (C) 2024 VeTube Team"
+
+[tool.cxfreeze.build_exe]
+# optimize: 0 (ninguno), 1 (-O), 2 (-OO, remueve docstrings)
+optimize = 2
+
+# packages: Forzar inclusión de paquetes completos (útil para imports dinámicos)
+packages = [
+    "wx",
+    "asyncio",
+    "yt_dlp",
+    "vlc",
+    "win32com",
+    "uiautomation",
+    "comtypes",
+    "comtypes.stream",
+    "sound_lib",
+    "sound_lib.external",
+    "googletrans",
+    "pytchat",
+    "chat_downloader",
+    "discord",
+    "TikTokLive",
+    "httpx",
+    "psutil",
+    "pyperclip",
+    "audioop",
+    "src",
+    "ui",
+    "utils",
+    "update",
+    "TTS",
+    "translates",
+    "controller",
+    "servicios",
+]
+
+# includes: Módulos específicos a incluir (más granular que packages)
+includes = []
+
+# excludes: Módulos a excluir para reducir tamaño
+excludes = [
+    "tkinter",
+    "unittest",
+    "test",
+    "IPython",
+    "matplotlib",
+    "TTS.sonata_protos.sonata_grpc_pb2_grpc",  # Código muerto (app usa grpclib)
+    "czipfile",                                   # Fallback a zipfile stdlib
+]
+
+# zip_include_packages: Paquetes de Python puro en library.zip (reduce archivos)
+zip_include_packages = [
+    "encodings",
+    "httpx",
+    "httpcore",
+    "anyio",
+    "sniffio",
+    "certifi",
+    "idna",
+]
+
+# zip_exclude_packages: Paquetes que deben estar en filesystem (no en zip)
+zip_exclude_packages = ["*"]
+
+# bin_includes: Forzar inclusión de DLLs/binarios específicos
+bin_includes = []
+
+# bin_excludes: Excluir DLLs del sistema (no necesarias)
+bin_excludes = [
+    "api-ms-win-*.dll",
+]
+
+# include_msvcr: Incluir MSVC runtime (true si hay errores de MSVCR*.dll)
+include_msvcr = false
+# include_files: Archivos/directorios a incluir [origen, destino]
+# - origen: ruta relativa al proyecto
+# - destino: ruta relativa al directorio de build (lib/ para módulos)
+include_files = [
+    # Datos de la aplicación
+    ["data.json", "data.json"],
+    ["bootstrap.exe", "bootstrap.exe"],
+    
+    # Recursos
+    ["translates/", "translates/"],
+    ["locales/", "locales/"],
+    ["sounds/", "sounds/"],
+    
+    # Binarios externos y datos de arquitectura
+    ["64/", "lib/64/"],  # bypass64.exe, VLC, Sonata TTS
+    
+    # DLLs nativas de sound_lib (deben ir en sound_lib/lib/ para que paths.py las encuentre)
+    [".venv/Lib/site-packages/sound_lib/lib/", "sound_lib/lib/"],
+]
+
+# ==============================================================================
+# BDIST_MSI: Configuración del instalador Windows
+# ==============================================================================
+# upgrade_code: GUID único para gestión de actualizaciones
+# - Generar en: https://www.guidgen.com/ o PowerShell: [guid]::NewGuid()
+# - MANTENER el mismo upgrade_code entre versiones para permitir upgrades
+# - Cambiar product_code en cada versión
+
+[tool.cxfreeze.bdist_msi]
+publisher = "VeTube Team"
+upgrade_code = "{A41D2ECB-3DAE-4275-A644-038DD79BF765}"
+product_code = "{21EBC38D-037B-4077-952E-6A235944BA77}"
+add_to_path = false
+initial_target_dir = '[ProgramFilesFolder]\\VeTube'
+
+[dependency-groups]
+dev = [
+    "cx-freeze>=8.6.4",
+    "pytest>=9.1.1",
+    "ruff>=0.16.2",
+    "ty>=0.0.69",
+]
