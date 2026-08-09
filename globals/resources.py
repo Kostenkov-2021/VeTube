@@ -3,8 +3,8 @@ from utils.languageHandler import getAvailableLanguages
 from exchange.codes import CODES
 from TTS.list_voices import piper_list_voices
 from setup import reader
-from os import path, getcwd, listdir
 from globals.data_store import config
+from globals.paths import SOUNDS_DIR, VOICES_DIR
 nombres_sonidos = [
     "chat.mp3",
     "chatmiembro.mp3",
@@ -25,16 +25,16 @@ sonidos_requeridos = nombres_sonidos + ["msj.mp3", "orilla.mp3", "cambiardisposi
 rutasonidos = []
 
 def listar_temas_sonidos():
-    if not path.isdir("sounds"):
+    if not SOUNDS_DIR.is_dir():
         return []
     return sorted(
-        d for d in listdir("sounds")
-        if all(path.isfile(path.join("sounds", d, nombre)) for nombre in sonidos_requeridos)
+        d.name for d in SOUNDS_DIR.iterdir()
+        if d.is_dir() and all((d / nombre).is_file() for nombre in sonidos_requeridos)
     )
 
 def recargar_rutasonidos():
     # Mutación in place: los módulos que importaron rutasonidos ven el cambio sin reiniciar
-    rutasonidos[:] = [f"sounds/{config['directorio']}/{nombre}" for nombre in nombres_sonidos]
+    rutasonidos[:] = [str(SOUNDS_DIR / config['directorio'] / nombre) for nombre in nombres_sonidos]
 
 recargar_rutasonidos()
 idiomas = getAvailableLanguages()
@@ -49,4 +49,4 @@ if not voces_p:
 else:
 	lista_voces_piper = voces_p
 lista_voces=reader._leer.list_voices()
-carpeta_voces = path.join(getcwd(), "voices")
+carpeta_voces = str(VOICES_DIR)

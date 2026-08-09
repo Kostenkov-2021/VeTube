@@ -7,6 +7,7 @@ from ui.show_comment import ShowCommentDialog
 from ui.list_urls import ListUrlsDialog
 from globals.data_store import mensajes_destacados
 from utils.funciones import escribirJsonLista,extractUser
+from globals.paths import MENSAJES_DESTACADOS_FILE
 
 class ChatItemController:
     def __init__(self, menu, list_box, chat_controller):
@@ -66,7 +67,7 @@ class ChatItemController:
             list_mensajes.Append(f"{mensaje}: {titulo}")
             mensajes_destacados.append({'mensaje': mensaje, 'titulo': titulo})
             
-            escribirJsonLista('mensajes_destacados.json', mensajes_destacados)
+            escribirJsonLista(MENSAJES_DESTACADOS_FILE, mensajes_destacados)
             reader.leer_sapi(_("El mensaje ha sido archivado correctamente."))
         else: 
             reader.leer_sapi(_("Este mensaje ya está en la lista de archivados."))

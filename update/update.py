@@ -16,6 +16,7 @@ import wx
 from platform_utils import paths
 from utils.translator import TranslatorWrapper
 from setup import network
+from globals.paths import DATA_FILE
 logger = getLogger('update')
 
 def perform_update(update_url, donations=True, password=None, progress_callback=None, update_complete_callback=None):
@@ -48,8 +49,8 @@ def perform_update(update_url, donations=True, password=None, progress_callback=
 
 async def async_check_update(endpoint, current_version):
     try:
-        if os.path.exists("data.json"):
-            with open ("data.json") as file: resultado=json.load(file)
+        if DATA_FILE.exists():
+            with open (DATA_FILE) as file: resultado=json.load(file)
             donations = resultado.get('donations', True)
             traducir = resultado.get('traducir', False)
         else:

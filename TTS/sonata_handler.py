@@ -12,6 +12,7 @@ from sound_lib import stream, output
 from sound_lib.main import BassError
 from grpclib.client import Channel
 import grpclib.const
+from globals.paths import VOICES_DIR
 
 # Configuración de Job Objects para Windows
 if sys.platform == "win32":
@@ -193,9 +194,9 @@ class piperSpeak:
         if not os.path.exists(model_path):
             import glob
             filename = os.path.basename(model_path)
-            coincidencias = glob.glob(os.path.join("voices", "*", filename))
+            coincidencias = list(VOICES_DIR.glob(f"*/{filename}"))
             if coincidencias:
-                model_path = coincidencias[0]
+                model_path = str(coincidencias[0])
         
         if model_path.endswith(".onnx"):
             json_path = model_path + ".json"

@@ -5,8 +5,10 @@ import traceback
 import tarfile
 import tempfile
 import shutil
+from pathlib import Path
 from .base_downloader import BaseDownloader
 from setup import network
+from globals.paths import VOICES_DIR
 
 PIPER_VOICE_LIST_URL = "https://huggingface.co/rhasspy/piper-voices/raw/v1.0.0/voices.json"
 PIPER_VOICE_DOWNLOAD_URL_PREFIX = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0"
@@ -122,14 +124,14 @@ class PiperManager(BaseDownloader):
         
         data = self.voices_data[voice_key]
         archivos = data.get('files', {})
-        dest_dir = os.path.join("voices", f"voice-{voice_key}")
+        dest_dir = str(VOICES_DIR / f"voice-{voice_key}")
         self.ensure_dir(dest_dir)
         
         tasks = []
         for rel_path in archivos.keys():
             url = f"{PIPER_VOICE_DOWNLOAD_URL_PREFIX}/{rel_path}"
             file_name = os.path.basename(rel_path)
-            local_path = os.path.join(dest_dir, file_name)
+            local_path = str(Path(dest_dir) / file_name)
             tasks.append(self.download_file(url, local_path, progress_callback))
             
         results = await asyncio.gather(*tasks)
@@ -156,7 +158,7 @@ class PiperManager(BaseDownloader):
             if not res['success']: return res
             
             # Extraer
-            dest_dir = os.path.join("voices", f"voice-{voice_key}")
+            dest_dir = str(VOICES_DIR / f"voice-{voice_key}")
             self.ensure_dir(dest_dir)
             
             try:

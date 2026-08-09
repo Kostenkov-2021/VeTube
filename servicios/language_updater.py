@@ -8,6 +8,7 @@ import zipfile
 import traceback
 from .base_downloader import BaseDownloader
 from setup import network
+from globals.paths import LOCALES_DIR
 
 class GestorRepositorios(BaseDownloader):
     def __init__(self, frame, github_repo, rama='master', local_dir='.', json_file='languages.json'):
@@ -90,7 +91,7 @@ class GestorRepositorios(BaseDownloader):
             if not res['success']: return res
             
             # Extraer en la carpeta locales
-            ruta_destino = os.path.join(self.local_dir, "locales")
+            ruta_destino = str(LOCALES_DIR)
             res = self.descomprimir_zip(res['data'], ruta_destino)
             if not res['success']: return res
             
