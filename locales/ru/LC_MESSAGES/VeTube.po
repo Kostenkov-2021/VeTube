@@ -4,7 +4,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: VeTube 3.91\n"
+"Project-Id-Version: VeTube 3.94\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-07-07 21:03-0700\n"
 "PO-Revision-Date: 2026-08-09 12:30+0500\n"
@@ -642,7 +642,7 @@ msgstr "Чтобы применить новый язык, необходимо 
 
 #: globals/mensajes.py:2
 msgid "iniciar/cancelar la captura de otro en vivo"
-msgstr "запустить или остановить прямой эфир"
+msgstr "показать или скрыть окно чата"
 
 #: globals/mensajes.py:3
 msgid "Silencia todas las voces"
