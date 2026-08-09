@@ -64,6 +64,15 @@ shortcut_name = "VeTube"
 shortcut_dir = "DesktopFolder"
 copyright = "Copyright (C) 2024 VeTube Team"
 
+# Shortcut para el menú inicio
+[[tool.cxfreeze.executables]]
+script = "run_main_window.py"
+base = "gui"
+target_name = "VeTube.exe"
+shortcut_name = "VeTube"
+shortcut_dir = "ProgramMenuFolder"
+copyright = "Copyright (C) 2024 VeTube Team"
+
 [tool.cxfreeze.build_exe]
 # optimize: 0 (ninguno), 1 (-O), 2 (-OO, remueve docstrings)
 optimize = 2
@@ -85,6 +94,18 @@ packages = [
     "chat_downloader",
     "discord",
     "TikTokLive",
+    "TikTokLiveProto",
+    "TikTokLiveProto.v3",
+    "TikTokLiveProto.v3.webcast",
+    "TikTokLiveProto.v3.webcast.model",
+    "TikTokLiveProto.v3.webcast.model.data",
+    "TikTokLiveProto.v3.webcast.model.data.multi_guest_play",
+    "TikTokLiveProto.v3.webcast.model.data.oec_msg",
+    "TikTokLiveProto.v3.webcast.model.message",
+    "TikTokLiveProto.v3.webcast.model.base",
+    "TikTokLiveProto.v3.webcast.model.base.user",
+    "TikTokLiveProto.v3.webcast.message",
+    "TikTokLiveProto.v3.webcast.message.proto",
     "httpx",
     "psutil",
     "pyperclip",

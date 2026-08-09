@@ -272,7 +272,7 @@ Add your language to the language list in `utils/languageHandler.py`:
 ```python
 def getAvailableLanguages():
     # Add your language code to this list
-    languages = ['en', 'fr', 'pt', 'pl', 'cs', 'id', 'xx']
+    languages = ["en", "fr", "pt", "pl", "cs", "id", "xx"]
     # ...
 ```
 
