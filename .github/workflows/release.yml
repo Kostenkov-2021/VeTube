@@ -36,16 +36,11 @@ jobs:
       - name: Build portable version
         run: uv run cxfreeze build
 
-      - name: Rename build folder
-        run: |
-          $buildPath = Get-ChildItem -Path "build" -Directory | Select-Object -First 1
-          Rename-Item -Path $buildPath.FullName -NewName "vetube"
-        shell: pwsh
-
       - name: Compress with 7-Zip (maximum compression)
         run: |
           $version = "${{ github.ref_name }}"
-          7z a -t7z -mx=9 "vetube-$version.7z" "build/vetube/*"
+          $buildPath = Get-ChildItem -Path "build" -Directory | Select-Object -First 1
+          7z a -t7z -mx=9 "vetube-$version.7z" "$($buildPath.FullName)\*"
         shell: pwsh
 
       - name: Upload portable artifact
@@ -81,18 +76,18 @@ jobs:
         run: uv run cxfreeze bdist_msi
         shell: pwsh
 
-      - name: Rename MSI to vetube.setup
+      - name: Rename MSI
         run: |
           $version = "${{ github.ref_name }}"
           $msiFile = Get-ChildItem -Path "dist" -Filter "*.msi" | Select-Object -First 1
-          Rename-Item -Path $msiFile.FullName -NewName "vetube-$version.setup"
+          Rename-Item -Path $msiFile.FullName -NewName "vetube-$version.msi"
         shell: pwsh
 
       - name: Upload MSI artifact
         uses: actions/upload-artifact@v4
         with:
           name: msi-build
-          path: dist/vetube-*.setup
+          path: dist/vetube-*.msi
           retention-days: 1
 
   release:
@@ -125,7 +120,7 @@ jobs:
         with:
           files: |
             dist/vetube-*.7z
-            dist/vetube-*.setup
+            dist/vetube-*.msi
           draft: false
           prerelease: false
           generate_release_notes: true
