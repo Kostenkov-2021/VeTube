@@ -44,6 +44,32 @@ def _limpiar_variante(dest_dir, quitar_rt):
     except OSError:
         traceback.print_exc()
 
+
+def _extraer_plano(tar_path, destino):
+    """Extrae un tar en 'destino' aplanando las rutas de dentro.
+
+    Los paquetes RT de mush42 no vienen comprimidos pese a llamarse .tar.gz
+    (empiezan por «./», no por la firma gzip), así que 'r:gz' falla al abrir y
+    el que trabaja de verdad es el repli 'r:'. Entre un intento y el otro se
+    vacía el destino: si el primero llegó a escribir algo, no debe quedar
+    mezclado con lo del segundo.
+    """
+    ultimo_error = None
+    for modo in ("r:gz", "r:"):
+        try:
+            with tarfile.open(tar_path, modo) as tar:
+                for member in tar.getmembers():
+                    if member.isfile():
+                        # Solo el nombre del fichero, para aplanar la ruta.
+                        member.name = os.path.basename(member.name)
+                        tar.extract(member, destino)
+            return
+        except tarfile.ReadError as e:
+            ultimo_error = e
+            shutil.rmtree(destino, ignore_errors=True)
+            os.makedirs(destino, exist_ok=True)
+    raise ultimo_error
+
 class PiperManager(BaseDownloader):
     def __init__(self):
         super().__init__()
@@ -220,26 +246,40 @@ class PiperManager(BaseDownloader):
             res = await self.download_file(url, tar_path, progress_callback)
             if not res['success']: return res
 
-            # Extraer
+            # Se extrae a un directorio de paso, NO a la carpeta de la voz: si
+            # la extracción se corta a media faena (apagón, disco lleno, cierre
+            # de la aplicación) durante los 63 MB del paquete, la voz que ya
+            # estaba instalada no puede quedarse con restos. obtener_ruta_voz da
+            # prioridad a decoder.onnx, así que media extracción convierte una
+            # voz que funcionaba en una voz muda.
+            stage_dir = os.path.join(temp_dir, "extraido")
+            os.makedirs(stage_dir, exist_ok=True)
+            _extraer_plano(tar_path, stage_dir)
+
             dest_dir = str(VOICES_DIR / f"voice-{voice_key}")
             self.ensure_dir(dest_dir)
 
+            # El paso al directorio definitivo repite el patrón de instalar_voz:
+            # primero se llevan todos los ficheros con el nombre acabado en
+            # .part y solo después se renombran, que es lo único instantáneo.
+            # shutil.move y no os.replace porque el temporal del sistema puede
+            # estar en otra unidad, y ahí os.replace no cruza.
+            partes = []
             try:
-                # Primero intentamos como 'gz' que es lo más común
-                with tarfile.open(tar_path, 'r:gz') as tar:
-                    for member in tar.getmembers():
-                        if member.isfile():
-                            # Extraemos solo el nombre del archivo para aplanarlo
-                            member.name = os.path.basename(member.name)
-                            tar.extract(member, dest_dir)
-            except tarfile.ReadError:
-                # Si falla, podría ser un tar no comprimido
-                with tarfile.open(tar_path, 'r:') as tar:
-                    for member in tar.getmembers():
-                        if member.isfile():
-                            # Extraemos solo el nombre del archivo para aplanarlo
-                            member.name = os.path.basename(member.name)
-                            tar.extract(member, dest_dir)
+                for nombre in os.listdir(stage_dir):
+                    final = os.path.join(dest_dir, nombre)
+                    parte = final + ".part"
+                    shutil.move(os.path.join(stage_dir, nombre), parte)
+                    partes.append((parte, final))
+                for parte, final in partes:
+                    os.replace(parte, final)
+            except Exception:
+                for parte, _final in partes:
+                    try:
+                        os.remove(parte)
+                    except OSError:
+                        pass
+                raise
 
             # Esta carpeta pudo tener antes la variante estándar de la misma voz.
             _limpiar_variante(dest_dir, quitar_rt=False)
