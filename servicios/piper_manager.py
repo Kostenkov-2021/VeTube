@@ -40,9 +40,17 @@ def _limpiar_variante(dest_dir, quitar_rt):
                 try:
                     os.remove(os.path.join(dest_dir, nombre))
                 except OSError:
-                    pass
+                    # Que esto falle no es inocuo: si sobrevive el decoder.onnx
+                    # de la variante anterior, obtener_ruta_voz le sigue dando
+                    # prioridad y la voz recién descargada no se usa nunca,
+                    # mientras el diálogo anuncia que todo ha ido bien. No se
+                    # ha conseguido provocar (el puente sonata no retiene el
+                    # fichero tras LoadVoice), pero un antivirus o un atributo
+                    # de solo lectura bastarían. Al menos que quede registrado.
+                    logger.exception("No se ha podido borrar %s de %s", nombre, dest_dir)
     except OSError:
-        traceback.print_exc()
+        # print_exc iba a una salida que la aplicación compilada no tiene.
+        logger.exception("No se ha podido repasar la carpeta de voz %s", dest_dir)
 
 
 def _extraer_plano(tar_path, destino):
