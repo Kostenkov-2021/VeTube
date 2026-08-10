@@ -120,7 +120,7 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ## Credits
 
-VeTube is developed by [Cesar Verastegui](https://github.com/metalalchemist) and [Rowell Urbaez Reyes](https://github.com/Row0902), with contributions from the community.
+VeTube is developed and maintained by [Cesar Verastegui](https://github.com/metalalchemist), with contributions from [Rowell Urbaez Reyes](https://github.com/Row0902) and the community.
 
 Special thanks to:
 - The [Piper TTS](https://github.com/rhasspy/piper) project for high-quality neural voices
