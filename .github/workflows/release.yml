@@ -1,0 +1,126 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-portable:
+    name: Build Portable Version
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Build portable version
+        run: uv run cxfreeze build
+
+      - name: Rename build folder
+        run: |
+          $buildPath = Get-ChildItem -Path "build" -Directory | Select-Object -First 1
+          Rename-Item -Path $buildPath.FullName -NewName "vetube"
+        shell: pwsh
+
+      - name: Compress with 7-Zip (maximum compression)
+        run: |
+          $version = "${{ github.ref_name }}"
+          7z a -t7z -mx=9 "vetube-$version.7z" "build/vetube/*"
+        shell: pwsh
+
+      - name: Upload portable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable-build
+          path: vetube-*.7z
+          retention-days: 1
+
+  build-msi:
+    name: Build MSI Installer
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Build MSI installer
+        run: uv run cxfreeze bdist_msi
+        shell: pwsh
+
+      - name: Rename MSI to vetube.setup
+        run: |
+          $version = "${{ github.ref_name }}"
+          $msiFile = Get-ChildItem -Path "dist" -Filter "*.msi" | Select-Object -First 1
+          Rename-Item -Path $msiFile.FullName -NewName "vetube-$version.setup"
+        shell: pwsh
+
+      - name: Upload MSI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: msi-build
+          path: dist/vetube-*.setup
+          retention-days: 1
+
+  release:
+    name: Create Release
+    needs: [build-portable, build-msi]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download portable artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: portable-build
+          path: dist/
+
+      - name: Download MSI artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: msi-build
+          path: dist/
+
+      - name: List release assets
+        run: ls -la dist/
+        shell: bash
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/vetube-*.7z
+            dist/vetube-*.setup
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,4 +1,5 @@
 import wx
+import asyncio
 from ui.menus.main_menu import MainMenu
 from update import updater
 from utils.languageHandler import curLang
@@ -8,11 +9,13 @@ from ui.dialog_response import response
 from globals import data_store
 from globals.resources import carpeta_voces,codes,codigos_traduccion
 from controller.editor_controller import EditorController
-from setup import network, reader, player
+from setup import network, reader
 from exchange import codes as currency_codes
 from servicios.language_updater import GestorRepositorios
 from ui.update_languages_dialog import UpdateLanguagesDialog
 from controller.update_languages_controller import UpdateLanguagesController
+from controller.kokoro_downloader_controller import KokoroDownloaderController
+from TTS.sherpa_handler import kokoro_model_instalado
 class MainMenuController:
     def __init__(self, frame, main_controller):
         self.frame = frame
@@ -51,6 +54,11 @@ class MainMenuController:
                 dlg.ajustes_controller.revertir_cambios_en_caliente()
         finally:
             dlg.Destroy()
+        # Pedido de César (2026-08-01): al Aceptar con Kokoro elegido y sin el
+        # modelo en el equipo, ofrecer la descarga en el acto — así el paquete
+        # de 334 MB solo lo baja quien de verdad va a usar estas voces.
+        if resultado == wx.ID_OK and data_store.config['sistemaTTS'] == "kokoro" and not kokoro_model_instalado():
+            KokoroDownloaderController(self.frame).show()
 
     def restaurar(self, event):
         if response(_("Estás apunto de reiniciar la configuración a sus valores predeterminados, ¿Deseas proceder?"), _("Atención:"))==wx.ID_YES:
@@ -62,7 +70,11 @@ class MainMenuController:
         else: wx.GetApp().ExitMainLoop()
 
     def on_update_languages(self, event):
-        if self.checking_languages: return
+        if self.checking_languages:
+            # Aviso audible: sin él, con un lector de pantalla no se distingue
+            # "ya está en curso" de "no ha pasado nada".
+            wx.MessageBox(_("Ya hay una comprobación de idiomas en curso."), _("Actualización de idiomas"), wx.ICON_INFORMATION)
+            return
         self.checking_languages = True
         gestor = GestorRepositorios(self.frame, github_repo="metalalchemist/vetube", local_dir=".")
         def handle_result(result):
@@ -91,6 +103,40 @@ class MainMenuController:
         else: # An actual error occurred
             wx.MessageBox(result['data'], _("Error de actualización"), wx.ICON_ERROR)
 
+    def comprobar_idiomas_al_inicio(self):
+        """Comprobación silenciosa al arrancar: solo pregunta cuando el idioma
+        activo tiene algo que instalar. Los fallos (sin red, servidor caído) y
+        el caso sin novedades se callan, porque el usuario no pidió nada y la
+        opción manual del menú de ayuda sigue disponible."""
+        if self.checking_languages: return
+        self.checking_languages = True
+        gestor = GestorRepositorios(self.frame, github_repo="metalalchemist/vetube", local_dir=".")
+
+        def handle_result(result):
+            self.checking_languages = False
+            if isinstance(result, Exception) or not result['success']: return
+            data = result['data']
+            idioma_activo = curLang[:2]
+            if idioma_activo not in data.get('nuevos', {}) and idioma_activo not in data.get('actualizaciones', {}): return
+            self._preguntar_actualizar_idioma(gestor, data)
+
+        # El cliente de red central no tiene timeout: sin este límite, una
+        # petición colgada dejaría el cerrojo tomado toda la sesión y la
+        # opción del menú quedaría muda.
+        network.execute(asyncio.wait_for(gestor.comprobar_nuevos_y_actualizaciones(), 30), callback=handle_result)
+
+    def _preguntar_actualizar_idioma(self, gestor, data):
+        # Mientras la comprobación de actualización del programa siga activa
+        # (incluido su diálogo de "nueva versión"), esperar: dos diálogos a la
+        # vez se roban el foco y una pulsación perdida aceptaría una descarga.
+        if updater.buscando:
+            wx.CallLater(2000, self._preguntar_actualizar_idioma, gestor, data)
+            return
+        if response(_("Hay una actualización disponible para el idioma del programa. ¿Quieres instalarla ahora?"), _("Actualización de idiomas")) == wx.ID_YES:
+            update_controller = UpdateLanguagesController(self.frame, gestor, data)
+            update_controller.show()
+            update_controller.close()
+
     def guardar(self):
         cf = self.config_dialog
         data_store.config['categorias'] = [cf.categoriza.IsItemChecked(i) for i in range(cf.categoriza.GetItemCount())]
@@ -118,7 +164,17 @@ class MainMenuController:
             if idx >= len(voices_leer): idx = 0
             reader._leer.set_voice(voices_leer[idx])
         
-        if data_store.config['sistemaTTS'] != "piper":
+        if data_store.config['sistemaTTS'] in ("piper", "kokoro"):
+            # El puente sherpa usa la escala porcentaje_a_escala y no expone list_voices
+            reader._lector.set_rate(app_utilitys.porcentaje_a_escala(data_store.config['speed']))
+            reader._lector.set_pitch(data_store.config['tono'])
+            reader._lector.set_volume(data_store.config['volume'])
+        elif data_store.config['sistemaTTS'] == "edge":
+            # Edge: la velocidad va nativa (-10 a 10) a edge-tts
+            reader._lector.set_rate(data_store.config['speed'])
+            reader._lector.set_pitch(data_store.config['tono'])
+            reader._lector.set_volume(data_store.config['volume'])
+        else:
             reader._lector.set_rate(data_store.config['speed'])
             if data_store.config['sistemaTTS'] == "onecore":
                 reader._lector.set_pitch(data_store.config.get('tono_onecore', 0.6))
@@ -130,14 +186,14 @@ class MainMenuController:
                 idx = data_store.config['voz']
                 if idx >= len(voices_lector): idx = 0
                 reader._lector.set_voice(voices_lector[idx])
-        
+
         reader.set_sapi(data_store.config['sapi'])
-        if data_store.config['sistemaTTS'] == "piper":
-            nombres = player.devicenames
-            dispositivos_formateados = [{'name': n, 'id': i} for i, n in enumerate(nombres)]
-            salida_actual = reader._lector.find_device_id(nombres[data_store.config["dispositivo"]-1], known_devices=dispositivos_formateados)
-            reader._lector.set_device(salida_actual)
-            app_utilitys.configurar_piper(self.frame, carpeta_voces)
+        if data_store.config['sistemaTTS'] in ("piper", "kokoro"):
+            app_utilitys.fijar_dispositivo_lector()
+            if data_store.config['sistemaTTS'] == "piper":
+                app_utilitys.configurar_piper(self.frame, carpeta_voces)
+        elif data_store.config['sistemaTTS'] == "edge":
+            app_utilitys.fijar_dispositivo_lector()
         if cf.choice_moneditas.GetStringSelection()!='Por defecto':
             monedita=cf.choice_moneditas.GetStringSelection().split(', (')
             for k in currency_codes.CODES:

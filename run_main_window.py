@@ -8,20 +8,46 @@ from globals.resources import carpeta_voces,lista_voces_piper
 from controller.main_controller import MainController
 from update import updater,update
 from TTS.lector import detect_onnx_models
-from utils.app_utilitys import configurar_piper
+from utils.app_utilitys import configurar_piper, limpiar_motor_antiguo, fijar_dispositivo_lector
 if sys.platform == "win32": asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 def run_app():
+    # Restos del motor de voz anterior (actualizaciones copian por encima)
+    limpiar_motor_antiguo()
     app = wx.App(False)
-    if config['sistemaTTS'] == "piper":
-        if detect_onnx_models(carpeta_voces) is not None:
-            from TTS.list_voices import obtener_ruta_voz
-            setup.reader._lector=setup.reader._lector.piperSpeak(obtener_ruta_voz(lista_voces_piper[config['voz']]))
-            nombres_dispositivos = setup.player.devicenames
-            dispositivos_formateados = [{'name': n, 'id': i} for i, n in enumerate(nombres_dispositivos)]
-            nombre_actual = nombres_dispositivos[config["dispositivo"]-1]
-            salida_actual = setup.reader._lector.find_device_id(nombre_actual, known_devices=dispositivos_formateados)
-            setup.reader._lector.set_device(salida_actual)
+    if config['sistemaTTS'] in ("piper", "kokoro"):
+        # Ambos motores viven en el mismo puente sherpa: localizar la voz
+        # configurada y cargarla en el proceso residente.
+        modelo = None
+        if config['sistemaTTS'] == "piper":
+            # Si solo quedan restos de las antiguas voces RT, aquí no habrá
+            # voz que cargar: la migración se ofrece justo después, en
+            # configurar_piper (secuencia de arranque del MainController).
+            if detect_onnx_models(carpeta_voces) is not None:
+                from TTS.list_voices import obtener_ruta_voz
+                if not (0 <= config['voz'] < len(lista_voces_piper)):
+                    config['voz'] = 0
+                modelo = obtener_ruta_voz(lista_voces_piper[config['voz']])
+        else:
+            from TTS.sherpa_handler import kokoro_voice_config
+            modelo = kokoro_voice_config(config['voz'])
+        if modelo is not None:
+            setup.reader._lector.load_model(modelo)
+            fijar_dispositivo_lector()
+        elif config['sistemaTTS'] == "kokoro":
+            # Modelo Kokoro no disponible: avisar con la voz secundaria en lugar
+            # de arrancar con la voz principal muda (revisión de accesibilidad).
+            setup.reader._leer.speak(_("No hay voces instaladas"))
+    elif config['sistemaTTS'] == "edge":
+        # Edge no tiene modelo local: basta con apuntar el lector al nombre
+        # corto de la voz elegida y fijar el dispositivo de salida.
+        from TTS.edge_handler import edge_voz_shortname, edge_iniciar_carga, edge_list_voices
+        if not (0 <= config['voz'] < len(edge_list_voices())):
+            config['voz'] = 0
+        setup.reader._lector.load_model(edge_voz_shortname(config['voz']))
+        fijar_dispositivo_lector()
+        # La lista de voces se descarga en segundo plano (para los Ajustes).
+        edge_iniciar_carga()
     
     # Mostrar donación si es necesario (síncrono al inicio está bien por ser un diálogo de bienvenida)
     if config['donations']: update.donation()
