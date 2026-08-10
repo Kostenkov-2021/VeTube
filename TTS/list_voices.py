@@ -38,14 +38,24 @@ def es_voz_rt(nombre_carpeta):
 	encoder.onnx + decoder.onnx."""
 	return (VOICES_DIR / nombre_carpeta / "decoder.onnx").exists()
 
+# encoder.onnx no es un punto de entrada: es la mitad del modelo partido de las
+# voces RT, y el fichero que carga sonata es decoder.onnx (mismo criterio que
+# detect_onnx_models en lector.py). Contarlo como voz deja al usuario eligiendo
+# en Ajustes una entrada que no carga nada y sin ningún aviso.
+_ONNX_NO_CARGABLE = ("encoder.onnx",)
+
+def _modelos_cargables(folder_path):
+	"""Los .onnx de una carpeta de voz que sirven como punto de entrada."""
+	return [m for m in folder_path.glob("*.onnx")
+		if m.name.lower() not in _ONNX_NO_CARGABLE]
+
 def piper_list_voices():
 	if not VOICES_DIR.exists():
 		return []
 	folders = [f.name for f in VOICES_DIR.iterdir() if f.is_dir() and f.name.startswith("voice-")]
 	valid_folders = []
 	for folder in folders:
-		folder_path = VOICES_DIR / folder
-		if any(folder_path.glob("*.onnx")):
+		if _modelos_cargables(VOICES_DIR / folder):
 			valid_folders.append(folder)
 	return valid_folders
 
@@ -61,8 +71,8 @@ def obtener_ruta_voz(nombre_carpeta):
 	rt_decoder = folder_path / "decoder.onnx"
 	if rt_decoder.exists():
 		return str(rt_decoder)
-	# Si no, buscamos cualquier archivo .onnx en la carpeta
-	onnx_files = list(folder_path.glob("*.onnx"))
+	# Si no, buscamos cualquier archivo .onnx cargable de la carpeta
+	onnx_files = _modelos_cargables(folder_path)
 	if onnx_files:
 		return str(onnx_files[0])
 	return None
