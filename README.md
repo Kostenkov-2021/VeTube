@@ -55,6 +55,14 @@ uv run python run_main_window.py
 uv run cxfreeze build
 ```
 
+## Package Manager Support
+
+We're actively working on making VeTube available through additional package managers:
+
+- [x] **Scoop** - Available now via [Row0902/scoop-bucket](https://github.com/Row0902/scoop-bucket)
+- [ ] **Winget** - In progress
+- [ ] **Chocolatey** - In progress
+
 ## Quick Start
 
 1. **Launch VeTube** from Start Menu or desktop shortcut
