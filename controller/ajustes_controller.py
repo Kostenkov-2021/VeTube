@@ -218,12 +218,14 @@ class AjustesController:
             self._recordar_voz(motor_anterior)
             self._recuperar_voz(config['sistemaTTS'])
         reader.set_tts(config['sistemaTTS'])
-        if config['sistemaTTS'] in ("piper", "kokoro"):
-            # Cada motor tiene su propio puente y el que entra arranca de cero,
-            # con la salida de audio por defecto. Antes los dos compartían un
-            # único puente que ya la tenía puesta, así que nadie la volvía a
-            # fijar aquí: sin esta línea, cambiar de motor devolvía la voz a los
-            # altavoces de Windows aunque los ajustes dijeran otra cosa.
+        if config['sistemaTTS'] in ("piper", "kokoro", "edge"):
+            # Cada motor arranca de cero, con la salida de audio por defecto.
+            # Antes Piper y Kokoro compartían un único puente que ya la tenía
+            # puesta, así que nadie la volvía a fijar aquí: sin esta línea,
+            # cambiar de motor devolvía la voz a los altavoces de Windows
+            # aunque los ajustes dijeran otra cosa. Edge entra en la lista
+            # aunque no tenga puente: su edgeSpeak también nace con device=-1,
+            # y las otras tres ramas de edge de este fichero ya lo fijan.
             app_utilitys.fijar_dispositivo_lector()
         self.actualizar_filtro_idioma()
         if config['sistemaTTS'] == "piper":
@@ -276,6 +278,16 @@ class AjustesController:
             # voz elegida (ShortName) y descargar la lista de voces en segundo
             # plano si aún no está (la necesita el filtro de idioma y la lista).
             voz_index = config.get('voz', 0)
+            # Mismo guardián de rango que Piper y Kokoro, pero solo con el
+            # catálogo ya descargado: la lista de Edge llega en segundo plano y
+            # comprobarla vacía borraría la voz elegida cada vez que se abren
+            # los Ajustes antes de que llegue. Con el guardián, si el catálogo
+            # de Microsoft encoge entre dos sesiones el índice guardado deja de
+            # apuntar fuera: edge_voz_shortname devolvía None, load_model(None)
+            # no hace nada y el chat se quedaba mudo enseñando una voz.
+            if edge_voces_listas() and not (0 <= voz_index < len(edge_list_voices())):
+                voz_index = 0
+                config['voz'] = 0
             reader._lector.load_model(edge_voz_shortname(voz_index))
             reader._lector.set_volume(config['volume'])
             reader._lector.set_pitch(config['tono'])
