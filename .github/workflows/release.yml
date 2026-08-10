@@ -27,6 +27,9 @@ jobs:
       - name: Set up Python
         run: uv python install
 
+      - name: Create data.json
+        run: echo "{}" > data.json
+
       - name: Install dependencies
         run: uv sync --locked --no-install-project
 
@@ -67,6 +70,9 @@ jobs:
 
       - name: Set up Python
         run: uv python install
+
+      - name: Create data.json
+        run: echo "{}" > data.json
 
       - name: Install dependencies
         run: uv sync --locked --no-install-project
