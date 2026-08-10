@@ -10,6 +10,7 @@ from ui.menus.chat_item_menu import ChatItemMenu
 from ui.show_comment import ShowCommentDialog
 from controller.menus.chat_item_controller import ChatItemController
 from utils.funciones import escribirJsonLista, extractUser
+from globals.paths import MENSAJES_DESTACADOS_FILE
 
 class ChatController:
     def __init__(self, main_controller, frame, plataforma, servicio=None, chat_dialog=None):
@@ -322,7 +323,7 @@ class ChatController:
             list_mensajes.Append(f"{mensaje}: {titulo}")
             data_store.mensajes_destacados.append({'mensaje': mensaje, 'titulo': titulo})
             
-            escribirJsonLista('mensajes_destacados.json', data_store.mensajes_destacados)
+            escribirJsonLista(MENSAJES_DESTACADOS_FILE, data_store.mensajes_destacados)
             reader.leer_auto(_("El mensaje ha sido archivado correctamente."))
         else: 
             reader.leer_sapi(_("Este mensaje ya está en la lista de archivados."))

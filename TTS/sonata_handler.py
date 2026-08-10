@@ -10,6 +10,7 @@ from pathlib import Path
 from sound_lib import stream
 from grpclib.client import Channel
 import grpclib.const
+from globals.paths import VOICES_DIR
 
 # Configuración de Job Objects para Windows
 if sys.platform == "win32":
@@ -275,7 +276,7 @@ class piperSpeak:
         if not os.path.exists(model_path):
             import glob
             filename = os.path.basename(model_path)
-            coincidencias = glob.glob(os.path.join("voices", "voice-*", filename))
+            coincidencias = glob.glob(os.path.join(str(VOICES_DIR), "voice-*", filename))
             if coincidencias:
                 model_path = coincidencias[0]
         

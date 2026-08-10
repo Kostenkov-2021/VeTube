@@ -8,6 +8,7 @@ import ctypes
 import locale
 import gettext
 import platform
+from globals.paths import LOCALES_DIR
 #a few Windows locale constants
 LOCALE_SLANGUAGE=0x2
 LOCALE_SLANGDISPLAYNAME=0x6f
@@ -55,7 +56,7 @@ def getAvailableLanguages():
     @rtype: list of tuples
     """
     #Make a list of all the locales found in NVDA's locale dir
-    l=[x for x in os.listdir('locales') if os.path.isfile(os.path.join('locales', x, 'LC_MESSAGES', 'VeTube.mo'))]
+    l=[x for x in os.listdir(LOCALES_DIR) if (LOCALES_DIR / x / 'LC_MESSAGES' / 'VeTube.mo').is_file()]
     #Make sure that es (spanish) is in the list as it may not have any locale files, but is default
     if 'es' not in l:
         l.append('es')
@@ -100,10 +101,10 @@ def setLanguage(lang):
             if system == "Windows":
                 windowsLCID=ctypes.windll.kernel32.GetUserDefaultUILanguage()
                 localeName=locale.windows_locale[windowsLCID]
-            trans=gettext.translation('VeTube', localedir='locales', languages=[localeName])
+            trans=gettext.translation('VeTube', localedir=str(LOCALES_DIR), languages=[localeName])
             curLang=localeName
         else:
-            trans=gettext.translation('VeTube', localedir='locales', languages=[lang])
+            trans=gettext.translation('VeTube', localedir=str(LOCALES_DIR), languages=[lang])
             curLang=lang
             localeChanged=False
             if system == "Windows":

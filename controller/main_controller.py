@@ -1,5 +1,6 @@
 import wx
 from globals.data_store import favorite, mensajes_destacados, favs, msjs,config
+from globals.paths import FAVORITOS_FILE, MENSAJES_DESTACADOS_FILE
 from ui.main_window import MyFrame, PLATAFORMAS
 from os import remove
 from utils import languageHandler,canonical_scraper,funciones,fajustes
@@ -85,7 +86,7 @@ class MainController:
                 if wx.MessageBox(_( "¿Estás seguro de borrar todos los favoritos de la lista?"), _( "¡Atención!"), wx.YES_NO | wx.ICON_QUESTION) == wx.YES:
                     lf.Clear()
                     favorite.clear()
-                    remove('favoritos.json')
+                    remove(FAVORITOS_FILE)
                     lf.SetFocus()
             else:
                 sel = lf.GetSelection()
@@ -94,7 +95,7 @@ class MainController:
                     return
                 lf.Delete(sel)
                 favorite.pop(sel)
-                funciones.escribirJsonLista('favoritos.json', favorite)
+                funciones.escribirJsonLista(FAVORITOS_FILE, favorite)
                 lf.SetFocus()
         if lf.GetCount() <= 0:
             lf.Append(_( "Tus favoritos aparecerán aquí"))
@@ -127,7 +128,7 @@ class MainController:
                     sel = lf.GetSelection()
                     lf.Delete(sel)
                     mensajes_destacados.pop(sel)
-                    funciones.escribirJsonLista('mensajes_destacados.json', mensajes_destacados)
+                    funciones.escribirJsonLista(MENSAJES_DESTACADOS_FILE, mensajes_destacados)
                     lf.SetFocus()
                 else:
                     wx.MessageBox(_( "No hay más elementos que borrar"), "Error.", wx.ICON_ERROR)
@@ -140,7 +141,7 @@ class MainController:
             if len(mensajes_destacados) > 0:
                 if wx.MessageBox(_( "¿Estás seguro de que quieres borrar todos los mensajes?"), "Confirmación", wx.YES_NO | wx.ICON_QUESTION) == wx.YES:
                     mensajes_destacados.clear()
-                    remove('mensajes_destacados.json')
+                    remove(MENSAJES_DESTACADOS_FILE)
                     lf.Clear()
                     lf.Append(_( "Tus mensajes archivados aparecerán aquí"))
                     lf.SetFocus()
@@ -154,6 +155,19 @@ class MainController:
             
         if not url:
             url = self.frame.text_ctrl_1.GetValue()
+        
+        # Verificar plataforma seleccionada ANTES de validar URL vacía
+        plataforma_ids = self.frame.plataforma.GetSelection()
+        
+        # "La sala de juegos" (plataforma_ids == 4) no requiere URL
+        if not url and plataforma_ids != 4:
+            wx.MessageBox(_("No se puede acceder porque el campo de texto está vacío, debe escribir algo."), _("Error"), wx.ICON_ERROR)
+            self.frame.text_ctrl_1.SetFocus()
+            return
+        
+        # Si es "La sala de juegos" y no hay URL, asignar "sala" como identificador
+        if not url and plataforma_ids == 4:
+            url = "sala"
         
         if url:
             # Si es TikTok y necesita simplificación, lo manejamos de forma asíncrona
@@ -178,9 +192,6 @@ class MainController:
                 network.execute(canonical_scraper.get_simplified_tiktok_live_url(url), callback=handle_tiktok_result)
             else:
                 self._continuar_abriendo_chat(url)
-        else:
-            wx.MessageBox(_("No se puede acceder porque el campo de texto está vacío, debe escribir algo."), _("Error"), wx.ICON_ERROR)
-            self.frame.text_ctrl_1.SetFocus()
 
     def _continuar_abriendo_chat(self, url):
         # Check if chat dialog exists, if not create it

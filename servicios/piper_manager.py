@@ -5,8 +5,10 @@ import tarfile
 import tempfile
 import shutil
 from logging import getLogger
+from pathlib import Path
 from .base_downloader import BaseDownloader
 from setup import network
+from globals.paths import VOICES_DIR
 
 logger = getLogger(__name__)
 
@@ -160,7 +162,7 @@ class PiperManager(BaseDownloader):
 
         data = self.voices_data[voice_key]
         archivos = data.get('files', {})
-        dest_dir = os.path.join("voices", f"voice-{voice_key}")
+        dest_dir = str(VOICES_DIR / f"voice-{voice_key}")
         self.ensure_dir(dest_dir)
 
         tasks = []
@@ -168,7 +170,7 @@ class PiperManager(BaseDownloader):
         for rel_path in archivos.keys():
             url = f"{PIPER_VOICE_DOWNLOAD_URL_PREFIX}/{rel_path}"
             file_name = os.path.basename(rel_path)
-            local_path = os.path.join(dest_dir, file_name)
+            local_path = str(Path(dest_dir) / file_name)
             # Descarga a un nombre temporal: una descarga interrumpida no debe
             # dejar nunca un .onnx truncado que parezca una voz instalada.
             partes.append((local_path + ".part", local_path))
@@ -219,7 +221,7 @@ class PiperManager(BaseDownloader):
             if not res['success']: return res
 
             # Extraer
-            dest_dir = os.path.join("voices", f"voice-{voice_key}")
+            dest_dir = str(VOICES_DIR / f"voice-{voice_key}")
             self.ensure_dir(dest_dir)
 
             try:

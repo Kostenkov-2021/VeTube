@@ -11,6 +11,7 @@ from pathlib import Path
 from sound_lib import stream
 from grpclib.client import Channel
 import grpclib.const
+from globals.paths import VOICES_DIR
 
 # Servidor TTS nativo: ejecutable Rust + sherpa-onnx (C-API oficial), proceso
 # separado sin Python ni numpy (el arranque de VeTube nunca depende de él,
@@ -24,7 +25,7 @@ NOMBRE_EXE_PUENTE = "vetube-sherpa-grpc.exe"
 
 # Modelo Kokoro local: vive en voices/ junto a las voces de Piper y lo instala
 # el descargador propio (servicios/kokoro_manager.py, release tts-models de k2-fsa).
-KOKORO_MODEL_DIR = os.path.join("voices", "kokoro-multi-lang-v1_0")
+KOKORO_MODEL_DIR = str(VOICES_DIR / "kokoro-multi-lang-v1_0")
 
 def kokoro_model_instalado():
     """True si el modelo está instalado y completo (el descargador solo mueve la
@@ -468,7 +469,7 @@ class sherpaSpeak:
         if not es_ruta_kokoro and not os.path.exists(model_path):
             import glob
             filename = os.path.basename(model_path)
-            coincidencias = glob.glob(os.path.join("voices", "voice-*", filename))
+            coincidencias = glob.glob(os.path.join(str(VOICES_DIR), "voice-*", filename))
             if coincidencias:
                 model_path = coincidencias[0]
 
