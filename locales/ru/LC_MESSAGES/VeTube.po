@@ -1,0 +1,1661 @@
+# Russian translations for VeTube.
+# Copyright (C) 2026 VeTube contributors
+# This file is distributed under the same license as the VeTube project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: VeTube 3.94\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-07 21:03-0700\n"
+"PO-Revision-Date: 2026-08-09 12:30+0500\n"
+"Last-Translator: VeTube contributors\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.9\n"
+
+#: run_main_window.py:32
+msgid "VeTube ya se encuentra en ejecución. Cierra la otra instancia antes de iniciar esta."
+msgstr "VeTube уже запущен. Закройте другой экземпляр перед запуском этого."
+
+#: TTS/list_voices.py:17
+msgid "Selecciona un paquete de voz"
+msgstr "Выберите пакет голоса"
+
+#: TTS/list_voices.py:17
+msgid "Archivos tar.gz (*.tar.gz)|*.tar.gz"
+msgstr "Архивы tar.gz (*.tar.gz)|*.tar.gz"
+
+#: TTS/list_voices.py:19
+msgid ""
+"Para usar piper como sistema TTS, necesitas tener al menos una voz. Si quieres hacerlo de forma manual, extrae el paquete de voz en la carpeta \"voices/voice-nombre_de_paquete\" en VeTube."
+msgstr "Чтобы использовать Piper в качестве синтезатора речи, необходим хотя бы один голос. Для установки вручную распакуйте пакет голоса в папку «voices/voice-имя_пакета» внутри папки VeTube."
+
+#: TTS/list_voices.py:19
+msgid "No se instaló ninguna voz"
+msgstr "Не установлено ни одного голоса"
+
+#: TTS/list_voices.py:25
+msgid "¡Voz instalada satosfactoriamente! esta será establecida en VeTube ahora. Para cambiar de modelo de voz, puedes hacerlo a través de las configuraciones."
+msgstr "Голос успешно установлен! Теперь он будет выбран в VeTube. Модель голоса можно изменить в настройках."
+
+#: TTS/list_voices.py:25
+msgid "Listo"
+msgstr "Готово"
+
+#: controller/ajustes_controller.py:28 controller/ajustes_controller.py:131 controller/ajustes_controller.py:140
+msgid "Controlado por el lector de pantalla"
+msgstr "Управляется программой экранного доступа"
+
+#: controller/ajustes_controller.py:108 controller/ajustes_controller.py:226 controller/ajustes_controller.py:240 controller/ajustes_controller.py:335 controller/ajustes_controller.py:339
+#: ui/ajustes/voz.py:38
+msgid "&Reproducir prueba."
+msgstr "&Воспроизвести тест."
+
+#: controller/ajustes_controller.py:216
+msgid "Hablaré a través de este dispositivo."
+msgstr "Я буду говорить через это устройство."
+
+#: controller/ajustes_controller.py:221 controller/ajustes_controller.py:231
+msgid "Hola, soy la voz que te acompañará de ahora en adelante a leer los mensajes de tus canales favoritos."
+msgstr "Здравствуйте! Я голос, который отныне будет читать сообщения из ваших любимых каналов."
+
+#: controller/ajustes_controller.py:232
+msgid "&Detener prueba."
+msgstr "&Остановить тест."
+
+#: controller/ajustes_controller.py:285
+msgid "Descargar voces de internet..."
+msgstr "Скачать голоса из интернета…"
+
+#: controller/ajustes_controller.py:286
+msgid "Instalar desde archivo local (.tar.gz)..."
+msgstr "Установить из локального файла (.tar.gz)…"
+
+#: controller/chat_controller.py:152
+msgid "Error al conectar con el chat: "
+msgstr "Ошибка подключения к чату: "
+
+#: controller/chat_controller.py:152 controller/estadisticas_controller.py:46 controller/main_controller.py:117 controller/main_controller.py:199 controller/main_controller.py:203
+#: controller/main_controller.py:213 controller/main_controller.py:251 controller/main_controller.py:280 controller/main_controller.py:290 controller/main_controller.py:389
+#: controller/main_controller.py:391 controller/piper_downloader_controller.py:80 controller/piper_downloader_controller.py:101 controller/piper_downloader_controller.py:103
+#: controller/piper_downloader_controller.py:108 controller/piper_downloader_controller.py:159 controller/piper_downloader_controller.py:230 controller/update_languages_controller.py:77
+#: controller/update_languages_controller.py:82 ui/discord_token_dialog.py:40 update/updater.py:26
+msgid "Error"
+msgstr "Ошибка"
+
+#: controller/chat_controller.py:157
+msgid "Introduce el criterio de búsqueda"
+msgstr "Введите критерий поиска"
+
+#: controller/chat_controller.py:157
+msgid "Buscar mensajes"
+msgstr "Поиск сообщений"
+
+#: controller/chat_controller.py:183
+msgid "No se encontraron mensajes que coincidan con el criterio de búsqueda."
+msgstr "Сообщения, соответствующие критерию поиска, не найдены."
+
+#: controller/chat_controller.py:183
+msgid "Búsqueda sin resultados"
+msgstr "Нет результатов"
+
+#: controller/chat_controller.py:273
+msgid "Mensaje copiado"
+msgstr "Сообщение скопировано"
+
+#: controller/chat_controller.py:289 globals/mensajes.py:31 ui/chat_ui.py:34 ui/main_window.py:51
+msgid "Favoritos"
+msgstr "Избранное"
+
+#: controller/chat_controller.py:293
+msgid "Este mensaje ya se encuentra en favoritos"
+msgstr "Это сообщение уже есть в избранном"
+
+#: controller/chat_controller.py:296
+msgid "Mensaje agregado a favoritos"
+msgstr "Сообщение добавлено в избранное"
+
+#: controller/chat_controller.py:308 controller/main_controller.py:86 controller/main_controller.py:158 controller/main_controller.py:171 controller/main_controller.py:178
+#: controller/menus/chat_item_controller.py:52
+msgid "Tus mensajes archivados aparecerán aquí"
+msgstr "Здесь появятся ваши архивные сообщения"
+
+#: controller/chat_controller.py:324 controller/menus/chat_item_controller.py:70
+msgid "El mensaje ha sido archivado correctamente."
+msgstr "Сообщение успешно добавлено в архив."
+
+#: controller/chat_controller.py:326 controller/menus/chat_item_controller.py:72
+msgid "Este mensaje ya está en la lista de archivados."
+msgstr "Это сообщение уже есть в архиве."
+
+#: controller/chat_controller.py:333
+msgid "No se puede borrar la última página."
+msgstr "Нельзя удалить последнюю страницу."
+
+#: controller/chat_controller.py:337
+msgid "Página borrada."
+msgstr "Страница удалена."
+
+#: controller/chat_controller.py:345
+msgid "Lectura automática activada."
+msgstr "Автоматическое чтение включено."
+
+#: controller/chat_controller.py:345
+msgid "Lectura automática desactivada."
+msgstr "Автоматическое чтение выключено."
+
+#: controller/chat_controller.py:350
+msgid "sonidos activados."
+msgstr "звуки включены."
+
+#: controller/chat_controller.py:350
+msgid "sonidos desactivados."
+msgstr "звуки выключены."
+
+#: controller/chat_dialog_controller.py:120
+msgid "¿Desea cerrar la ventana de lectura de los chats en vivo?"
+msgstr "Закрыть окно чтения сообщений прямого эфира?"
+
+#: controller/chat_dialog_controller.py:120 controller/main_controller.py:121 controller/menus/main_menu_controller.py:108 controller/update_languages_controller.py:104
+msgid "¡Atención!"
+msgstr "Внимание!"
+
+#: controller/editor_controller.py:43
+msgid "Está apunto de restaurar las combinaciones a sus valores por defecto, ¿desea proceder? Esta acción no se puede desacer."
+msgstr "Настройки сочетаний клавиш будут сброшены. Продолжить? Это действие нельзя отменить."
+
+#: controller/editor_controller.py:43 controller/menus/main_menu_controller.py:54 update/update.py:144
+msgid "Atención:"
+msgstr "Внимание:"
+
+#: controller/editor_controller.py:63 controller/editor_controller.py:92
+msgid "Función desconocida"
+msgstr "Неизвестная функция"
+
+#: controller/editor_controller.py:85
+msgid "Debe escoger al menos una tecla de las casillas de verificación"
+msgstr "Выберите хотя бы одну клавишу с помощью флажков"
+
+#: controller/editor_controller.py:92
+#, python-format
+msgid "Esta combinación ya está siendo usada en la función %s"
+msgstr "Это сочетание клавиш уже используется функцией %s"
+
+#: controller/editor_controller.py:116
+msgid "Esa combinación está siendo usada por el sistema operativo"
+msgstr "Это сочетание клавиш используется операционной системой"
+
+#: controller/estadisticas_controller.py:9
+#, python-brace-format
+msgid "Total de mensajes recibidos: {}"
+msgstr "Всего получено сообщений: {}"
+
+#: controller/estadisticas_controller.py:10
+#, python-brace-format
+msgid "Total de usuarios que hablaron: {}"
+msgstr "Всего написало пользователей: {}"
+
+#: controller/estadisticas_controller.py:14
+#, python-brace-format
+msgid "Total de usuarios que se unieron al en vivo: {}"
+msgstr "Всего пользователей присоединилось к прямому эфиру: {}"
+
+#: controller/estadisticas_controller.py:15
+#, python-brace-format
+msgid "Total de usuarios que siguieron al moderador: {}"
+msgstr "Всего пользователей подписалось на ведущего: {}"
+
+#: controller/estadisticas_controller.py:16
+#, python-brace-format
+msgid "Total de me gustan en el en vivo: {}"
+msgstr "Всего отметок «Нравится» в прямом эфире: {}"
+
+#: controller/estadisticas_controller.py:17
+#, python-brace-format
+msgid "Total de usuarios que compartieron en el en vivo: {}"
+msgstr "Всего пользователей поделилось прямым эфиром: {}"
+
+#: controller/estadisticas_controller.py:19 ui/estadisticas_dialog.py:4
+msgid "Estadísticas del Chat"
+msgstr "Статистика чата"
+
+#: controller/estadisticas_controller.py:35 ui/estadisticas_dialog.py:18
+msgid "Guardar estadísticas"
+msgstr "Сохранить статистику"
+
+#: controller/estadisticas_controller.py:35
+msgid "Archivos JSON (*.json)|*.json"
+msgstr "Файлы JSON (*.json)|*.json"
+
+#: controller/estadisticas_controller.py:44
+#, python-brace-format
+msgid "Estadísticas guardadas en {}"
+msgstr "Статистика сохранена в {}"
+
+#: controller/estadisticas_controller.py:44 controller/piper_downloader_controller.py:242
+msgid "Éxito"
+msgstr "Успешно"
+
+#: controller/estadisticas_controller.py:46
+#, python-brace-format
+msgid "Error al guardar el archivo: {}"
+msgstr "Ошибка сохранения файла: {}"
+
+#: controller/main_controller.py:46 utils/app_utilitys.py:26
+msgid "Necesitas al menos una voz para poder usar el sintetizador Piper. ¿Deseas abrir el descargador de voces ahora para buscar e instalar una?"
+msgstr "Для использования синтезатора Piper необходим хотя бы один голос. Открыть диспетчер голосов, чтобы найти и установить голос?"
+
+#: controller/main_controller.py:46 controller/piper_downloader_controller.py:62 controller/piper_downloader_controller.py:66 controller/piper_downloader_controller.py:84
+#: globals/resources.py:31 utils/app_utilitys.py:26
+msgid "No hay voces instaladas"
+msgstr "Нет установленных голосов"
+
+#: controller/main_controller.py:77
+msgid "Lector Piper inicializado correctamente."
+msgstr "Piper успешно инициализирован."
+
+#: controller/main_controller.py:81
+#, python-format
+msgid "Favoritos(%s)"
+msgstr "Избранное (%s)"
+
+#: controller/main_controller.py:83 controller/main_controller.py:116 controller/main_controller.py:133 controller/menus/chat_menu_controller.py:56
+msgid "Tus favoritos aparecerán aquí"
+msgstr "Здесь появится избранное"
+
+#: controller/main_controller.py:117
+msgid "No hay favoritos que borrar"
+msgstr "Нет избранного для удаления"
+
+#: controller/main_controller.py:121
+msgid "¿Estás seguro de borrar todos los favoritos de la lista?"
+msgstr "Удалить всё избранное из списка?"
+
+#: controller/main_controller.py:137
+msgid "&Borrar mensajes"
+msgstr "&Удалить сообщения"
+
+#: controller/main_controller.py:138
+msgid "Borrar todos los mensajes destacados"
+msgstr "Удалить все отмеченные сообщения"
+
+#: controller/main_controller.py:141 ui/main_window.py:71
+msgid "&Borrar mensaje"
+msgstr "&Удалить сообщение"
+
+#: controller/main_controller.py:142
+msgid "Borrar el mensaje destacado seleccionado"
+msgstr "Удалить выбранное отмеченное сообщение"
+
+#: controller/main_controller.py:147
+msgid "&Borrar favoritos"
+msgstr "&Удалить избранное"
+
+#: controller/main_controller.py:148
+msgid "Borrar todos los favoritos"
+msgstr "Удалить всё избранное"
+
+#: controller/main_controller.py:151 ui/main_window.py:59
+msgid "&Borrar favorito"
+msgstr "&Удалить из избранного"
+
+#: controller/main_controller.py:152
+msgid "Borrar el favorito seleccionado"
+msgstr "Удалить выбранное из избранного"
+
+#: controller/main_controller.py:166
+msgid "No hay más elementos que borrar"
+msgstr "Больше нет элементов для удаления"
+
+#: controller/main_controller.py:168 controller/main_controller.py:181
+msgid "No hay mensajes que borrar"
+msgstr "Нет сообщений для удаления"
+
+#: controller/main_controller.py:174
+msgid "¿Estás seguro de que quieres borrar todos los mensajes?"
+msgstr "Удалить все сообщения?"
+
+#: controller/main_controller.py:199
+#, python-brace-format
+msgid "Error al simplificar URL de TikTok: {}"
+msgstr "Ошибка упрощения URL-адреса TikTok: {}"
+
+#: controller/main_controller.py:203 servicios/tiktok.py:65
+msgid "No se pudo obtener la URL real de TikTok."
+msgstr "Не удалось получить настоящий URL-адрес TikTok."
+
+#: controller/main_controller.py:213
+msgid "No se puede acceder porque el campo de texto está vacío, debe escribir algo."
+msgstr "Невозможно перейти: текстовое поле пусто. Введите что-нибудь."
+
+#: controller/main_controller.py:251
+msgid "Para Discord pega el enlace del canal de texto: haz clic derecho sobre el canal y elige «Copiar enlace»."
+msgstr "Для Discord вставьте ссылку на текстовый канал: щёлкните канал правой кнопкой мыши и выберите «Копировать ссылку»."
+
+#: controller/main_controller.py:280
+msgid "El enlace de Discord no es válido. Copia el enlace del canal de texto (clic derecho sobre el canal, «Copiar enlace») y pégalo en VeTube."
+msgstr "Недопустимая ссылка Discord. Скопируйте ссылку на текстовый канал (щёлкните канал правой кнопкой мыши и выберите «Копировать ссылку») и вставьте её в VeTube."
+
+#: controller/main_controller.py:290
+msgid "¡Parece que el enlace al cual está intentando acceder no es un enlace válido."
+msgstr "Похоже, введена недопустимая ссылка."
+
+#: controller/main_controller.py:325
+msgid "Conectando..."
+msgstr "Подключение…"
+
+#: controller/main_controller.py:389
+msgid "El token no es válido. Comprueba que lo copiaste completo desde el portal de desarrolladores de Discord."
+msgstr "Недопустимый токен. Убедитесь, что полностью скопировали его с портала разработчиков Discord."
+
+#: controller/main_controller.py:391
+msgid "No se pudo comprobar el token por un fallo de red. Revisa tu conexión a internet e inténtalo de nuevo."
+msgstr "Не удалось проверить токен из-за ошибки сети. Проверьте подключение к интернету и повторите попытку."
+
+#: controller/main_controller.py:434 controller/menus/main_menu_controller.py:59
+msgid "¿está seguro que desea salir del programa?"
+msgstr "Выйти из программы?"
+
+#: controller/main_controller.py:434 controller/menus/main_menu_controller.py:59
+msgid "¡atención!"
+msgstr "Внимание!"
+
+#: controller/piper_downloader_controller.py:72
+#, python-format
+msgid "Probando voz local: %s"
+msgstr "Проверка локального голоса: %s"
+
+#: controller/piper_downloader_controller.py:78
+#, python-format
+msgid "Hola, esta es una prueba de la voz %s instalada localmente."
+msgstr "Здравствуйте! Это проверка локально установленного голоса %s."
+
+#: controller/piper_downloader_controller.py:80
+#, python-format
+msgid "Error al cargar la voz para prueba: %s"
+msgstr "Ошибка загрузки голоса для проверки: %s"
+
+#: controller/piper_downloader_controller.py:88
+#, python-format
+msgid "¿Estás seguro de que deseas eliminar la voz %s? Esta acción no se puede deshacer."
+msgstr "Удалить голос %s? Это действие нельзя отменить."
+
+#: controller/piper_downloader_controller.py:89
+msgid "Confirmar eliminación"
+msgstr "Подтверждение удаления"
+
+#: controller/piper_downloader_controller.py:98
+#, python-format
+msgid "Voz %s eliminada correctamente."
+msgstr "Голос %s успешно удалён."
+
+#: controller/piper_downloader_controller.py:101
+msgid "No se pudo encontrar la carpeta de la voz."
+msgstr "Не удалось найти папку голоса."
+
+#: controller/piper_downloader_controller.py:103
+#, python-format
+msgid "No se pudo eliminar la voz: %s. Asegúrate de que no esté en uso."
+msgstr "Не удалось удалить голос %s. Убедитесь, что он не используется."
+
+#: controller/piper_downloader_controller.py:107
+msgid "Error al cargar el catálogo de voces."
+msgstr "Ошибка загрузки каталога голосов."
+
+#: controller/piper_downloader_controller.py:108
+msgid "No se pudo conectar con Hugging Face para obtener las voces."
+msgstr "Не удалось подключиться к Hugging Face для получения голосов."
+
+#: controller/piper_downloader_controller.py:116
+msgid "Catálogo cargado. Selecciona idiomas para ver las voces."
+msgstr "Каталог загружен. Выберите языки, чтобы просмотреть голоса."
+
+#: controller/piper_downloader_controller.py:139 controller/piper_downloader_controller.py:164 ui/piper_downloader.py:66
+msgid "&Reproducir muestra"
+msgstr "&Воспроизвести образец"
+
+#: controller/piper_downloader_controller.py:140
+msgid "Reproducción de muestra detenida."
+msgstr "Воспроизведение образца остановлено."
+
+#: controller/piper_downloader_controller.py:146
+msgid "Por favor, selecciona una voz de la lista para escuchar la muestra."
+msgstr "Выберите голос из списка, чтобы прослушать образец."
+
+#: controller/menus/chat_menu_controller.py:42 controller/menus/chat_menu_controller.py:53 controller/menus/chat_menu_controller.py:61 controller/piper_downloader_controller.py:146
+#: controller/piper_downloader_controller.py:181
+msgid "Aviso"
+msgstr "Предупреждение"
+
+#: controller/piper_downloader_controller.py:152
+#, python-format
+msgid "Reproduciendo muestra de %s..."
+msgstr "Воспроизводится образец голоса %s…"
+
+#: controller/piper_downloader_controller.py:155
+msgid "&Detener"
+msgstr "&Остановить"
+
+#: controller/piper_downloader_controller.py:159
+msgid "Esta voz no dispone de muestra de audio."
+msgstr "Для этого голоса нет звукового образца."
+
+#: controller/piper_downloader_controller.py:165
+msgid "Reproducción de muestra finalizada."
+msgstr "Завершено."
+
+#: controller/piper_downloader_controller.py:181
+msgid "Por favor, selecciona al menos una voz para descargar."
+msgstr "Выберите хотя бы один голос для скачивания."
+
+#: controller/piper_downloader_controller.py:190
+msgid "Descargar variantes de Calidad Normal (Alta)"
+msgstr "Скачивать варианты обычного качества (High)"
+
+#: controller/piper_downloader_controller.py:191
+msgid "Descargar variantes Rápidas (RT) donde estén disponibles"
+msgstr "Скачивать быстрые варианты (RT), если они доступны"
+
+#: controller/piper_downloader_controller.py:217
+#, python-format
+msgid "Descargando %s (%s) [%d/%d]..."
+msgstr "Скачивание %s (%s) [%d/%d]…"
+
+#: controller/piper_downloader_controller.py:230
+#, python-format
+msgid "Error al descargar %s: %s"
+msgstr "Ошибка скачивания %s: %s"
+
+#: controller/piper_downloader_controller.py:235
+#, python-format
+msgid "Proceso finalizado. %d de %d voces instaladas."
+msgstr "Процесс завершён. Установлено голосов: %d из %d."
+
+#: controller/piper_downloader_controller.py:242
+msgid "Las voces se han instalado correctamente. Ya puedes seleccionarlas en los Ajustes de Voz."
+msgstr "Голоса успешно установлены. Теперь их можно выбрать в настройках голоса."
+
+#: controller/update_languages_controller.py:32
+#, python-format
+msgid "%s (Nuevo - v%s)"
+msgstr "%s (новый — v%s)"
+
+#: controller/update_languages_controller.py:34
+#, python-format
+msgid "%s (Actualizar a v%s)"
+msgstr "%s (обновление до v%s)"
+
+#: controller/update_languages_controller.py:43
+msgid "Por favor, selecciona al menos un idioma para actualizar."
+msgstr "Выберите хотя бы один язык для обновления."
+
+#: controller/update_languages_controller.py:43
+msgid "Advertencia"
+msgstr "Предупреждение"
+
+#: controller/update_languages_controller.py:67
+msgid "Iniciando descarga de idiomas..."
+msgstr "Начинается скачивание языков…"
+
+#: controller/update_languages_controller.py:73
+#, python-format
+msgid "Idioma %s actualizado con éxito."
+msgstr "Язык %s успешно обновлён."
+
+#: controller/update_languages_controller.py:76
+#, python-format
+msgid "Error en %s: %s"
+msgstr "Ошибка в %s: %s"
+
+#: controller/update_languages_controller.py:77
+#, python-format
+msgid "Error al actualizar %s: %s"
+msgstr "Ошибка обновления %s: %s"
+
+#: controller/update_languages_controller.py:81
+#, python-format
+msgid "Error inesperado en %s: %s"
+msgstr "Непредвиденная ошибка в %s: %s"
+
+#: controller/update_languages_controller.py:82
+#, python-format
+msgid ""
+"Error inesperado en %s:\n"
+"%s\n"
+"\n"
+"Ver consola para más detalles."
+msgstr ""
+"Непредвиденная ошибка в %s:\n"
+"%s\n"
+"\n"
+"Подробности приведены в консоли."
+
+#: controller/update_languages_controller.py:95 ui/update_languages_dialog.py:63
+msgid "Actualización completada."
+msgstr "Обновление завершено."
+
+#: controller/update_languages_controller.py:104
+msgid "Es necesario reiniciar el programa para aplicar los nuevos idiomas. ¿Desea reiniciarlo ahora?"
+msgstr "Чтобы применить новые языки, необходимо перезапустить программу. Перезапустить её сейчас?"
+
+#: controller/menus/chat_item_controller.py:29
+msgid "Mensaje copiado al portapapeles"
+msgstr "Сообщение скопировано в буфер обмена"
+
+#: controller/menus/chat_item_controller.py:29
+msgid "El mensaje seleccionado ha sido copiado al portapapeles."
+msgstr "Выбранное сообщение скопировано в буфер обмена."
+
+#: controller/menus/chat_item_controller.py:43
+msgid "Mensaje traducido"
+msgstr "Сообщение переведено"
+
+#: controller/menus/chat_item_controller.py:43
+msgid "el mensaje se ha traducido al idioma del programa y se  a  copiado en el portapapeles."
+msgstr "сообщение переведено на язык программы и скопировано в буфер обмена."
+
+#: controller/menus/chat_menu_controller.py:42
+msgid "No hay una URL para agregar a favoritos."
+msgstr "Нет URL-адреса для добавления в избранное."
+
+#: controller/menus/chat_menu_controller.py:53
+msgid "Ya se encuentra en favoritos"
+msgstr "Уже в избранном"
+
+#: controller/menus/chat_menu_controller.py:61
+msgid "Se ha agregado a favoritos"
+msgstr "Добавлено в избранное"
+
+#: controller/menus/chat_menu_controller.py:69
+msgid "Enlace copiado al portapapeles"
+msgstr "Ссылка скопирована в буфер обмена"
+
+#: controller/menus/chat_menu_controller.py:69
+msgid "El enlace del chat ha sido copiado al portapapeles."
+msgstr "Ссылка на прямой эфир скопирована в буфер обмена."
+
+#: controller/menus/chat_menu_controller.py:71
+msgid "No se pudo copiar el enlace"
+msgstr "Не удалось скопировать ссылку"
+
+#: controller/menus/chat_menu_controller.py:71
+msgid "No se encontró un enlace válido para copiar."
+msgstr "Не найдена допустимая ссылка для копирования."
+
+#: controller/menus/chat_menu_controller.py:79
+msgid "No se pudo abrir el enlace"
+msgstr "Не удалось открыть ссылку"
+
+#: controller/menus/chat_menu_controller.py:79
+msgid "No se encontró un enlace válido para abrir."
+msgstr "Не найдена допустимая ссылка для открытия."
+
+#: controller/menus/main_menu_controller.py:39
+msgid "Creadores del proyecto:"
+msgstr "Создатели проекта:"
+
+#: controller/menus/main_menu_controller.py:40
+msgid ""
+"Descripción:\n"
+" Lee en voz alta los mensajes de los directos en youtube, tiktok, twitch, kick y la sala de  juegos, ajusta tus preferencias como quieras y disfruta más tus canales favoritos."
+msgstr ""
+"Описание:\n"
+"Читает вслух сообщения из прямых эфиров YouTube, TikTok, Kick, Playroom и Twitch. Настройте программу по своему вкусу и получайте больше удовольствия от любимых каналов."
+
+#: controller/menus/main_menu_controller.py:41 update/updater.py:31
+msgid "Información"
+msgstr "Информация"
+
+#: controller/menus/main_menu_controller.py:54
+msgid "Estás apunto de reiniciar la configuración a sus valores predeterminados, ¿Deseas proceder?"
+msgstr "Настройки будут сброшены. Продолжить?"
+
+#: controller/menus/main_menu_controller.py:69
+#, python-brace-format
+msgid "Error al conectar con el servidor de idiomas: {}"
+msgstr "Ошибка подключения к серверу языков: {}"
+
+#: controller/menus/main_menu_controller.py:69
+msgid "Error de red"
+msgstr "Ошибка сети"
+
+#: controller/menus/main_menu_controller.py:77 controller/menus/main_menu_controller.py:88
+msgid "Actualización de idiomas"
+msgstr "Обновление языков"
+
+#: controller/menus/main_menu_controller.py:88 servicios/language_updater.py:66
+msgid "No hay actualizaciones ni nuevos idiomas disponibles."
+msgstr "Нет доступных обновлений или новых языков."
+
+#: controller/menus/main_menu_controller.py:90
+msgid "Error de actualización"
+msgstr "Ошибка обновления"
+
+#: controller/menus/main_menu_controller.py:108
+msgid "Es necesario reiniciar el programa para aplicar el nuevo idioma. ¿desea reiniciarlo ahora?"
+msgstr "Чтобы применить новый язык, необходимо перезапустить программу. Перезапустить её сейчас?"
+
+#: globals/mensajes.py:2
+msgid "iniciar/cancelar la captura de otro en vivo"
+msgstr "показать или скрыть окно чата"
+
+#: globals/mensajes.py:3
+msgid "Silencia todas las voces"
+msgstr "Отключить все голоса"
+
+#: globals/mensajes.py:4
+msgid "Mensaje anterior."
+msgstr "Предыдущее сообщение."
+
+#: globals/mensajes.py:5
+msgid "Mensaje siguiente"
+msgstr "Следующее сообщение"
+
+#: globals/mensajes.py:6
+msgid "Buffer anterior"
+msgstr "Предыдущая страница"
+
+#: globals/mensajes.py:7
+msgid "Siguiente Buffer"
+msgstr "Следующая страница"
+
+#: globals/mensajes.py:8
+msgid "Ir al comienzo del buffer"
+msgstr "Перейти в начало страницы"
+
+#: globals/mensajes.py:9
+msgid "Ir al final del buffer"
+msgstr "Перейти в конец страницы"
+
+#: globals/mensajes.py:10
+msgid "Destaca un mensaje en el buffer de  favoritos"
+msgstr "Добавить сообщение в избранное"
+
+#: globals/mensajes.py:11
+msgid "Copia el mensaje actual"
+msgstr "Скопировать текущее сообщение"
+
+#: globals/mensajes.py:12
+msgid "Activa o desactiva la lectura automática"
+msgstr "Включить или выключить автоматическое чтение сообщений"
+
+#: globals/mensajes.py:13
+msgid "Busca una palabra en los mensajes actuales"
+msgstr "Найти фразу среди текущих сообщений"
+
+#: globals/mensajes.py:14
+msgid "Muestra el mensaje actual en un cuadro de texto"
+msgstr "Показать текущее сообщение в текстовом поле"
+
+#: globals/mensajes.py:15
+msgid "borra el buffer seleccionado"
+msgstr "удалить выбранную страницу"
+
+#: globals/mensajes.py:16
+msgid "activa o desactiva los sonidos del programa"
+msgstr "включить или выключить звуки программы"
+
+#: globals/mensajes.py:17
+msgid "Invocar el editor de combinaciones de teclado"
+msgstr "Открыть редактор сочетаний клавиш"
+
+#: globals/mensajes.py:18
+msgid "Archivar un mensaje"
+msgstr "Добавить сообщение в архив"
+
+#: globals/mensajes.py:19
+msgid "Pausar o reanudar el reproductor"
+msgstr "Приостановить или продолжить воспроизведение трансляции"
+
+#: globals/mensajes.py:20
+msgid "Adelantar la reproducción"
+msgstr "Перемотать трансляцию вперёд"
+
+#: globals/mensajes.py:21
+msgid "Atrasar la reproducción"
+msgstr "Перемотать трансляцию назад"
+
+#: globals/mensajes.py:22
+msgid "Sube el volumen del reproductor"
+msgstr "Увеличить громкость"
+
+#: globals/mensajes.py:23
+msgid "Baja el volumen del reproductor"
+msgstr "Уменьшить громкость"
+
+#: globals/mensajes.py:24
+msgid "Detener y liberar el reproductor"
+msgstr "Приостановить или продолжить воспроизведение"
+
+#: globals/mensajes.py:25
+msgid "ir al Siguiente en vivo"
+msgstr "перейти к следующему прямому эфиру"
+
+#: globals/mensajes.py:26
+msgid "ir al en vivo anterior"
+msgstr "перейти к предыдущему прямому эфиру"
+
+# | msgid "mensaje"
+#: globals/mensajes.py:30
+msgid "Mensajes"
+msgstr "Сообщения"
+
+#: globals/mensajes.py:30
+msgid "eventos"
+msgstr "события"
+
+#: globals/mensajes.py:30 ui/chat_ui.py:25 ui/chat_ui.py:30
+msgid "Miembros"
+msgstr "Участники"
+
+#: globals/mensajes.py:30
+msgid "Donativos"
+msgstr "Пожертвования"
+
+#: globals/mensajes.py:30 ui/chat_ui.py:31
+msgid "Moderadores"
+msgstr "Модераторы"
+
+#: globals/mensajes.py:31
+msgid "Usuarios Verificados"
+msgstr "Подтверждённые пользователи"
+
+#: globals/mensajes.py:35
+msgid "Sonido cuando llega un mensaje"
+msgstr "Звук при получении сообщения"
+
+#: globals/mensajes.py:36
+msgid "Sonido cuando habla un miembro"
+msgstr "Звук, когда пишет участник"
+
+#: globals/mensajes.py:37
+msgid "Sonido cuando se conecta un miembro o cuando alguien se une a tu en vivo en tiktok"
+msgstr "Звук при подключении участника или присоединении пользователя к вашему прямому эфиру в TikTok"
+
+#: globals/mensajes.py:38
+msgid "Sonido cuando llega un donativo"
+msgstr "Звук при получении пожертвования"
+
+#: globals/mensajes.py:39
+msgid "Sonido cuando habla un moderador"
+msgstr "Звук, когда пишет модератор"
+
+#: globals/mensajes.py:40
+msgid "Sonido cuando habla un usuario verificado"
+msgstr "Звук, когда пишет подтверждённый пользователь"
+
+#: globals/mensajes.py:41
+msgid "Sonido al ingresar al chat"
+msgstr "Звук при входе в чат"
+
+#: globals/mensajes.py:42
+msgid "Sonido cuando habla el propietario del canal"
+msgstr "Звук, когда пишет владелец канала"
+
+#: globals/mensajes.py:43
+msgid "sonido al terminar la búsqueda de mensajes"
+msgstr "звук после завершения поиска на странице"
+
+#: globals/mensajes.py:44
+msgid "sonido cuando le dan me gusta al en vivo (solo para tiktok)"
+msgstr "звук, когда кому-то нравится прямой эфир (только TikTok)"
+
+#: globals/mensajes.py:45
+msgid "Sonido cuando alguien empieza a seguirte en tiktok"
+msgstr "Звук, когда кто-то подписывается на вас в TikTok"
+
+#: globals/mensajes.py:46
+msgid "Sonido cuando alguien comparte el enlace de tu envivo en  tiktok"
+msgstr "Звук, когда кто-то делится ссылкой на ваш прямой эфир в TikTok"
+
+#: globals/mensajes.py:47
+msgid "Sonido cuando alguien envía un cofre  en tiktok"
+msgstr "Звук, когда кто-то отправляет сундук в TikTok"
+
+#: globals/mensajes.py:51
+msgid "Cuando llega un mensaje"
+msgstr "При получении сообщения"
+
+#: globals/mensajes.py:52
+msgid "Cuando habla un miembro"
+msgstr "Когда пишет участник"
+
+#: globals/mensajes.py:53
+msgid "Cuando se conecta un miembro o cuando alguien se une a tu en vivo en tiktok"
+msgstr "При подключении участника или присоединении пользователя к вашему прямому эфиру в TikTok"
+
+#: globals/mensajes.py:54
+msgid "Cuando llega un donativo"
+msgstr "При получении пожертвования"
+
+#: globals/mensajes.py:55
+msgid "Cuando habla un moderador"
+msgstr "Когда пишет модератор"
+
+#: globals/mensajes.py:56
+msgid "Cuando habla un usuario verificado"
+msgstr "Когда пишет подтверждённый пользователь"
+
+#: globals/mensajes.py:57
+msgid "Cuando le dan me gusta al en vivo (solo para tiktok)"
+msgstr "Когда кому-то нравится прямой эфир (только TikTok)"
+
+#: globals/mensajes.py:58
+msgid "Cuando alguien empieza a seguirte en tiktok"
+msgstr "Когда кто-то подписывается на вас в TikTok"
+
+#: globals/mensajes.py:59
+msgid "Cuando alguien comparte el enlace de tu envivo en  tiktok"
+msgstr "Когда кто-то делится ссылкой на ваш прямой эфир в TikTok"
+
+#: globals/mensajes.py:60
+msgid "Cuando alguien envía un cofre  en tiktok"
+msgstr "Когда кто-то отправляет сундук в TikTok"
+
+#: globals/resources.py:28 servicios/twich.py:92
+msgid "Por defecto"
+msgstr "По умолчанию"
+
+#: helpers/playroom_helper.py:61
+msgid "proceso playroom no abierto"
+msgstr "процесс Playroom не запущен"
+
+#: servicios/discord.py:56 servicios/kick.py:69 ui/piper_downloader.py:62
+msgid "Cargando..."
+msgstr "Загрузка…"
+
+#: servicios/discord.py:85
+msgid "El token del bot de Discord no es válido o fue revocado. Pega de nuevo el enlace del canal para introducir un token nuevo."
+msgstr "Токен бота Discord недействителен или отозван. Вставьте ссылку на канал ещё раз, чтобы ввести новый токен."
+
+#: servicios/discord.py:89
+msgid "Al bot le falta activar «Message Content Intent» en el portal de desarrolladores de Discord. Actívalo y vuelve a intentarlo."
+msgstr "Для бота не включён параметр Message Content Intent на портале разработчиков Discord. Включите его и повторите попытку."
+
+#: servicios/discord.py:107 servicios/kick.py:97 servicios/tiktok.py:154
+msgid "Ingresando al chat"
+msgstr "Вход в чат"
+
+#: servicios/discord.py:119
+msgid "No se encontró el canal de Discord. Comprueba que el bot está invitado al servidor y que el enlace del canal es correcto."
+msgstr "Канал Discord не найден. Убедитесь, что бот приглашён на сервер, а ссылка на канал верна."
+
+#: servicios/kick.py:39
+msgid "error_bypass_no_encontrado"
+msgstr "error_bypass_no_encontrado"
+
+#: servicios/kick.py:72
+msgid "error_iniciar_bypass"
+msgstr "error_iniciar_bypass"
+
+#: servicios/kick.py:115
+msgid "error_conectar_kick_chatroom"
+msgstr "error_conectar_kick_chatroom"
+
+#: servicios/kick.py:164 servicios/kick.py:166 servicios/tiktok.py:212 servicios/tiktok.py:216
+msgid " comenzó a seguirte!"
+msgstr " подписывается на вас!"
+
+#: servicios/kick.py:205 servicios/tiktok.py:262 servicios/twich.py:176 servicios/youtube.py:182
+msgid " en vivo, actualmente "
+msgstr " в прямом эфире, сейчас смотрят: "
+
+#: servicios/kick.py:205 servicios/tiktok.py:262 servicios/twich.py:176 servicios/youtube.py:182
+msgid " viendo ahora"
+msgstr " зрителей"
+
+#: servicios/language_updater.py:31
+msgid "Error al cargar el archivo de idiomas local."
+msgstr "Ошибка загрузки локального файла языков."
+
+#: servicios/language_updater.py:40
+msgid "Error al guardar el archivo de idiomas local."
+msgstr "Ошибка сохранения локального файла языков."
+
+#: servicios/language_updater.py:51
+msgid "Error de conexión con el servidor."
+msgstr "Ошибка подключения к серверу."
+
+#: servicios/language_updater.py:74
+#, python-format
+msgid "Error al descargar el archivo del idioma %s: %s"
+msgstr "Ошибка скачивания файла языка %s: %s"
+
+#: servicios/language_updater.py:84
+msgid "Error al extraer los archivos del idioma."
+msgstr "Ошибка извлечения файлов языка."
+
+#: servicios/language_updater.py:100
+msgid "Error inesperado durante la instalación."
+msgstr "Непредвиденная ошибка во время установки."
+
+#: servicios/sala.py:33 servicios/twich.py:31 servicios/youtube.py:31
+msgid "Ingresando al chat."
+msgstr "Вход в чат."
+
+#: servicios/sala.py:34
+msgid "Chat de la sala de juegos"
+msgstr "Чат QuentinC Playroom"
+
+#: servicios/tiktok.py:81
+msgid "El usuario está en vivo. Conectando..."
+msgstr "Пользователь ведёт прямой эфир. Подключение…"
+
+#: servicios/tiktok.py:94
+msgid "El usuario no está en vivo. Reintentando en un minuto."
+msgstr "Пользователь не в эфире. Повторная попытка через минуту."
+
+#: servicios/tiktok.py:142
+msgid "El directo ha finalizado. Se buscará de nuevo en un minuto."
+msgstr "Трансляция завершилась. Следующая проверка через минуту."
+
+#: servicios/tiktok.py:150
+msgid "Se ha perdido la conexión. El servicio se ha detenido."
+msgstr "Подключение потеряно. Служба остановлена."
+
+#: servicios/tiktok.py:193 servicios/tiktok.py:197
+msgid " envió un emogi."
+msgstr " отправляет эмодзи."
+
+#: servicios/tiktok.py:202
+msgid " ha enviado un cofre!"
+msgstr " отправляет сундук!"
+
+#: servicios/tiktok.py:223
+#, python-format
+msgid "%s ha enviado %s %s (%s %s)"
+msgstr "%s отправляет %s %s (%s %s)"
+
+#: servicios/tiktok.py:225
+#, python-format
+msgid "%s ha enviado %s %s (%s diamante)"
+msgstr "%s отправляет %s %s (%s алмазов)"
+
+#: servicios/tiktok.py:237 servicios/tiktok.py:241
+msgid " se ha unido a tu en vivo."
+msgstr " присоединяется к вашему прямому эфиру."
+
+#: servicios/tiktok.py:246 servicios/tiktok.py:250
+msgid " le ha dado me gusta a tu en vivo."
+msgstr " ставит отметку «Нравится» вашему прямому эфиру."
+
+#: servicios/tiktok.py:255 servicios/tiktok.py:259
+msgid " ha compartido tu en vivo!"
+msgstr " делится вашим прямым эфиром!"
+
+#: servicios/twich.py:64
+msgid "Desconocido"
+msgstr "Неизвестно"
+
+#: servicios/twich.py:73
+#, python-brace-format
+msgid "{author_name} ha renovado su suscripción en el nivel {subscription_plan_name}. ¡Lleva suscrito por {cumulative_months} meses!"
+msgstr "{author_name} продлевает подписку уровня {subscription_plan_name}. Срок подписки: {cumulative_months} мес.!"
+
+#: servicios/twich.py:78
+#, python-brace-format
+msgid "{author_name} se ha suscrito en el nivel {subscription_plan_name} por {cumulative_months} meses!"
+msgstr "{author_name} оформляет подписку уровня {subscription_plan_name} на {cumulative_months} мес.!"
+
+#: servicios/twich.py:79
+#, python-brace-format
+msgid "{author_name} regaló una suscripción de nivel {subscription_type} a la comunidad, ¡ha regalado un total de {sender_count} suscripciones!"
+msgstr "{author_name} дарит сообществу подписку уровня {subscription_type}. Всего подарено подписок: {sender_count}!"
+
+#: servicios/twich.py:80
+#, python-brace-format
+msgid "{author_name} ha regalado una suscripción a {gift_recipient_display_name} en el nivel {subscription_plan_name} por {number_of_months_gifted} meses!"
+msgstr "{author_name} дарит пользователю {gift_recipient_display_name} подписку уровня {subscription_plan_name} на {number_of_months_gifted} мес.!"
+
+#: servicios/youtube.py:73
+msgid "Se ha detectado una transmisión pasada. ¿Deseas conectarte con el servicio en tiempo real del chat?"
+msgstr "Обнаружена прошедшая трансляция. Подключиться к текущему чату канала в реальном времени?"
+
+#: servicios/youtube.py:73
+msgid "Transmisión pasada"
+msgstr "Прошедшая трансляция"
+
+#: servicios/youtube.py:125
+msgid " se a conectado al chat. "
+msgstr " подключается к чату. "
+
+#: ui/chat_dialog.py:4
+msgid "Sesiones de chat"
+msgstr "Сеансы чата"
+
+#: ui/chat_ui.py:10
+msgid "Lectura del chat en vivo..."
+msgstr "Чтение чата прямого эфира…"
+
+#: ui/chat_ui.py:12
+msgid "&Cerrar chat"
+msgstr "&Закрыть чат"
+
+#: ui/chat_ui.py:20
+msgid "conversaciones"
+msgstr "беседы"
+
+#: ui/chat_ui.py:21
+msgid "mensajes privados"
+msgstr "личные сообщения"
+
+#: ui/ajustes/__init__.py:23 ui/chat_ui.py:23 ui/chat_ui.py:28
+msgid "General"
+msgstr "Общие"
+
+#: ui/ajustes/__init__.py:47 ui/chat_ui.py:24 ui/chat_ui.py:29 ui/chat_ui.py:53
+msgid "Eventos"
+msgstr "События"
+
+#: ui/chat_ui.py:26
+msgid "regalos"
+msgstr "подаренные подписки"
+
+#: ui/chat_ui.py:32
+msgid "Donaciones"
+msgstr "Пожертвования"
+
+#: ui/chat_ui.py:33
+msgid "Verificados"
+msgstr "Подтверждённые пользователи"
+
+#: ui/chat_ui.py:40
+msgid "&Eliminar"
+msgstr "&Удалить"
+
+#: ui/chat_ui.py:42 ui/menus/main_menu.py:9
+msgid "&Opciones"
+msgstr "&Параметры"
+
+#: ui/chat_ui.py:54
+msgid "&Filtrar por"
+msgstr "&Фильтр"
+
+#: ui/discord_token_dialog.py:16
+msgid "Se necesita el token del bot de Discord"
+msgstr "Требуется токен бота Discord"
+
+#: ui/discord_token_dialog.py:18
+msgid "Para leer un canal de Discord, VeTube necesita el token de tu bot. Pégalo aquí; quedará guardado y no se te volverá a pedir."
+msgstr "Для чтения канала Discord VeTube необходим токен вашего бота. Вставьте его сюда. Токен будет сохранён, и повторно вводить его не придётся."
+
+#: ui/discord_token_dialog.py:21
+msgid "&Token del bot:"
+msgstr "&Токен бота:"
+
+#: ui/discord_token_dialog.py:25
+msgid "¿No sabes cómo crear el token? Abrir la &guía"
+msgstr "Не знаете, как создать токен? Откройте &руководство"
+
+#: ui/discord_token_dialog.py:40
+msgid "Debes pegar el token del bot para continuar."
+msgstr "Чтобы продолжить, вставьте токен бота."
+
+#: ui/estadisticas_dialog.py:13
+msgid "Autor"
+msgstr "Автор"
+
+#: ui/estadisticas_dialog.py:14
+msgid "Cantidad de mensajes"
+msgstr "Количество сообщений"
+
+#: ui/estadisticas_dialog.py:19 ui/update_languages_dialog.py:64
+msgid "Cerrar"
+msgstr "Закрыть"
+
+#: ui/list_urls.py:8
+msgid "Lista de URLS"
+msgstr "Список URL-адресов"
+
+#: ui/editor/editor.py:24 ui/editor/nueva_combinacion.py:38 ui/list_urls.py:21 ui/piper_downloader.py:70
+msgid "&Cerrar"
+msgstr "&Закрыть"
+
+#: ui/list_urls.py:30
+msgid "No hay URLS en este mensaje"
+msgstr "В этом сообщении нет URL-адресов"
+
+#: ui/main_window.py:17
+msgid "&Más opciones"
+msgstr "&Дополнительные параметры"
+
+#: ui/main_window.py:23
+msgid "Inicio"
+msgstr "Главная"
+
+#: ui/main_window.py:27
+msgid "Escriba o pegue una URL o usuario"
+msgstr "Введите или вставьте URL-адрес либо имя пользователя"
+
+#: ui/main_window.py:32
+msgid "Capturar el chat de: "
+msgstr "Источник чата: "
+
+#: ui/main_window.py:34
+msgid "detectar"
+msgstr "автоопределение"
+
+#: ui/main_window.py:34
+msgid "YouTube"
+msgstr "YouTube"
+
+#: ui/main_window.py:34
+msgid "Twich"
+msgstr "Twitch"
+
+#: ui/main_window.py:34
+msgid "TikTok"
+msgstr "TikTok"
+
+#: ui/main_window.py:34
+msgid "La sala de juegos"
+msgstr "QuentinC Playroom"
+
+#: ui/main_window.py:34
+msgid "Kick"
+msgstr "Kick"
+
+#: ui/main_window.py:34
+msgid "Discord"
+msgstr "Discord"
+
+#: ui/main_window.py:39
+msgid "&Acceder"
+msgstr "&Войти"
+
+#: ui/main_window.py:42
+msgid "&Borrar"
+msgstr "&Удалить"
+
+#: ui/main_window.py:53
+msgid "&Tus favoritos: "
+msgstr "&Ваше избранное: "
+
+#: ui/main_window.py:57
+#, python-format
+msgid "Favoritos (%s)"
+msgstr "Избранное (%s)"
+
+#: ui/main_window.py:61 ui/main_window.py:73
+msgid "&Seleccionar todos los elementos"
+msgstr "&Выбрать всё"
+
+#: ui/main_window.py:65
+msgid "mensajes archivados"
+msgstr "архивные сообщения"
+
+#: ui/main_window.py:67
+msgid "&Mensajes archivados: "
+msgstr "&Архивные сообщения: "
+
+#: ui/piper_downloader.py:6
+msgid "Gestor de voces Piper"
+msgstr "Диспетчер голосов Piper"
+
+#: ui/piper_downloader.py:15
+msgid "Voces que ya tienes en tu equipo:"
+msgstr "Голоса, установленные на компьютере:"
+
+#: ui/piper_downloader.py:22
+msgid "&Probar voz"
+msgstr "&Проверить голос"
+
+#: ui/piper_downloader.py:24
+msgid "&Eliminar voz"
+msgstr "&Удалить голос"
+
+#: ui/piper_downloader.py:29
+msgid "Voces instaladas"
+msgstr "Установленные голоса"
+
+#: ui/piper_downloader.py:35
+msgid "Selecciona los idiomas para filtrar las voces:"
+msgstr "Выберите языки для фильтрации голосов:"
+
+#: ui/piper_downloader.py:39 ui/piper_downloader.py:49 ui/update_languages_dialog.py:12
+msgid "Idioma"
+msgstr "Язык"
+
+#: ui/piper_downloader.py:43
+msgid "Selecciona la voz que deseas descargar:"
+msgstr "Выберите голос для скачивания:"
+
+#: ui/ajustes/__init__.py:31 ui/piper_downloader.py:47
+msgid "Voz"
+msgstr "Голос"
+
+#: ui/piper_downloader.py:48
+msgid "Calidad"
+msgstr "Качество"
+
+#: ui/piper_downloader.py:54
+msgid "Descargar voces"
+msgstr "Скачать голоса"
+
+#: ui/piper_downloader.py:68
+msgid "&Descargar e instalar"
+msgstr "&Скачать и установить"
+
+#: ui/show_comment.py:6
+msgid "Mensaje"
+msgstr "Сообщение"
+
+#: ui/menus/chat_item_menu.py:7 ui/show_comment.py:13
+msgid "&Traducir"
+msgstr "&Перевести"
+
+#: ui/show_comment.py:20
+msgid "mensaje: "
+msgstr "сообщение: "
+
+#: ui/show_comment.py:36
+msgid "&Traducir mensaje"
+msgstr "&Перевести сообщение"
+
+#: ui/show_comment.py:36
+msgid "&Traducir al idioma del programa"
+msgstr "&Перевести на язык программы"
+
+#: ui/show_comment.py:42
+msgid "mensaje en "
+msgstr "сообщение на языке: "
+
+#: ui/update_languages_dialog.py:5
+msgid "Actualizar idiomas"
+msgstr "Обновление языков"
+
+#: ui/update_languages_dialog.py:8
+msgid "Selecciona los idiomas que deseas actualizar:"
+msgstr "Выберите языки для обновления:"
+
+#: ui/update_languages_dialog.py:29
+msgid "Actualizar"
+msgstr "Обновить"
+
+#: ui/ajustes/__init__.py:16
+msgid "Configuración"
+msgstr "Настройки"
+
+#: ui/ajustes/__init__.py:27
+msgid "Chat"
+msgstr "Чат"
+
+#: ui/ajustes/__init__.py:35
+msgid "reproducción"
+msgstr "воспроизведение"
+
+#: ui/ajustes/__init__.py:39
+msgid "Categorías"
+msgstr "Категории"
+
+#: ui/ajustes/__init__.py:43
+msgid "Sonidos"
+msgstr "Звуки"
+
+#: ui/ajustes/__init__.py:54 update/update.py:145
+msgid "&Aceptar"
+msgstr "&ОК"
+
+#: ui/ajustes/__init__.py:56 update/update.py:145
+msgid "&Cancelar"
+msgstr "&Отмена"
+
+#: ui/ajustes/categorias.py:10
+msgid "Categoría"
+msgstr "Категория"
+
+#: ui/ajustes/chat.py:10
+msgid "Opciones del chat"
+msgstr "Параметры чата"
+
+#: ui/ajustes/chat.py:12
+msgid "Leer los mensajes anteriores al chat"
+msgstr "Читать предыдущие сообщения чата"
+
+#: ui/ajustes/chat.py:15
+msgid "traducción de mensajes: "
+msgstr "перевод сообщений: "
+
+#: ui/ajustes/chat.py:23
+msgid "Activar lectura de mensajes automática"
+msgstr "Включить автоматическое чтение сообщений"
+
+#: ui/ajustes/chat.py:26
+msgid "convertir las donaciones a la divisa: "
+msgstr "преобразовывать пожертвования в валюту: "
+
+#: ui/ajustes/eventos.py:9
+msgid "procesados: "
+msgstr "показываемые события: "
+
+#: ui/ajustes/eventos.py:12 ui/ajustes/eventos.py:18
+msgid "Evento"
+msgstr "Событие"
+
+#: ui/ajustes/eventos.py:15
+msgid "leídos"
+msgstr "озвучиваемые события"
+
+#: ui/ajustes/general.py:9
+msgid "Opciones de la app"
+msgstr "Параметры приложения"
+
+#: ui/ajustes/general.py:11
+msgid "Idioma de VeTube (Requiere reiniciar)"
+msgstr "Язык VeTube (требуется перезапуск)"
+
+#: ui/ajustes/general.py:16
+msgid "Activar diálogo de donaciones al inicio de la app."
+msgstr "Показывать диалог пожертвований при запуске."
+
+#: ui/ajustes/general.py:19
+msgid "preguntar si desea salir de la app al cerrar."
+msgstr "запрашивать подтверждение выхода при закрытии приложения."
+
+#: ui/ajustes/general.py:22
+msgid "Comprobar si hay actualizaciones al iniciar la app"
+msgstr "Проверять обновления при запуске"
+
+#: ui/ajustes/general.py:25
+msgid "intentar traducir las novedades cuando salga una actualización."
+msgstr "переводить список изменений при получении обновления."
+
+#: ui/ajustes/general.py:28
+msgid "Desactivar la interfaz invisible"
+msgstr "Отключить невидимый интерфейс"
+
+#: ui/ajustes/reproduccion.py:8
+msgid "ajustes de reproducción"
+msgstr "настройки воспроизведения"
+
+#: ui/ajustes/reproduccion.py:10
+msgid "activar reproducción automática al iniciar un en vivo."
+msgstr "автоматически начинать воспроизведение при запуске прямого эфира."
+
+#: ui/ajustes/reproduccion.py:13
+msgid "tiempo para adelantar y atrazar el en vivo en segundos"
+msgstr "шаг перемотки трансляции в секундах"
+
+#: ui/ajustes/reproduccion.py:17
+msgid "volumen del reproductor"
+msgstr "громкость проигрывателя"
+
+#: ui/ajustes/reproduccion.py:21
+msgid "cambio de volumen con las teclas de volumen (1-25)"
+msgstr "изменять громкость клавишами громкости (1–25)"
+
+#: ui/ajustes/sonidos.py:10
+msgid "Activar sonidos"
+msgstr "Включить звуки"
+
+#: ui/ajustes/sonidos.py:14
+msgid "Tema de sonidos"
+msgstr "Звуковая тема"
+
+#: ui/ajustes/sonidos.py:23
+msgid "Sonido"
+msgstr "Звук"
+
+#: ui/ajustes/sonidos.py:18
+msgid "&Reproducir"
+msgstr "&Воспроизвести"
+
+#: ui/ajustes/sonidos.py:21
+msgid "Seleccionar dispositivo de audio"
+msgstr "Выберите аудиоустройство"
+
+#: ui/ajustes/sonidos.py:26
+msgid "&Establecer"
+msgstr "&Установить"
+
+#: ui/ajustes/voz.py:9
+msgid "Opciones del habla"
+msgstr "Параметры речи"
+
+#: ui/ajustes/voz.py:11
+msgid "Usar voz sapi en lugar de lector de pantalla."
+msgstr "Использовать голос SAPI вместо программы экранного доступа."
+
+#: ui/ajustes/voz.py:14
+msgid "Sistema TTS a usar: "
+msgstr "Используемый синтезатор речи: "
+
+#: ui/ajustes/voz.py:19
+msgid "Voz: "
+msgstr "Голос: "
+
+#: ui/ajustes/voz.py:24
+msgid "Instalar un paquete de voz..."
+msgstr "Установить пакет голоса…"
+
+#: ui/ajustes/voz.py:26
+msgid "Tono: "
+msgstr "Высота: "
+
+#: ui/ajustes/voz.py:30
+msgid "Volumen: "
+msgstr "Громкость: "
+
+#: ui/ajustes/voz.py:34
+msgid "Velocidad: "
+msgstr "Скорость: "
+
+#: ui/editor/editor.py:7
+msgid "Editor de combinaciones de teclado para Vetube"
+msgstr "Редактор сочетаний клавиш VeTube"
+
+#: ui/editor/editor.py:9
+msgid "&Selecciona la combinación de teclado a editar"
+msgstr "&Выберите сочетание клавиш для изменения"
+
+#: ui/editor/editor.py:11
+msgid "acción: "
+msgstr "действие: "
+
+#: ui/editor/editor.py:12
+msgid "combinación de teclas: "
+msgstr "сочетание клавиш: "
+
+#: ui/editor/editor.py:21
+msgid "&Editar"
+msgstr "&Изменить"
+
+#: ui/editor/editor.py:23
+msgid "&restaurar combinaciones por defecto"
+msgstr "&Восстановить сочетание клавиш по умолчанию"
+
+#: ui/editor/nueva_combinacion.py:8
+#, python-format
+msgid "Editando la combinación de teclas para %s"
+msgstr "Изменение сочетания клавиш для функции %s"
+
+#: ui/editor/nueva_combinacion.py:10
+msgid "Selecciona las teclas que quieres usar"
+msgstr "Выберите клавиши, которые хотите использовать"
+
+#: ui/editor/nueva_combinacion.py:13
+msgid "&Control"
+msgstr "&Control"
+
+#: ui/editor/nueva_combinacion.py:15
+msgid "&Alt"
+msgstr "&Alt"
+
+#: ui/editor/nueva_combinacion.py:17
+msgid "&Shift"
+msgstr "&Shift"
+
+#: ui/editor/nueva_combinacion.py:19
+msgid "&Windows"
+msgstr "&Windows"
+
+#: ui/editor/nueva_combinacion.py:28
+msgid "Selecciona una tecla para la combinación"
+msgstr "Выберите клавишу для сочетания"
+
+#: ui/editor/nueva_combinacion.py:37
+msgid "&Aplicar nueva combinación de teclado"
+msgstr "&Применить новое сочетание клавиш"
+
+#: ui/menus/chat_filter_menu.py:9
+msgid "Todos"
+msgstr "Все"
+
+#: ui/menus/chat_filter_menu.py:10
+msgid "Unidos"
+msgstr "Зрители"
+
+#: ui/menus/chat_filter_menu.py:11
+msgid "Gustados"
+msgstr "Отметки «Нравится»"
+
+#: ui/menus/chat_filter_menu.py:12
+msgid "Compartidas"
+msgstr "Поделились"
+
+#: ui/menus/chat_filter_menu.py:13
+msgid "Seguidores"
+msgstr "Подписчики"
+
+#: ui/menus/chat_item_menu.py:8
+msgid "&Mostrar el mensaje en un cuadro de texto."
+msgstr "&Показать текущее сообщение в текстовом поле."
+
+#: ui/menus/chat_item_menu.py:9
+msgid "&Copiar mensaje al portapapeles"
+msgstr "&Копировать сообщение в буфер обмена"
+
+#: ui/menus/chat_item_menu.py:10
+msgid "&Listado de Urls."
+msgstr "&Список URL-адресов."
+
+#: ui/menus/chat_item_menu.py:11
+msgid "&Archivar mensaje"
+msgstr "&Добавить сообщение в архив"
+
+#: ui/menus/chat_opciones_menu.py:7 ui/menus/main_menu.py:10
+msgid "&Editor de combinaciones de teclado para VeTube"
+msgstr "&Редактор сочетаний клавиш VeTube"
+
+#: ui/menus/chat_opciones_menu.py:8
+msgid "&Añadir este canal a favoritos"
+msgstr "&Добавить этот канал в избранное"
+
+#: ui/menus/chat_opciones_menu.py:9
+msgid "&Ver estadísticas del chat"
+msgstr "&Просмотреть статистику чата"
+
+#: ui/menus/chat_opciones_menu.py:10
+msgid "&Copiar enlace del chat al portapapeles"
+msgstr "&Копировать ссылку на чат прямого эфира"
+
+#: ui/menus/chat_opciones_menu.py:11
+msgid "&Reproducir video en el navegador"
+msgstr "&Воспроизвести видео в браузере"
+
+#: ui/menus/chat_opciones_menu.py:12
+msgid "Buscar mensajes..."
+msgstr "&Поиск сообщений…"
+
+#: ui/menus/main_menu.py:11
+msgid "&Configuración"
+msgstr "&Настройки"
+
+#: ui/menus/main_menu.py:12
+msgid "&Restablecer los ajustes"
+msgstr "&Восстановить настройки по умолчанию"
+
+#: ui/menus/main_menu.py:13
+msgid "&Ayuda"
+msgstr "&Справка"
+
+#: ui/menus/main_menu.py:14
+msgid "¿Cómo usar &vetube? (documentación en línea)"
+msgstr "Как пользоваться &VeTube? (открывается в браузере)"
+
+#: ui/menus/main_menu.py:15
+msgid "Únete a nuestra &causa"
+msgstr "&Поддержать нас"
+
+#: ui/menus/main_menu.py:16
+msgid "&Visita nuestra página de github"
+msgstr "&Открыть страницу на GitHub"
+
+#: ui/menus/main_menu.py:17
+msgid "&buscar actualizaciones"
+msgstr "&Проверить обновления"
+
+#: ui/menus/main_menu.py:18
+msgid "Actualizar &idiomas"
+msgstr "Обновить &языки"
+
+#: ui/menus/main_menu.py:19
+msgid "&Acerca de"
+msgstr "&О программе"
+
+#: ui/menus/main_menu.py:20
+msgid "&Salir...\tAlt+F4"
+msgstr "&Выход…\tAlt+F4"
+
+#: update/update.py:144
+msgid "Con tu apoyo contribuyes a que este programa siga siendo gratuito. ¿Te unes a nuestra causa?"
+msgstr "Ваша поддержка помогает сохранять программу бесплатной. Хотите поддержать нас?"
+
+#: update/updater.py:26
+msgid "Error al comprobar actualizaciones: "
+msgstr "Ошибка обновления "
+
+#: update/updater.py:31
+msgid "Al parecer tienes la última versión del programa"
+msgstr "У вас установлена последняя версия программы"
+
+#: update/wxUpdater.py:8
+#, python-format
+msgid ""
+"Hay una nueva versión de VeTube. Te gustaría descargarla ahora?\n"
+"\n"
+" VeTube versión: %s\n"
+"\n"
+"Cambios:\n"
+"%s"
+msgstr ""
+"Доступна новая версия VeTube. Скачать её сейчас?\n"
+"\n"
+"Версия VeTube: %s\n"
+"\n"
+"Изменения:\n"
+"%s"
+
+#: update/wxUpdater.py:8
+msgid "Nueva versión de VeTube"
+msgstr "Новая версия VeTube"
+
+#: update/wxUpdater.py:16
+msgid "Descarga en progreso"
+msgstr "Выполняется скачивание"
+
+#: update/wxUpdater.py:16
+msgid "Descargando la actualización"
+msgstr "Скачивание обновления"
+
+#: update/wxUpdater.py:30
+#, python-format
+msgid "Actualizando... %s de %s"
+msgstr "Обновление… %s из %s"
+
+#: update/wxUpdater.py:36
+msgid "La actualización se ha descargado e instalado exitosamente. Pulse en aceptar para continuar."
+msgstr "Обновление успешно скачано и установлено. Нажмите «ОК», чтобы продолжить."
+
+#: update/wxUpdater.py:36
+msgid "¡Hecho!"
+msgstr "Готово!"
+
+#: utils/languageHandler.py:72
+msgid "Idioma del sistema"
+msgstr "Язык системы"
