@@ -1,6 +1,5 @@
 import os
 import sys
-import json
 import asyncio
 import subprocess
 import socket
@@ -16,8 +15,10 @@ from globals.paths import VOICES_DIR
 # Servidor TTS nativo: ejecutable Rust + sherpa-onnx (C-API oficial), proceso
 # separado sin Python ni numpy (el arranque de VeTube nunca depende de él,
 # incluso en CPUs antiguas sin AVX). Habla el mismo protocolo sonata_grpc que
-# el antiguo servidor de Piper y sintetiza AMBOS motores: las voces Piper del
-# catálogo rhasspy y el modelo Kokoro. Un solo proceso residente para los dos.
+# el antiguo servidor de Piper, pero aquí sintetiza SOLO el modelo Kokoro: las
+# voces Piper volvieron al puente sonata, que las fonemiza mejor. Todo lo que
+# hacía falta para servirlas desde aquí (preparación del tokens.txt, metadatos
+# del .onnx, resolución de rutas de fichero) se fue con ellas.
 _BASE_DIR = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BIN_PUENTE = _BASE_DIR / "64" / "sherpa"
 EXE_PUENTE = str(BIN_PUENTE / "vetube-sherpa-grpc.exe")
@@ -131,82 +132,6 @@ def kokoro_voice_config(index):
     # una ruta relativa a VeTube no resolvería allí.
     return f"{os.path.abspath(KOKORO_MODEL_DIR)}?sid={sid}&lang={lang}"
 
-def _varint(n):
-    salida = b""
-    while True:
-        septeto = n & 0x7F
-        n >>= 7
-        if n:
-            salida += bytes([septeto | 0x80])
-        else:
-            return salida + bytes([septeto])
-
-def _entrada_metadata(clave, valor):
-    """Serializa un metadata_props de ONNX: campo 14 del ModelProto (tag 0x72),
-    con un StringStringEntryProto {key=1, value=2} dentro."""
-    k = clave.encode("utf-8")
-    v = str(valor).encode("utf-8")
-    interno = b"\x0a" + _varint(len(k)) + k + b"\x12" + _varint(len(v)) + v
-    return b"\x72" + _varint(len(interno)) + interno
-
-def preparar_voz_piper(json_path, forzar=False):
-    """Prepara (una sola vez) una voz del catálogo rhasspy para sherpa-onnx.
-
-    Los paquetes oficiales k2-fsa traen de fábrica dos piezas que las voces
-    rhasspy no tienen: los metadatos del .onnx (sample_rate, n_speakers,
-    comment=piper…, sin los cuales el motor aborta) y el tokens.txt. Ambas se
-    derivan por completo del .json de la voz: los metadatos se añaden por
-    concatenación al .onnx (propiedad del wire format de protobuf: los campos
-    repetidos de mensajes concatenados se fusionan) y el tokens.txt replica
-    octeto a octeto el de los paquetes k2-fsa (una línea «símbolo id» por
-    entrada de phoneme_id_map).
-
-    El tokens.txt se escribe EL ÚLTIMO porque hace de marcador de «voz ya
-    preparada»: si algo se interrumpe a medias, el próximo intento rehace
-    todo (los metadatos repetidos con el mismo valor son inofensivos).
-
-    forzar=True rehace la preparación aunque el marcador esté: hay que usarlo
-    siempre que se sustituya el .onnx de una carpeta ya preparada (reinstalar
-    una voz), porque el tokens.txt viejo sobrevive al fichero nuevo y este se
-    quedaría sin metadatos — y un .onnx sin metadatos aborta el puente entero.
-    """
-    try:
-        carpeta = os.path.dirname(json_path)
-        marcador = os.path.join(carpeta, "tokens.txt")
-        if os.path.isfile(marcador) and not forzar:
-            return True
-        with open(json_path, encoding="utf-8") as f:
-            cfg = json.load(f)
-        mapa = cfg.get("phoneme_id_map")
-        if not mapa:
-            return False
-
-        onnx_path = json_path[:-len(".json")]
-        if not os.path.isfile(onnx_path):
-            return False
-        meta = {
-            "model_type": "vits",
-            "comment": "piper",
-            "language": cfg.get("language", {}).get("name_english", "unknown"),
-            "voice": cfg.get("espeak", {}).get("voice", ""),
-            "has_espeak": 1,
-            "n_speakers": cfg.get("num_speakers", 1),
-            "sample_rate": cfg["audio"]["sample_rate"],
-        }
-        blob = b"".join(_entrada_metadata(k, v) for k, v in meta.items())
-        with open(onnx_path, "ab") as f:
-            f.write(blob)
-
-        temporal = marcador + ".tmp"
-        with open(temporal, "w", encoding="utf-8", newline="") as f:
-            for simbolo, ids in mapa.items():
-                f.write(f"{simbolo} {ids[0]}\n")
-        os.replace(temporal, marcador)
-        return True
-    except Exception as e:
-        print(f"No se pudo preparar la voz {json_path}: {e}")
-        return False
-
 # Configuración de Job Objects para Windows
 if sys.platform == "win32":
     CreateJobObject = ctypes.windll.kernel32.CreateJobObjectW
@@ -239,9 +164,9 @@ if PROTO_DIR not in sys.path:
 
 from .sonata_protos import sonata_grpc_pb2
 
-# Instancia global para el Singleton: los modos «piper» y «kokoro» comparten
-# el mismo proceso puente (el servidor mantiene cada modelo cargado residente,
-# así que alternar entre motores no recarga nada).
+# Instancia global para el Singleton: un solo proceso puente para Kokoro, que
+# el servidor mantiene con su modelo cargado residente mientras el motor esté
+# activo. Al cambiar de motor, lector.configurar_tts cierra este puente.
 _INSTANCIA_SHERPA = None
 # El barrido de procesos huérfanos solo hace falta una vez por sesión.
 _ORFANOS_LIMPIADOS = False
@@ -458,46 +383,9 @@ class sherpaSpeak:
             model_path = self.current_voice_path
         if not model_path: return
 
-        # Las rutas de Kokoro («carpeta?sid=..&lang=..») no son ficheros: pasan
-        # tal cual, sin buscarlas en el disco.
-        es_ruta_kokoro = "?" in model_path
-
-        # Si el .onnx no está en la ruta dada (nombres de carpeta que no
-        # coinciden), lo buscamos dentro de voices/. Solo en las carpetas
-        # «voice-*»: en voices/ vive también el paquete de Kokoro, y sus
-        # ficheros (model.onnx, tokens.txt) no son voces de Piper.
-        if not es_ruta_kokoro and not os.path.exists(model_path):
-            import glob
-            filename = os.path.basename(model_path)
-            coincidencias = glob.glob(os.path.join(str(VOICES_DIR), "voice-*", filename))
-            if coincidencias:
-                model_path = coincidencias[0]
-
-        if model_path.endswith(".onnx"):
-            json_path = model_path + ".json"
-            if not os.path.exists(json_path):
-                # Voz colocada a mano: su configuración puede llamarse de otro
-                # modo (config.json, <nombre>.json). Sin este repli se enviaría
-                # el .onnx crudo, que se salta la preparación de abajo y llega
-                # al puente sin tokens.txt.
-                import glob
-                otros = [j for j in glob.glob(os.path.join(os.path.dirname(model_path), "*.json"))
-                         if "+RT" not in os.path.basename(j)]
-                json_path = otros[0] if otros else json_path
-            if os.path.exists(json_path):
-                model_path = json_path
-
-        # Voz Piper: garantizar el tokens.txt y los metadatos que exige sherpa
-        # (las voces del catálogo rhasspy no los traen; se preparan una vez).
-        # Sin preparación no se intenta cargar: un .onnx sin metadatos aborta
-        # el proceso del puente entero, no solo la carga.
-        if model_path.endswith(".json") and not preparar_voz_piper(model_path):
-            print(f"Voz no preparada para sherpa, no se carga: {model_path}")
-            # Soltar la voz anterior: si no, el puente seguiría hablando con
-            # ella (puede ser la del otro motor) mientras Ajustes muestra la
-            # que se acaba de elegir.
-            self.unload_model()
-            return
+        # Aquí solo llegan rutas de Kokoro («carpeta?sid=..&lang=..»), que no
+        # son ficheros y pasan tal cual: desde que Piper habla por sonata, no
+        # hay ningún .onnx que buscar ni preparar en el disco.
 
         # El servidor guarda el modelo Kokoro en caché por su ruta, y con él el
         # idioma de la PRIMERA voz que se cargó: pedir después una voz de otro
@@ -523,7 +411,7 @@ class sherpaSpeak:
         # Invalidar la voz anterior antes de pedir la nueva: mientras el puente
         # responde, un mensaje del chat encontraría el identificador viejo, no
         # esperaría (ver _speak_task_inner) y se leería con la voz que el
-        # usuario acaba de abandonar, incluso la del otro motor.
+        # usuario acaba de abandonar.
         self.voice_id = None
         asyncio.run_coroutine_threadsafe(self._load_voice_task(model_path), self.loop)
 
@@ -607,17 +495,10 @@ class sherpaSpeak:
     def is_multispeaker(self):
         return False
 
-    def piperSpeak(self, model_path):
-        # Nombre histórico del handler de Piper: carga la voz y devuelve la
-        # instancia (varios llamantes reasignan el lector con su resultado).
-        self.load_model(model_path)
-        return self
-
     def unload_model(self):
-        """Suelta la voz cargada. El puente es un singleton que comparten los
-        dos motores, así que al pasar a uno que no tiene ninguna voz instalada
-        hay que olvidar la anterior: si no, el chat se seguiría leyendo con la
-        voz del otro motor."""
+        """Suelta la voz cargada. El puente sobrevive a que Kokoro se quede sin
+        modelo instalado, así que hay que olvidar la voz anterior: si no, el
+        chat se seguiría leyendo con una voz que Ajustes ya no muestra."""
         self.current_voice_path = None
         self.voice_id = None
 
