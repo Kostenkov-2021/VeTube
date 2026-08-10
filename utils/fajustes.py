@@ -1,4 +1,5 @@
 import json
+from globals.paths import DATA_FILE
 
 configuraciones ={
 	"salir": True,
@@ -34,17 +35,17 @@ actualizar_configuracion = False
 
 def escribirConfiguracion():
 	global configuraciones
-	with open('data.json', 'w+') as file:
+	with open(DATA_FILE, 'w+') as file:
 		json.dump(configuraciones, file, indent=4)
 
 def guardarConfiguracion(configs):
 	"""Guarda en data.json la configuración actual (no los valores por defecto)."""
-	with open('data.json', 'w+', encoding='utf-8') as file:
+	with open(DATA_FILE, 'w+', encoding='utf-8') as file:
 		json.dump(configs, file, indent=4, ensure_ascii=False)
 
 def leerConfiguracion():
 	global configuraciones, actualizar_configuracion
-	with open ("data.json") as file:
+	with open (DATA_FILE) as file:
 		configs = json.load(file)
 	for clave, valor_pred in configuraciones.items():
 		if clave not in configs:
@@ -56,6 +57,6 @@ def leerConfiguracion():
 			actualizar_configuracion = True
 	# actualizar al archivo en caso de ser necesario:
 	if actualizar_configuracion:
-		with open('data.json', 'w+') as file:
+		with open(DATA_FILE, 'w+') as file:
 			json.dump(configs, file, indent=4)
 	return configs

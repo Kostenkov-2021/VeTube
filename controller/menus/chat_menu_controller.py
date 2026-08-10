@@ -3,6 +3,7 @@ from pyperclip import copy
 from ui.menus.chat_opciones_menu import ChatOpcionesMenu
 from controller.editor_controller import EditorController
 from utils import funciones
+from globals.paths import FAVORITOS_FILE
 from controller.estadisticas_controller import EstadisticasController
 from servicios.estadisticas_manager import EstadisticasManager
 
@@ -57,7 +58,7 @@ class ChatMenuController:
 
         list_favorite.Append(f"{titulo}: {url}")
         favorite.append({'titulo': titulo, 'url': url})
-        funciones.escribirJsonLista('favoritos.json', favorite)
+        funciones.escribirJsonLista(FAVORITOS_FILE, favorite)
         wx.MessageBox(_("Se ha agregado a favoritos"), _("Aviso"), wx.OK | wx.ICON_INFORMATION)
 
     def copiarEnlace(self, event):

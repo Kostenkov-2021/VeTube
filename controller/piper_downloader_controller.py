@@ -7,6 +7,7 @@ from setup import network, player, reader
 from servicios.piper_manager import PiperManager
 from ui.piper_downloader import PiperDownloaderDialog
 from TTS.list_voices import piper_list_voices, obtener_ruta_voz
+from globals.paths import VOICES_DIR
 
 class PiperDownloaderController:
     def __init__(self, parent):
@@ -89,7 +90,7 @@ class PiperDownloaderController:
                          _("Confirmar eliminación"), wx.YES_NO | wx.ICON_WARNING) == wx.ID_YES:
             
             # piper_list_voices() ya devuelve el nombre de la carpeta (voice-...)
-            path_to_remove = os.path.join("voices", voz_nombre)
+            path_to_remove = str(VOICES_DIR / voz_nombre)
             
             try:
                 if os.path.exists(path_to_remove):

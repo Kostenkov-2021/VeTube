@@ -2,8 +2,13 @@ import os
 import glob
 import asyncio
 import traceback
+import tarfile
+import tempfile
+import shutil
+from pathlib import Path
 from .base_downloader import BaseDownloader
 from setup import network
+from globals.paths import VOICES_DIR
 
 PIPER_VOICE_LIST_URL = "https://huggingface.co/rhasspy/piper-voices/raw/v1.0.0/voices.json"
 PIPER_VOICE_DOWNLOAD_URL_PREFIX = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0"
@@ -28,16 +33,15 @@ def voces_rt_instaladas():
     (basta con limpiarlas).
     """
     puras, mixtas = [], []
-    if not os.path.isdir("voices"):
+    if not VOICES_DIR.exists():
         return puras, mixtas
-    for carpeta in os.listdir("voices"):
-        ruta = os.path.join("voices", carpeta)
-        if not (carpeta.startswith("voice-") and os.path.isdir(ruta)):
+    for carpeta in VOICES_DIR.iterdir():
+        if not (carpeta.name.startswith("voice-") and carpeta.is_dir()):
             continue
-        onnx = [os.path.basename(m).lower() for m in glob.glob(os.path.join(ruta, "*.onnx"))]
+        onnx = [m.name.lower() for m in carpeta.glob("*.onnx")]
         if not any(f in onnx for f in _FICHEROS_RT):
             continue
-        clave = carpeta[len("voice-"):]
+        clave = carpeta.name[len("voice-"):]
         if any(f not in _FICHEROS_RT for f in onnx):
             mixtas.append(clave)
         else:
@@ -46,11 +50,11 @@ def voces_rt_instaladas():
 
 def limpiar_ficheros_rt(voice_key):
     """Borra los ficheros de la variante RT de la carpeta de una voz."""
-    ruta = os.path.join("voices", f"voice-{voice_key}")
+    ruta = VOICES_DIR / f"voice-{voice_key}"
     try:
-        for nombre in os.listdir(ruta):
-            if nombre.lower() in _FICHEROS_RT or _es_json_rt(nombre):
-                os.remove(os.path.join(ruta, nombre))
+        for nombre in ruta.iterdir():
+            if nombre.name.lower() in _FICHEROS_RT or _es_json_rt(nombre.name):
+                nombre.unlink()
     except OSError:
         traceback.print_exc()
 
@@ -152,7 +156,7 @@ class PiperManager(BaseDownloader):
 
         data = self.voices_data[voice_key]
         archivos = data.get('files', {})
-        dest_dir = os.path.join("voices", f"voice-{voice_key}")
+        dest_dir = str(VOICES_DIR / f"voice-{voice_key}")
         self.ensure_dir(dest_dir)
 
         tasks = []
@@ -160,7 +164,7 @@ class PiperManager(BaseDownloader):
         for rel_path in archivos.keys():
             url = f"{PIPER_VOICE_DOWNLOAD_URL_PREFIX}/{rel_path}"
             file_name = os.path.basename(rel_path)
-            local_path = os.path.join(dest_dir, file_name)
+            local_path = str(Path(dest_dir) / file_name)
             # Descarga a un nombre temporal: una descarga interrumpida no debe
             # dejar nunca un .onnx truncado que parezca una voz instalada.
             partes.append((local_path + ".part", local_path))
