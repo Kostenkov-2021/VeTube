@@ -11,3 +11,16 @@ favoritos.json
 keys.txt
 .vscode
 logs/
+
+# Build artifacts (cx_Freeze / uv)
+build/
+dist/
+src/vetube.egg-info/
+
+# Local tool state
+.codegraph/
+.atl/
+
+# Scratch / temp files
+@AutomationLog.txt
+issue-body.md
