@@ -5,7 +5,7 @@
 ![Version](https://img.shields.io/badge/version-3.94-blue)
 ![Python](https://img.shields.io/badge/python-3.14+-green)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
-![License](https://img.shields.io/badge/license-MIT-orange)
+![License](https://img.shields.io/badge/license-GPL--3.0-orange)
 
 ## What is VeTube?
 
@@ -116,7 +116,7 @@ VeTube is available in multiple languages. See the **[Translation Guide](transla
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GPL-3.0 License — see the [LICENSE](LICENSE) file for details.
 
 ## Credits
 
