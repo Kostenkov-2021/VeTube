@@ -2,9 +2,9 @@
 
 **The amazing people who make VeTube possible** — VeTube is built by a community of developers, translators, and users who believe in making live streaming more accessible.
 
-## Creator & Maintainer
+## Core Team
 
-VeTube is created and maintained by Cesar Verastegui.
+The core team maintains VeTube, reviews contributions, and guides the project's direction.
 
 <table>
   <tbody>
@@ -20,17 +20,6 @@ VeTube is created and maintained by Cesar Verastegui.
         <a href="#maintenance-metalalchemist" title="Maintenance">🚧</a>
         <a href="#ideas-metalalchemist" title="Ideas & Planning">🤔</a>
       </td>
-    </tr>
-  </tbody>
-</table>
-
-## Contributors
-
-Thanks to all the people who have contributed code, bug fixes, and improvements to VeTube.
-
-<table>
-  <tbody>
-    <tr>
       <td align="center" valign="top" width="14.28%">
         <a href="https://github.com/Row0902">
           <img src="https://github.com/Row0902.png?s=100" width="100px;" alt="Rowell Urbaez Reyes"/>
@@ -42,6 +31,17 @@ Thanks to all the people who have contributed code, bug fixes, and improvements 
         <a href="#maintenance-Row0902" title="Maintenance">🚧</a>
         <a href="#packaging-Row0902" title="Packaging">📦</a>
       </td>
+    </tr>
+  </tbody>
+</table>
+
+## Contributors
+
+Thanks to all the people who have contributed code, bug fixes, and improvements to VeTube.
+
+<table>
+  <tbody>
+    <tr>
       <td align="center" valign="top" width="14.28%">
         <a href="https://github.com/enzowenterstein">
           <img src="https://github.com/enzowenterstein.png?s=100" width="100px;" alt="Enzo"/>
