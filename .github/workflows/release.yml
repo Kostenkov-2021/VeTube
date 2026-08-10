@@ -2,6 +2,8 @@ name: Build and Release
 
 on:
   push:
+    branches:
+      - master
     tags:
       - 'v*'
 
@@ -39,15 +41,14 @@ jobs:
 
       - name: Compress with 7-Zip (maximum compression)
         run: |
-          $version = "${{ github.ref_name }}"
-          7z a -t7z -mx=9 "vetube-$version-portable.7z" "build/vetube/*"
+          7z a -t7z -mx=9 "vetube.7z" "build/vetube/*"
         shell: pwsh
 
       - name: Upload portable artifact
         uses: actions/upload-artifact@v4
         with:
           name: portable-build
-          path: vetube-*-portable.7z
+          path: vetube.7z
           retention-days: 1
 
   build-msi:
@@ -73,11 +74,17 @@ jobs:
         run: uv run cxfreeze bdist_msi
         shell: pwsh
 
+      - name: Rename MSI to vetube.setup
+        run: |
+          $msiFile = Get-ChildItem -Path "dist" -Filter "*.msi" | Select-Object -First 1
+          Rename-Item -Path $msiFile.FullName -NewName "vetube.setup"
+        shell: pwsh
+
       - name: Upload MSI artifact
         uses: actions/upload-artifact@v4
         with:
           name: msi-build
-          path: dist/*.msi
+          path: dist/vetube.setup
           retention-days: 1
 
   release:
@@ -108,8 +115,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/*.7z
-            dist/*.msi
+            dist/vetube.7z
+            dist/vetube.setup
           draft: false
           prerelease: false
           generate_release_notes: true
