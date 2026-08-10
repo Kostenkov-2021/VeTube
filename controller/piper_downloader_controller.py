@@ -253,6 +253,14 @@ class PiperDownloaderController:
         self.view.update_progress(100)
         
         if completadas > 0:
+            # La lista de instaladas solo se rellenaba al abrir el diálogo y al
+            # eliminar una voz, nunca al terminar una descarga. Con la etiqueta
+            # «(RT)» eso pasó de incompleto a engañoso: al bajar la variante
+            # rápida de una voz que ya estaba, el disco cambia pero la lista
+            # sigue mostrándola sin marca, y el usuario concluye que la
+            # instalación ha fallado. Una voz nueva ni siquiera aparecía.
+            # Se refresca ANTES del aviso: al cerrarlo, la lista ya es correcta.
+            self._refrescar_instaladas()
             wx.MessageBox(_("Las voces se han instalado correctamente. Ya puedes seleccionarlas en los Ajustes de Voz."), _("Éxito"))
 
     def show(self):
