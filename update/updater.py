@@ -82,6 +82,18 @@ def do_update(is_manual: bool = False) -> None:
         is_manual: True when triggered by the user (shows errors),
             False for auto-check (silent on failure).
     """
+    # Don't allow updates in development mode
+    if not getattr(sys, "frozen", False):
+        if is_manual:
+            wx.CallAfter(
+                wx.MessageBox,
+                _("Updates are not available when running from source code.\n\n"
+                  "Please use the compiled version (.exe) to check for updates."),
+                _("Development Mode"),
+                wx.ICON_INFORMATION,
+            )
+        return
+
     global buscando
     if buscando:
         return
