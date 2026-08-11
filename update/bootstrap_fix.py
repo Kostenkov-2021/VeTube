@@ -5,20 +5,27 @@ import subprocess
 import time
 import ctypes
 import traceback
+import logging
 
-# Archivo de log en la carpeta temporal del usuario (ej. C:\Users\TuUsuario\AppData\Local\Temp\vetube_bootstrap_debug.txt)
+logger = logging.getLogger(__name__)
+
+EXIT_SUCCESS = 0
+EXIT_FAILURE = 1
+EXIT_CANCELLED = 2
+
 LOG_FILE = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'vetube_bootstrap_debug.txt')
+ROLLBACK_SIGNAL = '_rollback_needed'
 
-def log(msg):
-    """Escribe un mensaje en el archivo de log."""
+
+def log(msg: str) -> None:
     try:
         with open(LOG_FILE, 'a', encoding='utf-8') as f:
             f.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
     except Exception:
         pass
 
-def kill_process(pid):
-    """Mata el proceso con el PID dado usando la API de Windows."""
+
+def kill_process(pid: int) -> None:
     log(f"Intentando matar proceso PID: {pid}")
     try:
         PROCESS_TERMINATE = 1
@@ -32,13 +39,26 @@ def kill_process(pid):
     except Exception as e:
         log(f"Error matando proceso: {e}")
 
-def main():
+
+def _write_rollback_signal(dest: str) -> None:
+    signal_path = os.path.join(dest, ROLLBACK_SIGNAL)
+    try:
+        with open(signal_path, 'w') as f:
+            f.write(str(int(time.time())))
+        log(f"Rollback signal written: {signal_path}")
+    except Exception as e:
+        log(f"Failed to write rollback signal: {e}")
+
+
+def main() -> None:
     log("=== INICIO BOOTSTRAP ===")
     log(f"Argumentos recibidos: {sys.argv}")
 
     if len(sys.argv) < 5:
         log("ERROR: No hay suficientes argumentos.")
-        sys.exit(1)
+        sys.exit(EXIT_FAILURE)
+
+    exit_code = EXIT_FAILURE
 
     try:
         pid = int(sys.argv[1])
@@ -48,48 +68,47 @@ def main():
 
         log(f"Config inicial -> Source: {source} | Dest: {dest} | Exe: {exe_path}")
 
-        # --- CORRECCIÓN DE RUTA ---
         if os.path.basename(os.path.normpath(dest)) == "_internal":
             log("Detectado destino '_internal'. Corrigiendo a directorio padre.")
             dest = os.path.dirname(os.path.normpath(dest))
             log(f"Nuevo Destino: {dest}")
-        # --------------------------
 
-        # 1. Matar proceso
-        time.sleep(1) 
+        time.sleep(1)
         kill_process(pid)
         time.sleep(2)
 
-        # 2. Mover archivos
         if os.path.exists(source) and os.path.exists(dest):
             log("Iniciando copia de archivos...")
             try:
                 shutil.copytree(source, dest, dirs_exist_ok=True)
                 log("Copia finalizada correctamente.")
+            except PermissionError as e:
+                log(f"ERROR copiando archivos (permiso deniado): {e}")
+                log(traceback.format_exc())
+                _write_rollback_signal(dest)
+                sys.exit(EXIT_CANCELLED)
             except Exception as e:
                 log(f"ERROR copiando archivos: {e}")
                 log(traceback.format_exc())
+                _write_rollback_signal(dest)
+                sys.exit(EXIT_FAILURE)
         else:
             log("ERROR: La carpeta source o dest no existen.")
+            sys.exit(EXIT_FAILURE)
 
-        # 3. Ejecutar la nueva versión
         log("Intentando relanzar aplicación...")
-        
-        # Normalizar ruta del ejecutable
+
         exe_path = os.path.normpath(exe_path)
         log(f"Ruta exe original: {exe_path}")
 
-        # Verificación inteligente de la ruta del ejecutable
         final_exe_path = exe_path
         if not os.path.exists(final_exe_path):
             log("El exe no existe en la ruta original. Buscando alternativas...")
-            # 1. Buscar en la carpeta destino raíz
             candidate = os.path.join(dest, os.path.basename(exe_path))
             if os.path.exists(candidate):
                 final_exe_path = candidate
                 log(f"Encontrado en raíz destino: {final_exe_path}")
             else:
-                # 2. Buscar quitando _internal si estaba
                 clean_path = exe_path.replace("_internal\\", "").replace("_internal/", "")
                 if os.path.exists(clean_path):
                     final_exe_path = clean_path
@@ -99,32 +118,39 @@ def main():
             working_dir = os.path.dirname(os.path.abspath(final_exe_path))
             log(f"Lanzando: {final_exe_path}")
             log(f"Directorio de trabajo (CWD): {working_dir}")
-            
+
             os.chdir(working_dir)
-            
+
             try:
-                # Intento 1: DETACHED_PROCESS
-                # Corregido: Quitamos CREATE_NEW_CONSOLE porque entraba en conflicto con DETACHED_PROCESS (Error 87)
-                subprocess.Popen([final_exe_path], 
+                subprocess.Popen([final_exe_path],
                                  creationflags=subprocess.DETACHED_PROCESS,
                                  cwd=working_dir,
                                  close_fds=False,
                                  shell=False)
                 log("subprocess.Popen llamado con éxito (DETACHED).")
+                exit_code = EXIT_SUCCESS
             except Exception as e:
                 log(f"Fallo intento 1: {e}")
-                # Intento 2: Shell básico
                 log("Intentando fallback con shell=True...")
-                # Usamos una f-string limpia para las comillas
-                subprocess.Popen(f'"{final_exe_path}"', shell=True, cwd=working_dir)
+                try:
+                    subprocess.Popen(f'"{final_exe_path}"', shell=True, cwd=working_dir)
+                    log("Fallback lanzado con éxito.")
+                    exit_code = EXIT_SUCCESS
+                except Exception as e2:
+                    log(f"Fallo intento 2: {e2}")
+                    exit_code = EXIT_FAILURE
         else:
             log(f"ERROR CRÍTICO: No se encontró el ejecutable en ninguna ruta probada. Última intentada: {final_exe_path}")
+            exit_code = EXIT_FAILURE
 
     except Exception as e:
         log(f"ERROR GLOBAL NO CONTROLADO: {e}")
         log(traceback.format_exc())
-    
-    log("=== FIN BOOTSTRAP ===")
+        exit_code = EXIT_FAILURE
+
+    log(f"=== FIN BOOTSTRAP (exit={exit_code}) ===")
+    sys.exit(exit_code)
+
 
 if __name__ == "__main__":
     main()
