@@ -169,6 +169,7 @@ include_files = [
     # Datos de la aplicación
     ["data.json", "data.json"],
     ["bootstrap.exe", "bootstrap.exe"],
+    ["VERSION", "VERSION"],
     
     # Recursos
     ["translates/", "translates/"],

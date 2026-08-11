@@ -23,22 +23,49 @@ from update.wxUpdater import available_update_dialog, progress_callback, update_
 
 logger = logging.getLogger(__name__)
 
-try:
-    import tomllib
-except ModuleNotFoundError:
-    import tomli as tomllib
-
 
 def _read_version() -> str:
-    """Read version from pyproject.toml at runtime."""
-    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+    """Read version using multiple fallback strategies.
+    
+    Strategy 1: VERSION file (works in both development and cx_Freeze builds)
+    Strategy 2: importlib.metadata (works for installed packages)
+    Strategy 3: pyproject.toml (works in development)
+    Strategy 4: Return "0.0.0" (should never happen)
+    """
+    # Strategy 1: Try VERSION file (most reliable for cx_Freeze builds)
     try:
+        version_file = BASE_DIR / "VERSION"
+        if version_file.exists():
+            version = version_file.read_text(encoding="utf-8").strip()
+            if version:
+                return version
+    except Exception as e:
+        logger.debug(f"VERSION file read failed: {e}")
+    
+    # Strategy 2: Try importlib.metadata (standard for installed packages)
+    try:
+        from importlib.metadata import version
+        return version("vetube")
+    except Exception as e:
+        logger.debug(f"importlib.metadata failed: {e}")
+    
+    # Strategy 3: Try pyproject.toml (development mode)
+    try:
+        try:
+            import tomllib
+        except ModuleNotFoundError:
+            import tomli as tomllib
+        
+        pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
         with open(pyproject_path, "rb") as f:
             data = tomllib.load(f)
         return data["project"]["version"]
-    except Exception:
-        logger.exception("Failed to read version from pyproject.toml")
-        return "0.0.0"
+    except Exception as e:
+        logger.debug(f"pyproject.toml read failed: {e}")
+    
+    # Strategy 4: Fallback (should never reach here)
+    logger.error("Could not determine version from any source")
+    return "0.0.0"
 
 
 VERSION: str = _read_version()
