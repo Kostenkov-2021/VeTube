@@ -115,6 +115,19 @@ jobs:
         run: ls -la dist/
         shell: bash
 
+      - name: Detect prerelease
+        id: detect
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [[ "$TAG" =~ -beta|-rc|-alpha ]]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+            echo "Tag $TAG detected as prerelease"
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+            echo "Tag $TAG detected as stable release"
+          fi
+        shell: bash
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -122,7 +135,7 @@ jobs:
             dist/vetube-*.7z
             dist/vetube-*.msi
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.detect.outputs.prerelease }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
