@@ -16,6 +16,7 @@ from globals.paths import BASE_DIR, BOOTSTRAP_EXE
 from update import github_client
 from update.backup import cleanup_backup, create_backup, restore_backup
 from update.bootstrap import launch_bootstrap
+from update.channel import get_channel
 from update.downloader import download
 from update.extractor import extract
 from update.verifier import verify
@@ -88,7 +89,7 @@ def do_update(is_manual: bool = False) -> None:
     def _check_and_notify() -> None:
         global buscando
         try:
-            release = github_client.get_latest_release()
+            release = github_client.get_latest_release(get_channel())
 
             if release is None:
                 if is_manual:
