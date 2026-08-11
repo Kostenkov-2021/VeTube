@@ -16,29 +16,28 @@ def channel_selection_dialog() -> bool:
     current = get_channel()
 
     dlg = wx.Dialog(None, title=_(u"Update Channel"), size=(420, 260))
-    panel = wx.Panel(dlg)
     vbox = wx.BoxSizer(wx.VERTICAL)
 
     header = wx.StaticText(
-        panel, label=_(u"Choose which updates you want to receive:")
+        dlg, label=_(u"Choose which updates you want to receive:")
     )
     header.SetFont(header.GetFont().Bold())
     vbox.Add(header, 0, wx.ALL | wx.EXPAND, 12)
 
     radio_stable = wx.RadioButton(
-        panel, label=_(u"Stable"), style=wx.RB_GROUP
+        dlg, label=_(u"Stable"), style=wx.RB_GROUP
     )
     vbox.Add(radio_stable, 0, wx.LEFT | wx.RIGHT, 24)
     desc_stable = wx.StaticText(
-        panel, label=_(u"Only official releases. Recommended for most users.")
+        dlg, label=_(u"Only official releases. Recommended for most users.")
     )
     desc_stable.SetForegroundColour(wx.Colour(100, 100, 100))
     vbox.Add(desc_stable, 0, wx.LEFT | wx.BOTTOM, 24)
 
-    radio_beta = wx.RadioButton(panel, label=_(u"Beta"))
+    radio_beta = wx.RadioButton(dlg, label=_(u"Beta"))
     vbox.Add(radio_beta, 0, wx.LEFT | wx.RIGHT, 24)
     desc_beta = wx.StaticText(
-        panel,
+        dlg,
         label=_(u"Includes pre-releases and early features. May be unstable."),
     )
     desc_beta.SetForegroundColour(wx.Colour(100, 100, 100))
@@ -52,7 +51,7 @@ def channel_selection_dialog() -> bool:
     btn_sizer = dlg.CreateButtonSizer(wx.OK | wx.CANCEL)
     vbox.Add(btn_sizer, 0, wx.ALL | wx.ALIGN_CENTER, 12)
 
-    panel.SetSizer(vbox)
+    dlg.SetSizer(vbox)
 
     if dlg.ShowModal() == wx.ID_OK:
         chosen = "beta" if radio_beta.GetValue() else "stable"
