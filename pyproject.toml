@@ -1,6 +1,6 @@
 [project]
 name = "vetube"
-version = "3.94"
+version = "3.95-rc2"
 description = "Aplicación VeTube"
 readme = "README.md"
 authors = [
