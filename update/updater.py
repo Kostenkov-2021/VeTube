@@ -37,7 +37,8 @@ def _read_version() -> str:
     try:
         version_file = BASE_DIR / "VERSION"
         if version_file.exists():
-            version = version_file.read_text(encoding="utf-8").strip()
+            # Use utf-8-sig to automatically strip BOM if present
+            version = version_file.read_text(encoding="utf-8-sig").strip()
             if version:
                 return version
     except Exception as e:
