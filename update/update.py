@@ -1,166 +1,117 @@
-from logging import getLogger
-import json
-from utils import languageHandler
-import contextlib
-import io
-import os
-import sys
-import platform
-import httpx
-import tempfile
-try:
-    import czipfile as zipfile
-except ImportError:
-    import zipfile
-import wx
-from platform_utils import paths
-from utils.translator import TranslatorWrapper
-from setup import network
-from globals.paths import DATA_FILE
-logger = getLogger('update')
+"""Legacy update module — simplified for backward compatibility.
 
-def perform_update(update_url, donations=True, password=None, progress_callback=None, update_complete_callback=None):
-    # perform_update corre en un hilo aparte (updater.py). Si algo falla (antivirus,
-    # firewall, conexión, permisos...), la excepción moriría en silencio y el usuario
-    # solo vería que "no pasa nada". La registramos para poder diagnosticar el caso.
+The main update flow is now in updater.py. This module keeps async_check_update()
+and perform_update() for backward compatibility with existing callers.
+"""
+
+import json
+import logging
+import os
+import tempfile
+
+import wx
+from packaging.version import Version
+
+from globals.paths import DATA_FILE
+from update import github_client
+from update.channel import get_channel
+from update.downloader import download
+from update.extractor import extract
+
+logger = logging.getLogger(__name__)
+
+
+async def async_check_update(endpoint: str = "", current_version: str = "") -> dict | Exception | None:
+    """Check for updates using GitHub Releases API.
+
+    Args:
+        endpoint: Ignored (kept for backward compatibility).
+        current_version: Ignored (reads from updater.VERSION).
+
+    Returns:
+        Dict with update info, None if no update, or Exception on error.
+    """
+    try:
+        if DATA_FILE.exists():
+            with open(DATA_FILE) as file:
+                resultado = json.load(file)
+            donations = resultado.get('donations', True)
+        else:
+            donations = True
+
+        channel = get_channel()
+        release = github_client.get_latest_release(channel)
+
+        if release is None:
+            logger.debug("No release found for channel '%s'", channel)
+            return None
+
+        from update.updater import VERSION
+        current = Version(VERSION)
+        latest = Version(release.version)
+
+        if latest <= current:
+            logger.debug("No update available (current=%s, latest=%s)", VERSION, release.version)
+            return None
+
+        return {
+            'update_url': release.zip_url,
+            'available_version': release.version,
+            'available_description': release.description,
+            'donations': donations,
+        }
+
+    except Exception as e:
+        logger.exception("Error checking for updates")
+        return e
+
+
+def perform_update(
+    update_url: str,
+    donations: bool = True,
+    password: str | None = None,
+    progress_callback=None,
+    update_complete_callback=None,
+) -> None:
+    """Download and extract update (simplified flow without verification/backup).
+
+    Args:
+        update_url: URL to download the update from.
+        donations: Whether to show donation dialog.
+        password: Password for zip extraction (unused, kept for compatibility).
+        progress_callback: Called with (bytes_downloaded, total_bytes).
+        update_complete_callback: Called when extraction is complete.
+    """
     try:
         base_path = tempfile.mkdtemp()
         download_path = os.path.join(base_path, 'update.zip')
         update_path = os.path.join(base_path, 'update')
-        logger.info("Iniciando actualización desde %s", update_url)
 
-        # A PROPÓSITO invertido respecto al inicio (run_main_window.py): este diálogo es un
-        # recordatorio para quienes DESACTIVARON la casilla de donaciones, por si les nace
-        # contribuir; los que la tienen activa ya lo ven en cada inicio. NO "corregir".
-        # perform_update corre en un hilo aparte (updater.py); el diálogo va al hilo de la UI.
-        if not donations: wx.CallAfter(donation)
+        logger.info("Starting simplified update from %s", update_url)
 
-        with httpx.Client(follow_redirects=True, timeout=None) as client:
-            downloaded = download_update(update_url, download_path, client=client, progress_callback=progress_callback)
+        if not donations:
+            wx.CallAfter(donation)
 
-        extracted = extract_update(downloaded, update_path, password=password)
-        bootstrap_path = move_bootstrap(extracted)
+        download(update_url, download_path, progress_callback=progress_callback)
+        extract(download_path, update_path)
+
         if callable(update_complete_callback):
             update_complete_callback()
-        execute_bootstrap(bootstrap_path, extracted)
-        logger.info("Update prepared for installation.")
+
+        logger.info("Simplified update complete")
+
     except Exception:
-        logger.exception("Fallo al descargar o instalar la actualización")
+        logger.exception("Failed to download or extract update")
 
-async def async_check_update(endpoint, current_version):
-    try:
-        if DATA_FILE.exists():
-            with open (DATA_FILE) as file: resultado=json.load(file)
-            donations = resultado.get('donations', True)
-            traducir = resultado.get('traducir', False)
-        else:
-            donations = True
-            traducir = False
 
-        response = await network.client.get(endpoint)
-        response.raise_for_status()
-        available_update = response.json()
-        
-        available_version = available_update['current_version']
-        arch_key = platform.system() + platform.architecture()[0][:2]
-        
-        if available_version == current_version or arch_key not in available_update['downloads']:
-            logger.debug("No update available or not for this architecture")
-            return None
-            
-        available_description = available_update.get('description', None)
-        if traducir:
-            # Si la traducción falla, la comprobación en sí fue bien: dejar la
-            # descripción original en vez de convertirla en un falso error.
-            try:
-                translator = TranslatorWrapper()
-                available_description = translator.translate(available_description, target=languageHandler.curLang[:2])
-            except Exception:
-                logger.exception("No se pudo traducir la descripción de la actualización")
-            
-        update_url = available_update['downloads'][arch_key]
-        
-        return {
-            'update_url': update_url,
-            'available_version': available_version,
-            'available_description': available_description,
-            'donations': donations
-        }
-    except Exception as e:
-        # Devolver la excepción, NO None: None significa "sin actualización", y la
-        # comprobación manual respondería "tienes la última versión" sin red.
-        # handle_check_result (updater.py) ya distingue una Exception y avisa.
-        logger.exception("Error al comprobar actualizaciones")
-        return e
-
-def download_update(update_url, update_destination, client, progress_callback=None, chunk_size=128*1024):
-    total_downloaded = 0
-    last_percent = -1
-    with io.open(update_destination, 'w+b') as outfile:
-        with client.stream("GET", update_url) as response:
-            response.raise_for_status()
-            total_size = int(response.headers.get('content-length', 0))
-            logger.debug("Total update size: %d" % total_size)
-            for chunk in response.iter_bytes(chunk_size):
-                outfile.write(chunk)
-                total_downloaded += len(chunk)
-                if callable(progress_callback) and total_size > 0:
-                    percent = int((total_downloaded * 100) / total_size)
-                    if percent > last_percent:
-                        last_percent = percent
-                        call_callback(progress_callback, total_downloaded, total_size)
-    logger.debug("Update downloaded")
-    return update_destination
-
-def extract_update(update_archive, destination, password=None):
-    """Given an update archive, extracts it. Returns the directory to which it has been extracted"""
-    with contextlib.closing(zipfile.ZipFile(update_archive)) as archive:
-        if password:
-            archive.setpassword(password)
-        archive.extractall(path=destination)
-    logger.debug("Update extracted")
-    return destination
-
-def move_bootstrap(extracted_path):
-    working_path = os.path.abspath(os.path.join(extracted_path, '..'))
-    if platform.system() == 'Darwin':
-        extracted_path = os.path.join(extracted_path, 'Contents', 'Resources')
-    downloaded_bootstrap = os.path.join(extracted_path, bootstrap_name())
-    new_bootstrap_path = os.path.join(working_path, bootstrap_name())
-    os.rename(downloaded_bootstrap, new_bootstrap_path)
-    return new_bootstrap_path
-
-def execute_bootstrap(bootstrap_path, source_path):
-    is_frozen = getattr(sys, 'frozen', False)
-    if is_frozen: dest_path = os.path.dirname(sys.executable)
-    else: dest_path = os.path.abspath(os.path.join(paths.app_path()))
-    arguments = r'"%s" "%s" "%s" "%s"' % (os.getpid(), source_path, dest_path, paths.get_executable())
-    if platform.system() == 'Windows':
-        import win32api
-        win32api.ShellExecute(0, 'open', bootstrap_path, arguments, '', 5)
-    else:  
-        import subprocess
-        make_executable(bootstrap_path)
-        subprocess.Popen(['%s %s' % (bootstrap_path, arguments)], shell=True)
-    logger.info("Bootstrap executed")
-
-def bootstrap_name():
-    if platform.system() == 'Windows': return 'bootstrap.exe'
-    if platform.system() == 'Darwin': return 'bootstrap-mac.sh'
-    return 'bootstrap-lin.sh'
-
-def make_executable(path):
-    import stat
-    st = os.stat(path)
-    os.chmod(path, st.st_mode | stat.S_IEXEC)
-
-def call_callback(callback, *args, **kwargs):
-    # try:
-    callback(*args, **kwargs)
-# except:
-#  logger.exception("Failed calling callback %r with args %r and kwargs %r" % (callback, args, kwargs))
-def donation():
-    dlg = wx.MessageDialog(None, _("Con tu apoyo contribuyes a que este programa siga siendo gratuito. ¿Te unes a nuestra causa?"), _("Atención:"), wx.YES_NO | wx.ICON_ASTERISK)
+def donation() -> None:
+    """Show donation dialog."""
+    dlg = wx.MessageDialog(
+        None,
+        _("Con tu apoyo contribuyes a que este programa siga siendo gratuito. ¿Te unes a nuestra causa?"),
+        _("Atención:"),
+        wx.YES_NO | wx.ICON_ASTERISK,
+    )
     dlg.SetYesNoLabels(_("&Aceptar"), _("&Cancelar"))
-    if dlg.ShowModal()==wx.ID_YES: wx.LaunchDefaultBrowser('https://www.paypal.com/donate/?hosted_button_id=5ZV23UDDJ4C5U')
-
+    if dlg.ShowModal() == wx.ID_YES:
+        wx.LaunchDefaultBrowser('https://www.paypal.com/donate/?hosted_button_id=5ZV23UDDJ4C5U')

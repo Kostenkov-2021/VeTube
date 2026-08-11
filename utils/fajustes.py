@@ -28,7 +28,8 @@ configuraciones ={
 	"cambiovolumen": 10,
 	'interface': False,
 	'discord_token': "",
-	'leer_historial': True
+	'leer_historial': True,
+	'update_channel': "stable"
 
 }
 actualizar_configuracion = False
