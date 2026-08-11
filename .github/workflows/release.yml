@@ -36,18 +36,27 @@ jobs:
       - name: Build portable version
         run: uv run cxfreeze build
 
-      - name: Compress with 7-Zip (maximum compression)
+      - name: Compress build (zip)
         run: |
           $version = "${{ github.ref_name }}"
           $buildPath = Get-ChildItem -Path "build" -Directory | Select-Object -First 1
-          7z a -t7z -mx=9 "vetube-$version.7z" "$($buildPath.FullName)\*"
+          Compress-Archive -Path "$($buildPath.FullName)\*" -DestinationPath "vetube-$version.zip" -CompressionLevel Optimal
+        shell: pwsh
+
+      - name: Generate SHA256 checksum
+        run: |
+          $version = "${{ github.ref_name }}"
+          $hash = (Get-FileHash "vetube-$version.zip" -Algorithm SHA256).Hash.ToLower()
+          "$hash  vetube-$version.zip" | Out-File -FilePath "vetube-$version.zip.sha256" -Encoding UTF8
         shell: pwsh
 
       - name: Upload portable artifact
         uses: actions/upload-artifact@v4
         with:
           name: portable-build
-          path: vetube-*.7z
+          path: |
+            vetube-*.zip
+            vetube-*.sha256
           retention-days: 1
 
   build-msi:
@@ -132,7 +141,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/vetube-*.7z
+            dist/vetube-*.zip
+            dist/vetube-*.zip.sha256
             dist/vetube-*.msi
           draft: false
           prerelease: ${{ steps.detect.outputs.prerelease }}
