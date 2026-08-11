@@ -19,8 +19,9 @@ from update.bootstrap import launch_bootstrap
 from update.channel import get_channel
 from update.downloader import download
 from update.extractor import extract
+from update.release_notes_dialog import show_release_notes_dialog
 from update.verifier import verify
-from update.wxUpdater import available_update_dialog, progress_callback, update_finished
+from update.wxUpdater import progress_callback, update_finished
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +129,7 @@ def do_update(is_manual: bool = False) -> None:
                 return
 
             def _on_user_choice() -> None:
-                if available_update_dialog(release.version, release.description):
+                if show_release_notes_dialog(None, release.version, release.description):
                     threading.Thread(
                         target=_install_update,
                         args=(release,),
