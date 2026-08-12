@@ -3,7 +3,6 @@ import asyncio
 from ui.menus.main_menu import MainMenu
 from update import updater
 from update.channel import set_channel
-from update.wxUpdater import channel_selection_dialog
 from utils.languageHandler import curLang
 from ui.ajustes import configuracionDialog
 from utils import fajustes, app_utilitys
@@ -31,7 +30,6 @@ class MainMenuController:
         self.frame.Bind(wx.EVT_MENU, lambda evt: wx.LaunchDefaultBrowser('https://www.paypal.com/donate/?hosted_button_id=5ZV23UDDJ4C5U'), self.menu.apoyo)
         self.frame.Bind(wx.EVT_MENU, lambda evt: wx.LaunchDefaultBrowser('https://github.com/metalalchemist/VeTube'), self.menu.itemPageMain)
         self.frame.Bind(wx.EVT_MENU, lambda evt: updater.do_update(is_manual=True), self.menu.actualizador)
-        self.frame.Bind(wx.EVT_MENU, self.on_cambiar_canal, self.menu.cambiar_canal)
         self.frame.Bind(wx.EVT_MENU, self.mostrar_acerca_de, self.menu.acercade)
         self.frame.Bind(wx.EVT_MENU, self.mostrar_ajustes, self.menu.opcion_1)
         self.frame.Bind(wx.EVT_MENU, self.restaurar, self.menu.opcion_3)
@@ -45,10 +43,6 @@ class MainMenuController:
             _(u"Descripción:\n Lee en voz alta los mensajes de los directos en youtube, tiktok, twitch, kick y la sala de  juegos, ajusta tus preferencias como quieras y disfruta más tus canales favoritos."),
             "VeTube "+str(updater.VERSION), wx.ICON_INFORMATION
         )
-
-    def on_cambiar_canal(self, event):
-        """Muestra el diálogo para cambiar el canal de actualizaciones."""
-        channel_selection_dialog()
 
     def mostrar_ajustes(self, event):
         dlg = configuracionDialog(self.frame)

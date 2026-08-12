@@ -144,7 +144,13 @@ def get_latest_release(channel: Optional[str] = None) -> Optional[ReleaseInfo]:
                 _cache.store(None, etag)
                 return None
 
-            release_info = _parse_release(filtered[0])
+            # Iterate through filtered releases to find one with required assets
+            release_info = None
+            for release in filtered:
+                release_info = _parse_release(release)
+                if release_info is not None:
+                    break
+            
             _cache.store(release_info, etag)
             return release_info
 

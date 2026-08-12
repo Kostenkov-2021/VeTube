@@ -15,7 +15,6 @@ class MainMenu:
         self.apoyo = self.ayuda.Append(wx.ID_ANY, _("Únete a nuestra &causa"))
         self.itemPageMain = self.ayuda.Append(wx.ID_ANY, _("&Visita nuestra página de github"))
         self.actualizador = self.ayuda.Append(wx.ID_ANY, _("&Buscar actualizaciones"))
-        self.cambiar_canal = self.ayuda.Append(wx.ID_ANY, _("Cambiar &canal de actualizaciones"))
         self.update_langs = self.ayuda.Append(wx.ID_ANY, _("Actualizar &idiomas"))
         self.acercade = self.menu1.Append(wx.ID_ANY, _("&Acerca de"))
         self.salir = self.menu1.Append(wx.ID_EXIT, _("&Salir...\tAlt+F4"))
