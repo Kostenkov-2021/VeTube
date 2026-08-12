@@ -12,6 +12,7 @@ import httpx
 import wx
 from packaging.version import Version
 
+from globals.data_store import config
 from globals.paths import BASE_DIR, BOOTSTRAP_EXE
 from update import github_client
 from update.backup import cleanup_backup, create_backup, restore_backup
@@ -164,6 +165,9 @@ def _install_update(release: github_client.ReleaseInfo) -> None:
     extract_path = os.path.join(base_path, "update")
     install_dir = str(BASE_DIR)
     backup_path: str | None = None
+    
+    # Check if backup should be created
+    create_backup_flag = config.get('create_backup_before_update', True)
 
     try:
         logger.info("Starting update to v%s", release.version)
@@ -177,7 +181,12 @@ def _install_update(release: github_client.ReleaseInfo) -> None:
         if not verify(zip_path, checksum_content, release.zip_name):
             raise RuntimeError("SHA256 verification failed")
 
-        backup_path = create_backup(install_dir, VERSION)
+        # Create backup if enabled
+        if create_backup_flag:
+            backup_path = create_backup(install_dir, VERSION)
+            logger.info("Backup created at %s", backup_path)
+        else:
+            logger.info("Backup disabled by user configuration")
 
         extract(zip_path, extract_path)
 
@@ -193,7 +202,8 @@ def _install_update(release: github_client.ReleaseInfo) -> None:
         )
 
         if exit_code == 0:
-            cleanup_backup(backup_path)
+            if backup_path:
+                cleanup_backup(backup_path)
             update_finished()
             logger.info("Update installed successfully")
         else:

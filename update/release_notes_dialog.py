@@ -7,6 +7,8 @@ import re
 import wx
 import wx.html2
 
+from globals.data_store import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -167,6 +169,36 @@ class ReleaseNotesDialog(wx.Dialog):
         self.webview = wx.html2.WebView.New(self)
         main_sizer.Add(self.webview, 1, wx.EXPAND | wx.ALL, 10)
         
+        # Backup status panel
+        backup_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        create_backup = config.get('create_backup_before_update', True)
+        
+        if create_backup:
+            backup_text = _("✓ A security backup will be created before updating")
+            backup_color = wx.Colour(39, 174, 96)  # Green
+        else:
+            backup_text = _("⚠ No backup will be created. If the update fails, you won't be able to revert.")
+            backup_color = wx.Colour(231, 76, 60)  # Red
+        
+        backup_label = wx.StaticText(self, label=backup_text)
+        backup_label.SetForegroundColour(backup_color)
+        backup_sizer.Add(backup_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 10)
+        
+        # Link to settings
+        settings_link = wx.adv.HyperlinkCtrl(
+            self, 
+            wx.ID_ANY,
+            _("Change settings"),
+            "",
+            style=wx.adv.HL_ALIGN_RIGHT
+        )
+        settings_link.SetNormalColour(wx.Colour(52, 152, 219))
+        settings_link.SetHoverColour(wx.Colour(41, 128, 185))
+        settings_link.Bind(wx.adv.EVT_HYPERLINK, self._on_open_settings)
+        backup_sizer.Add(settings_link, 1, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
+        
+        main_sizer.Add(backup_sizer, 0, wx.EXPAND | wx.ALL, 5)
+        
         # Button sizer
         button_sizer = wx.StdDialogButtonSizer()
         
@@ -222,6 +254,23 @@ class ReleaseNotesDialog(wx.Dialog):
         """Handle cancel button click."""
         self.user_accepted = False
         self.EndModal(wx.ID_CANCEL)
+    
+    def _on_open_settings(self, event):
+        """Open settings dialog to change backup configuration."""
+        from ui.ajustes import configuracionDialog
+        
+        # Close this dialog temporarily
+        self.Hide()
+        
+        # Open settings dialog
+        settings_dlg = configuracionDialog(self.GetParent())
+        settings_dlg.ShowModal()
+        settings_dlg.Destroy()
+        
+        # Show this dialog again
+        self.Show()
+        self.Raise()
+        self.SetFocus()
     
     def _on_webview_navigating(self, event):
         """Handle link clicks in WebView - open external links in browser."""

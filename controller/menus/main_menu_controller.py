@@ -155,6 +155,8 @@ class MainMenuController:
         # Guardar canal de actualizaciones seleccionado
         canal_seleccionado = "stable" if cf.choice_canal.GetSelection() == 0 else "beta"
         set_channel(canal_seleccionado)
+        # Guardar configuración de backup antes de actualizar
+        data_store.config['create_backup_before_update'] = cf.check_backup.IsChecked()
         fajustes.guardarConfiguracion(data_store.config)
         if rest:
             if response(_("Es necesario reiniciar el programa para aplicar el nuevo idioma. ¿desea reiniciarlo ahora?"), _("¡Atención!")) == wx.ID_YES:
