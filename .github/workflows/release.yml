@@ -27,29 +27,52 @@ jobs:
       - name: Set up Python
         run: uv python install
 
+      - name: Create data.json
+        run: echo "{}" > data.json
+
+      - name: Sync VERSION file
+        run: |
+          if ("${{ github.ref_type }}" -eq "tag") {
+            # Extract version from tag (remove 'v' prefix)
+            $version = "${{ github.ref_name }}".TrimStart('v')
+            Write-Host "Using version from tag: $version"
+          } else {
+            # Read version from pyproject.toml
+            $version = (Select-String -Path pyproject.toml -Pattern '^version = "(.*)"' | ForEach-Object { $_.Matches.Groups[1].Value })
+            Write-Host "Using version from pyproject.toml: $version"
+          }
+          # Write without BOM using UTF8 encoding without BOM
+          [System.IO.File]::WriteAllText("VERSION", $version, [System.Text.UTF8Encoding]::new($false))
+          Write-Host "VERSION file updated to: $version"
+        shell: pwsh
+
       - name: Install dependencies
-        run: uv sync --locked
+        run: uv sync --locked --no-install-project
 
       - name: Build portable version
         run: uv run cxfreeze build
 
-      - name: Rename build folder
-        run: |
-          $buildPath = Get-ChildItem -Path "build" -Directory | Select-Object -First 1
-          Rename-Item -Path $buildPath.FullName -NewName "vetube"
-        shell: pwsh
-
-      - name: Compress with 7-Zip (maximum compression)
+      - name: Compress build (zip)
         run: |
           $version = "${{ github.ref_name }}"
-          7z a -t7z -mx=9 "vetube-$version.7z" "build/vetube/*"
+          $buildPath = Get-ChildItem -Path "build" -Directory | Select-Object -First 1
+          Compress-Archive -Path "$($buildPath.FullName)\*" -DestinationPath "vetube-$version.zip" -CompressionLevel Optimal
+        shell: pwsh
+
+      - name: Generate SHA256 checksum
+        run: |
+          $version = "${{ github.ref_name }}"
+          $hash = (Get-FileHash "vetube-$version.zip" -Algorithm SHA256).Hash.ToLower()
+          "$hash  vetube-$version.zip" | Out-File -FilePath "vetube-$version.zip.sha256" -Encoding UTF8
         shell: pwsh
 
       - name: Upload portable artifact
         uses: actions/upload-artifact@v4
         with:
           name: portable-build
-          path: vetube-*.7z
+          path: |
+            vetube-*.zip
+            vetube-*.sha256
           retention-days: 1
 
   build-msi:
@@ -68,30 +91,50 @@ jobs:
       - name: Set up Python
         run: uv python install
 
+      - name: Create data.json
+        run: echo "{}" > data.json
+
+      - name: Sync VERSION file
+        run: |
+          if ("${{ github.ref_type }}" -eq "tag") {
+            # Extract version from tag (remove 'v' prefix)
+            $version = "${{ github.ref_name }}".TrimStart('v')
+            Write-Host "Using version from tag: $version"
+          } else {
+            # Read version from pyproject.toml
+            $version = (Select-String -Path pyproject.toml -Pattern '^version = "(.*)"' | ForEach-Object { $_.Matches.Groups[1].Value })
+            Write-Host "Using version from pyproject.toml: $version"
+          }
+          # Write without BOM using UTF8 encoding without BOM
+          [System.IO.File]::WriteAllText("VERSION", $version, [System.Text.UTF8Encoding]::new($false))
+          Write-Host "VERSION file updated to: $version"
+        shell: pwsh
+
       - name: Install dependencies
-        run: uv sync --locked
+        run: uv sync --locked --no-install-project
 
       - name: Build MSI installer
         run: uv run cxfreeze bdist_msi
         shell: pwsh
 
-      - name: Rename MSI to vetube.setup
+      - name: Rename MSI
         run: |
           $version = "${{ github.ref_name }}"
           $msiFile = Get-ChildItem -Path "dist" -Filter "*.msi" | Select-Object -First 1
-          Rename-Item -Path $msiFile.FullName -NewName "vetube-$version.setup"
+          Rename-Item -Path $msiFile.FullName -NewName "vetube-$version.msi"
         shell: pwsh
 
       - name: Upload MSI artifact
         uses: actions/upload-artifact@v4
         with:
           name: msi-build
-          path: dist/vetube-*.setup
+          path: dist/vetube-*.msi
           retention-days: 1
 
   release:
     name: Create Release
     needs: [build-portable, build-msi]
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -113,14 +156,28 @@ jobs:
         run: ls -la dist/
         shell: bash
 
+      - name: Detect prerelease
+        id: detect
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [[ "$TAG" =~ -beta|-rc|-alpha ]]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+            echo "Tag $TAG detected as prerelease"
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+            echo "Tag $TAG detected as stable release"
+          fi
+        shell: bash
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/vetube-*.7z
-            dist/vetube-*.setup
+            dist/vetube-*.zip
+            dist/vetube-*.zip.sha256
+            dist/vetube-*.msi
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.detect.outputs.prerelease }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

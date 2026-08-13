@@ -67,6 +67,8 @@ class configuracionDialog(wx.Dialog):
 		self.check_donaciones = self.panel_general.check_donaciones
 		self.check_salir = self.panel_general.check_salir
 		self.check_actualizaciones = self.panel_general.check_actualizaciones
+		self.choice_canal = self.panel_general.choice_canal
+		self.check_backup = self.panel_general.check_backup
 		self.check_traduccion = self.panel_general.check_traduccion
 		self.check_interface = self.panel_general.check_interface
 

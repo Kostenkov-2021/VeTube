@@ -1,6 +1,7 @@
 import wx
 from globals.data_store import config
 from globals.resources import langs, codes
+from update.channel import get_channel
 
 class PanelGeneral(wx.Panel):
 	def __init__(self, parent):
@@ -25,6 +26,16 @@ class PanelGeneral(wx.Panel):
 		self.check_actualizaciones = wx.CheckBox(self, wx.ID_ANY, _("Comprobar si hay actualizaciones al iniciar la app"))
 		self.check_actualizaciones.SetValue(config['updates'])
 		boxSizer_1.Add(self.check_actualizaciones, 0, wx.ALL, 5)
+		# Selector de canal de actualizaciones
+		label_canal = wx.StaticText(self, wx.ID_ANY, _("Canal de actualizaciones:"))
+		boxSizer_1.Add(label_canal, 0, wx.ALL, 5)
+		self.choice_canal = wx.Choice(self, wx.ID_ANY, choices=[_("Estable (solo versiones oficiales)"), _("Beta (incluye versiones de prueba)")])
+		self.choice_canal.SetSelection(0 if get_channel() == "stable" else 1)
+		boxSizer_1.Add(self.choice_canal, 0, wx.EXPAND | wx.ALL, 5)
+		# Checkbox de backup antes de actualizar
+		self.check_backup = wx.CheckBox(self, wx.ID_ANY, _("Crear backup de seguridad antes de actualizar"))
+		self.check_backup.SetValue(config.get('create_backup_before_update', True))
+		boxSizer_1.Add(self.check_backup, 0, wx.ALL, 5)
 		self.check_traduccion = wx.CheckBox(self, wx.ID_ANY, _("intentar traducir las novedades cuando salga una actualización."))
 		self.check_traduccion.SetValue(config['traducir'])
 		boxSizer_1.Add(self.check_traduccion, 0, wx.ALL, 5)

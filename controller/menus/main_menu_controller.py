@@ -2,6 +2,7 @@ import wx
 import asyncio
 from ui.menus.main_menu import MainMenu
 from update import updater
+from update.channel import set_channel
 from utils.languageHandler import curLang
 from ui.ajustes import configuracionDialog
 from utils import fajustes, app_utilitys
@@ -151,6 +152,11 @@ class MainMenuController:
         if data_store.config['idioma'] != codes[cf.choice_language.GetSelection()]:
             data_store.config['idioma'] = codes[cf.choice_language.GetSelection()]
             rest = True
+        # Guardar canal de actualizaciones seleccionado
+        canal_seleccionado = "stable" if cf.choice_canal.GetSelection() == 0 else "beta"
+        set_channel(canal_seleccionado)
+        # Guardar configuración de backup antes de actualizar
+        data_store.config['create_backup_before_update'] = cf.check_backup.IsChecked()
         fajustes.guardarConfiguracion(data_store.config)
         if rest:
             if response(_("Es necesario reiniciar el programa para aplicar el nuevo idioma. ¿desea reiniciarlo ahora?"), _("¡Atención!")) == wx.ID_YES:

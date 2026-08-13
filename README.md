@@ -5,7 +5,7 @@
 ![Version](https://img.shields.io/badge/version-3.94-blue)
 ![Python](https://img.shields.io/badge/python-3.14+-green)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
-![License](https://img.shields.io/badge/license-MIT-orange)
+![License](https://img.shields.io/badge/license-GPL--3.0-orange)
 
 ## What is VeTube?
 
@@ -55,6 +55,14 @@ uv run python run_main_window.py
 uv run cxfreeze build
 ```
 
+## Package Manager Support
+
+We're actively working on making VeTube available through additional package managers:
+
+- [x] **Scoop** - Available now via [Row0902/scoop-bucket](https://github.com/Row0902/scoop-bucket)
+- [ ] **Winget** - In progress
+- [ ] **Chocolatey** - In progress
+
 ## Quick Start
 
 1. **Launch VeTube** from Start Menu or desktop shortcut
@@ -93,6 +101,7 @@ VeTube is available in multiple languages. See the **[Translation Guide](transla
 - [Bahasa Indonesia (Indonesian)](doc/id/readme.md)
 - [Polski (Polish)](doc/pl/readme.md)
 - [Português (Portuguese)](doc/pt/readme.md)
+- [Русский (Russian)](doc/ru/readme.md)
 
 ## Requirements
 
@@ -116,11 +125,11 @@ VeTube is available in multiple languages. See the **[Translation Guide](transla
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GPL-3.0 License — see the [LICENSE](LICENSE) file for details.
 
 ## Credits
 
-VeTube is developed by [Cesar Verastegui](https://github.com/metalalchemist) and [Rowell Urbaez Reyes](https://github.com/Row0902), with contributions from the community.
+VeTube is developed and maintained by [Cesar Verastegui](https://github.com/metalalchemist) and [Rowell Urbaez Reyes](https://github.com/Row0902), with contributions from the community.
 
 Special thanks to:
 - The [Piper TTS](https://github.com/rhasspy/piper) project for high-quality neural voices

@@ -1,6 +1,6 @@
 [project]
 name = "vetube"
-version = "3.94"
+version = "3.95-rc4"
 description = "Aplicación VeTube"
 readme = "README.md"
 authors = [
@@ -16,6 +16,7 @@ dependencies = [
     "chat-downloader",
     "cx-freeze>=8.6.4",
     "discord-py>=2.7.1",
+    "edge-tts>=7.0.0",
     "googletrans-py",
     "grpclib>=0.4.9",
     "httpx>=0.28.1",
@@ -93,6 +94,7 @@ packages = [
     "pytchat",
     "chat_downloader",
     "discord",
+    "edge_tts",
     "TikTokLive",
     "TikTokLiveProto",
     "TikTokLiveProto.v3",
@@ -121,7 +123,9 @@ packages = [
 ]
 
 # includes: Módulos específicos a incluir (más granular que packages)
-includes = []
+includes = [
+    "edge_tts",
+]
 
 # excludes: Módulos a excluir para reducir tamaño
 excludes = [
@@ -165,6 +169,7 @@ include_files = [
     # Datos de la aplicación
     ["data.json", "data.json"],
     ["bootstrap.exe", "bootstrap.exe"],
+    ["VERSION", "VERSION"],
     
     # Recursos
     ["translates/", "translates/"],
