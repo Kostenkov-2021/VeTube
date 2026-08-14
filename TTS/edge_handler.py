@@ -121,6 +121,14 @@ def edge_voz_shortname(index):
 
 
 class edgeSpeak:
+    # Cerrojo compartido entre el hilo de la interfaz y el hilo asíncrono, de
+    # CLASE y no de instancia porque __init__ se re-ejecuta tras un close().
+    # Hace falta porque silence() libera el stream desde el hilo de la interfaz
+    # mientras _speak_task_inner publica el suyo desde el hilo asíncrono: sin
+    # él, un flujo puede arrancar DESPUÉS de la petición de silencio y sonar
+    # sin dueño (se oye un mensaje que el usuario acababa de cancelar).
+    _bass_lock = threading.Lock()
+
     def __new__(cls, *args, **kwargs):
         global _INSTANCIA
         if _INSTANCIA is None:
@@ -223,14 +231,17 @@ class edgeSpeak:
         # Invalida cualquier síntesis en curso y corta el audio actual.
         self._speak_generation += 1
         self._sintetizando = False
-        if self.bass_stream is not None:
-            try:
-                self.bass_stream.stop()
-                self.bass_stream.free()
-            except Exception:
-                pass
-            self.bass_stream = None
-            self._mp3_buffer = None
+        # Bajo cerrojo: el hilo asíncrono puede estar publicando su stream en
+        # este mismo instante (mismo patrón que sonata/sherpa).
+        with self._bass_lock:
+            if self.bass_stream is not None:
+                try:
+                    self.bass_stream.stop()
+                    self.bass_stream.free()
+                except Exception:
+                    pass
+                self.bass_stream = None
+                self._mp3_buffer = None
 
     def is_playing(self):
         # True mientras se sintetiza o suena (botón «Detener prueba»).
@@ -285,15 +296,19 @@ class edgeSpeak:
                 local_stream.set_device(self.device)
             except Exception:
                 pass
-        if gen != self._speak_generation:
-            try:
-                local_stream.free()
-            except Exception:
-                pass
-            return
-        self._mp3_buffer = cdata
-        self.bass_stream = local_stream
-        local_stream.play()
+        # Comprobar y publicar en el mismo cerrojo: si se comprueba fuera, un
+        # silence() que entre justo aquí deja este stream sin dueño (ya no es
+        # self.bass_stream) y nadie lo libera — el mensaje cancelado suena.
+        with self._bass_lock:
+            if gen != self._speak_generation:
+                try:
+                    local_stream.free()
+                except Exception:
+                    pass
+                return
+            self._mp3_buffer = cdata
+            self.bass_stream = local_stream
+            local_stream.play()
 
     def close(self):
         self.silence()
