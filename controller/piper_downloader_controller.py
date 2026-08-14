@@ -6,7 +6,7 @@ import shutil
 from setup import network, player, reader
 from servicios.piper_manager import PiperManager
 from ui.piper_downloader import PiperDownloaderDialog
-from TTS.list_voices import piper_list_voices, obtener_ruta_voz
+from TTS.list_voices import piper_list_voices, obtener_ruta_voz, es_voz_rt
 from globals.paths import VOICES_DIR
 
 class PiperDownloaderController:
@@ -58,7 +58,12 @@ class PiperDownloaderController:
         self.voces_locales = piper_list_voices()
         self.view.list_instaladas.Clear()
         if self.voces_locales:
-            self.view.list_instaladas.Set(self.voces_locales)
+            # Se marca la variante en la etiqueta: las dos crean una carpeta con
+            # el mismo nombre y no se distinguían de ninguna manera. La lista
+            # voces_locales guarda el nombre real, que es lo que usan probar y
+            # eliminar.
+            self.view.list_instaladas.Set([
+                f"{v} (RT)" if es_voz_rt(v) else v for v in self.voces_locales])
         else:
             self.view.list_instaladas.Append(_("No hay voces instaladas"))
 
@@ -86,8 +91,10 @@ class PiperDownloaderController:
             return
         
         voz_nombre = self.voces_locales[selection]
-        if wx.MessageBox(_("¿Estás seguro de que deseas eliminar la voz %s? Esta acción no se puede deshacer.") % voz_nombre, 
-                         _("Confirmar eliminación"), wx.YES_NO | wx.ICON_WARNING) == wx.ID_YES:
+        # wx.MessageBox devuelve wx.YES/wx.NO, no wx.ID_YES (eso es ShowModal):
+        # con wx.ID_YES la comparación nunca era cierta y el Sí no hacía nada.
+        if wx.MessageBox(_("¿Estás seguro de que deseas eliminar la voz %s? Esta acción no se puede deshacer.") % voz_nombre,
+                         _("Confirmar eliminación"), wx.YES_NO | wx.ICON_WARNING) == wx.YES:
             
             # piper_list_voices() ya devuelve el nombre de la carpeta (voice-...)
             path_to_remove = str(VOICES_DIR / voz_nombre)
@@ -113,7 +120,12 @@ class PiperDownloaderController:
         for i, info in enumerate(self.idiomas_data):
             self.view.lang_list.InsertItem(i, info['display'])
         
-        self.view.set_status(_("Catálogo cargado. Selecciona idiomas para ver las voces."))
+        if self.manager.rt_disponible:
+            self.view.set_status(_("Catálogo cargado. Selecciona idiomas para ver las voces."))
+        else:
+            # Sin catálogo RT la columna «Variante rápida» sale vacía en todas
+            # las voces, igual que si ninguna tuviera variante: hay que avisar.
+            self.view.set_status(_("Catálogo cargado, pero no se pudo consultar la lista de variantes rápidas (RT). Selecciona idiomas para ver las voces."))
 
     def on_lang_checked(self, event):
         codigos_seleccionados = []
@@ -130,6 +142,7 @@ class PiperDownloaderController:
             self.view.voice_list.InsertItem(i, v['name'])
             self.view.voice_list.SetItem(i, 1, v['quality'])
             self.view.voice_list.SetItem(i, 2, v['lang_code'])
+            self.view.voice_list.SetItem(i, 3, "RT" if v.get('has_rt') else "")
 
     def on_reproducir(self, event):
         if self.reproduciendo_muestra:
@@ -182,32 +195,56 @@ class PiperDownloaderController:
             return
         
         voces_seleccionadas = [self.voces_actuales[i] for i in checked_indices]
-        self._iniciar_descarga_multiple(voces_seleccionadas)
+        tiene_rt = any(v.get('has_rt') for v in voces_seleccionadas)
+        
+        if tiene_rt:
+            # Mostrar menú para elegir variante global para el lote
+            menu = wx.Menu()
+            item_normal = menu.Append(wx.ID_ANY, _("Descargar variantes de Calidad Normal (Alta)"))
+            item_rt = menu.Append(wx.ID_ANY, _("Descargar variantes Rápidas (RT) donde estén disponibles"))
+            
+            self.view.Bind(wx.EVT_MENU, lambda evt: self._iniciar_descarga_multiple(voces_seleccionadas, es_rt=False), item_normal)
+            self.view.Bind(wx.EVT_MENU, lambda evt: self._iniciar_descarga_multiple(voces_seleccionadas, es_rt=True), item_rt)
+            
+            self.view.PopupMenu(menu)
+            menu.Destroy()
+        else:
+            # Ninguna tiene RT, descarga normal para todas
+            self._iniciar_descarga_multiple(voces_seleccionadas, es_rt=False)
 
-    def _iniciar_descarga_multiple(self, voces):
+    def _iniciar_descarga_multiple(self, voces, es_rt):
         self.view.btn_descargar.Disable()
         self.view.lang_list.Disable()
         self.view.voice_list.Disable()
+        
+        network.execute(self._descargar_lote(voces, es_rt))
 
-        network.execute(self._descargar_lote(voces))
-
-    async def _descargar_lote(self, voces):
+    async def _descargar_lote(self, voces, preferir_rt):
         total = len(voces)
         completadas = 0
-
+        
         for voice in voces:
-            wx.CallAfter(self.view.set_status, _("Descargando %s [%d/%d]...") % (voice['name'], completadas + 1, total))
-
+            usar_rt = preferir_rt and voice.get('has_rt')
+            # «RT» se deja tal cual (es la sigla, como en la lista de instaladas),
+            # pero «Normal» es una palabra y tiene que traducirse: se lee en voz
+            # alta dentro de un mensaje que sí está traducido.
+            tipo_str = "RT" if usar_rt else _("Normal")
+            
+            wx.CallAfter(self.view.set_status, _("Descargando %s (%s) [%d/%d]...") % (voice['name'], tipo_str, completadas + 1, total))
+            
             def cb(p):
                 wx.CallAfter(self.view.update_progress, p)
 
-            res = await self.manager.instalar_voz(voice['key'], cb)
-
+            if usar_rt:
+                res = await self.manager.instalar_voz_rt(voice['key'], cb)
+            else:
+                res = await self.manager.instalar_voz(voice['key'], cb)
+            
             if res['success']:
                 completadas += 1
             else:
                 wx.CallAfter(wx.MessageBox, _("Error al descargar %s: %s") % (voice['name'], res['data']), _("Error"))
-
+        
         wx.CallAfter(self._finalizar_descargas, completadas, total)
 
     def _finalizar_descargas(self, completadas, total):
@@ -218,6 +255,14 @@ class PiperDownloaderController:
         self.view.update_progress(100)
         
         if completadas > 0:
+            # La lista de instaladas solo se rellenaba al abrir el diálogo y al
+            # eliminar una voz, nunca al terminar una descarga. Con la etiqueta
+            # «(RT)» eso pasó de incompleto a engañoso: al bajar la variante
+            # rápida de una voz que ya estaba, el disco cambia pero la lista
+            # sigue mostrándola sin marca, y el usuario concluye que la
+            # instalación ha fallado. Una voz nueva ni siquiera aparecía.
+            # Se refresca ANTES del aviso: al cerrarlo, la lista ya es correcta.
+            self._refrescar_instaladas()
             wx.MessageBox(_("Las voces se han instalado correctamente. Ya puedes seleccionarlas en los Ajustes de Voz."), _("Éxito"))
 
     def show(self):

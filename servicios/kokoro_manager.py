@@ -7,6 +7,7 @@ import shutil
 import httpx
 from logging import getLogger
 from .base_downloader import BaseDownloader
+from globals.paths import VOICES_DIR
 
 logger = getLogger(__name__)
 
@@ -35,7 +36,7 @@ class KokoroManager(BaseDownloader):
         self.cancelado = True
 
     def destino_final(self):
-        return os.path.join("voices", CARPETA_MODELO)
+        return str(VOICES_DIR / CARPETA_MODELO)
 
     def hay_espacio_suficiente(self, temp_dir):
         """Comprueba el espacio libre antes de empezar: el paquete y su

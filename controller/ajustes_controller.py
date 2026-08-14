@@ -48,6 +48,7 @@ class AjustesController:
         'sapi', 'reader', 'traducir', 'interface', 'updates', 'salir', 'donations',
         'sonidos', 'directorio', 'sistemaTTS', 'dispositivo', 'voz', 'volume',
         'tono', 'tono_onecore', 'speed', 'reproducir', 'tiempo', 'volumen', 'cambiovolumen',
+        'voz_piper', 'voz_kokoro', 'voz_edge',
     ]
 
     def __init__(self, dialog):
@@ -176,6 +177,30 @@ class AjustesController:
         self.dialog.seleccionar_TTS.Enable(not event.IsChecked())
         self.actualizar_visibilidad_instalador()
 
+    @staticmethod
+    def _clave_voz(motor):
+        """Cada motor con lista de voces propia guarda la suya aparte. Los demás
+        (auto, sapi5, onecore) comparten las voces del sistema y siguen como
+        estaban.
+
+        Edge entra aquí por la misma razón que los otros dos: su lista no tiene
+        nada que ver con las demás, así que heredar la posición del motor
+        anterior carga una voz que nadie ha pedido, en cualquier idioma."""
+        return f"voz_{motor}" if motor in ("piper", "kokoro", "edge") else None
+
+    def _recordar_voz(self, motor):
+        clave = self._clave_voz(motor)
+        if clave:
+            config[clave] = config.get('voz', 0)
+
+    def _recuperar_voz(self, motor):
+        clave = self._clave_voz(motor)
+        if clave:
+            # Sin nada guardado todavía se empieza por la primera voz, que en
+            # Kokoro es la francesa: heredar la posición del otro motor era
+            # justo lo que hacía hablar en español sin haberlo pedido.
+            config['voz'] = config.get(clave, 0)
+
     def cambiar_sintetizador(self, event):
         if self.play_timer.IsRunning():
             self.play_timer.Stop()
@@ -183,8 +208,25 @@ class AjustesController:
         self.dialog.boton_prueva.SetLabel(_("&Reproducir prueba."))
         self.reproduciendo_prueba = False
 
+        motor_anterior = config['sistemaTTS']
         config['sistemaTTS'] = self.dialog.seleccionar_TTS.GetStringSelection()
+        if motor_anterior != config['sistemaTTS']:
+            # config['voz'] es UNA sola posición para listas de voces que ya no
+            # tienen nada que ver: la 3ª voz de Piper es una voz española en
+            # Kokoro. Al cambiar de motor se guarda la voz del que sale y se
+            # recupera la del que entra, así cada uno vuelve donde lo dejaste.
+            self._recordar_voz(motor_anterior)
+            self._recuperar_voz(config['sistemaTTS'])
         reader.set_tts(config['sistemaTTS'])
+        if config['sistemaTTS'] in ("piper", "kokoro", "edge"):
+            # Cada motor arranca de cero, con la salida de audio por defecto.
+            # Antes Piper y Kokoro compartían un único puente que ya la tenía
+            # puesta, así que nadie la volvía a fijar aquí: sin esta línea,
+            # cambiar de motor devolvía la voz a los altavoces de Windows
+            # aunque los ajustes dijeran otra cosa. Edge entra en la lista
+            # aunque no tenga puente: su edgeSpeak también nace con device=-1,
+            # y las otras tres ramas de edge de este fichero ya lo fijan.
+            app_utilitys.fijar_dispositivo_lector()
         self.actualizar_filtro_idioma()
         if config['sistemaTTS'] == "piper":
             if lista_voces_piper and lista_voces_piper[0] != _("No hay voces instaladas"):
@@ -196,10 +238,14 @@ class AjustesController:
                 model_path = obtener_ruta_voz(lista_voces_piper[voz_index])
                 reader._lector.load_model(model_path)
             else:
-                # Sin voces de Piper no hay nada que cargar, y el puente es el
-                # mismo proceso: hay que soltar la voz de Kokoro que pudiera
-                # quedar cargada, o el chat se leería con ella.
+                # Sin voces de Piper no hay nada que cargar: soltar la voz para
+                # que el chat no intente leerse con la que quedara de antes.
                 reader._lector.unload_model()
+                if event is not None:
+                    # Igual que en la rama de Kokoro: avisar en voz alta en vez
+                    # de quedarse mudo sin explicación. Con el event a None
+                    # (revert de Cancelar) no se anuncia nada.
+                    reader._leer.speak(_("No hay voces instaladas"))
             self._mostrar_voces(lista_voces_piper)
             # Sincronizar volumen, tono y velocidad de Piper
             reader._lector.set_volume(config['volume'])
@@ -215,8 +261,8 @@ class AjustesController:
             if config_kokoro is not None:
                 reader._lector.load_model(config_kokoro)
             else:
-                # Mismo caso al revés: sin el paquete de Kokoro hay que soltar
-                # la voz de Piper que estuviera cargada en el puente.
+                # Mismo caso al revés: sin el paquete de Kokoro no hay voz que
+                # cargar en su puente.
                 reader._lector.unload_model()
                 if event is not None:
                     # Avisar en voz alta en lugar de callar, pero no al
@@ -232,6 +278,16 @@ class AjustesController:
             # voz elegida (ShortName) y descargar la lista de voces en segundo
             # plano si aún no está (la necesita el filtro de idioma y la lista).
             voz_index = config.get('voz', 0)
+            # Mismo guardián de rango que Piper y Kokoro, pero solo con el
+            # catálogo ya descargado: la lista de Edge llega en segundo plano y
+            # comprobarla vacía borraría la voz elegida cada vez que se abren
+            # los Ajustes antes de que llegue. Con el guardián, si el catálogo
+            # de Microsoft encoge entre dos sesiones el índice guardado deja de
+            # apuntar fuera: edge_voz_shortname devolvía None, load_model(None)
+            # no hace nada y el chat se quedaba mudo enseñando una voz.
+            if edge_voces_listas() and not (0 <= voz_index < len(edge_list_voices())):
+                voz_index = 0
+                config['voz'] = 0
             reader._lector.load_model(edge_voz_shortname(voz_index))
             reader._lector.set_volume(config['volume'])
             reader._lector.set_pitch(config['tono'])
@@ -285,7 +341,8 @@ class AjustesController:
             "es": _("Español"),
             "fr": _("Francés"),
             "en-us": _("Inglés (Estados Unidos)"),
-            "en-gb": _("Inglés (Reino Unido)"),
+            # «en» a secas es el inglés británico de espeak-ng (ver VOCES_KOKORO).
+            "en": _("Inglés (Reino Unido)"),
             "it": _("Italiano"),
             "pt-br": _("Portugués (Brasil)"),
             "hi": _("Hindi"),

@@ -87,16 +87,15 @@ class PrismBackendWrapper:
 class ReaderHandler:
     def __init__(self, lector=None):
         sistema = config['sistemaTTS'] if lector is None else lector
-        if sistema in ("piper", "kokoro", "edge"):
-            from TTS.lector import configurar_tts
-            self._lector = configurar_tts(sistema)
-        elif sistema == "onecore":
-            self._lector = PrismBackendWrapper(BackendId.ONE_CORE)
-        elif sistema == "sapi5":
-            self._lector = PrismBackendWrapper(BackendId.SAPI)
-        else:
-            self._lector = PrismBackendWrapper(is_best=True)
-        
+        # TODOS los lectores pasan por configurar_tts, también los que no usan
+        # ningún puente: es ahí donde se cierran los puentes de los demás. Si
+        # sapi5/onecore/auto se construyeran aquí, el servidor del motor
+        # anterior seguiría vivo con su modelo cargado hasta cerrar VeTube.
+        # De paso, un motor nuevo (como edge) ya no hay que apuntarlo también
+        # en esta lista: basta con añadirlo en configurar_tts.
+        from TTS.lector import configurar_tts
+        self._lector = configurar_tts(sistema)
+
         # Intentar inicializar SAPI5 para alertas y anuncios secundarios del sistema.
         # Si falla (por ejemplo, en sistemas sin SAPI o que no son Windows), se usa OneCore de respaldo.
         # Si OneCore también falla, se recurre al mejor backend disponible en el sistema.
@@ -112,15 +111,11 @@ class ReaderHandler:
 
 
     def set_tts(self, nuevo_tts):
-        if nuevo_tts in ("piper", "kokoro", "edge"):
-            from TTS.lector import configurar_tts
-            self._lector = configurar_tts(nuevo_tts)
-        elif nuevo_tts == "onecore":
-            self._lector = PrismBackendWrapper(BackendId.ONE_CORE)
-        elif nuevo_tts == "sapi5":
-            self._lector = PrismBackendWrapper(BackendId.SAPI)
-        else:
-            self._lector = PrismBackendWrapper(is_best=True)
+        # Igual que en __init__: pasar por configurar_tts siempre, para que al
+        # dejar piper o kokoro se cierre su servidor en vez de quedarse en
+        # memoria con el modelo cargado (Kokoro son unos 350 MB).
+        from TTS.lector import configurar_tts
+        self._lector = configurar_tts(nuevo_tts)
 
     def set_sapi(self, sapi):
         config['sapi'] = sapi

@@ -1909,61 +1909,6 @@ msgstr "o servidor de downloads respondeu com o erro HTTP %d."
 msgid "El paquete descargado está incompleto (falta %s)."
 msgstr "O pacote baixado está incompleto (falta %s)."
 
-#: controller/piper_downloader_controller.py:198
-#: controller/piper_migracion_rt_controller.py:46
-#, python-format
-msgid "Descargando %s [%d/%d]..."
-msgstr "Baixando %s [%d/%d]..."
-
-#: utils/app_utilitys.py:36
-#, python-format
-msgid ""
-"Las voces rápidas (RT) ya no existen en VeTube: el nuevo motor de voz no "
-"las necesita y la versión estándar suena igual. ¿Quieres descargar ahora "
-"la versión estándar de estas voces? %s"
-msgstr ""
-"As vozes rápidas (RT) já não existem no VeTube: o novo motor de voz não "
-"precisa delas e a versão padrão soa igual. Quer baixar agora a versão "
-"padrão dessas vozes? %s"
-
-#: utils/app_utilitys.py:37
-msgid "Voces por actualizar"
-msgstr "Vozes para atualizar"
-
-#: ui/piper_migracion_rt.py:10
-msgid "Actualizar las voces de Piper"
-msgstr "Atualizar as vozes do Piper"
-
-#: ui/piper_migracion_rt.py:14
-msgid ""
-"Descargando la versión estándar de tus voces rápidas (RT). Cada voz "
-"quedará instalada en su mismo lugar y conservará su configuración."
-msgstr ""
-"Baixando a versão padrão das suas vozes rápidas (RT). Cada voz "
-"permanecerá instalada no mesmo lugar e manterá a sua configuração."
-
-#: controller/piper_migracion_rt_controller.py:29
-msgid "Conectando con el catálogo de voces..."
-msgstr "Conectando ao catálogo de vozes..."
-
-#: controller/piper_migracion_rt_controller.py:79
-#, python-format
-msgid "Proceso finalizado. %d de %d voces actualizadas."
-msgstr "Processo concluído. %d de %d vozes atualizadas."
-
-#: controller/piper_migracion_rt_controller.py:81
-#, python-format
-msgid ""
-"No se pudieron actualizar todas las voces: %s\n"
-"VeTube lo volverá a intentar en el próximo inicio."
-msgstr ""
-"Não foi possível atualizar todas as vozes: %s\n"
-"O VeTube tentará novamente na próxima inicialização."
-
-#: controller/piper_migracion_rt_controller.py:86
-msgid "Voces actualizadas correctamente."
-msgstr "Vozes atualizadas com sucesso."
-
 #: controller/ajustes_controller.py:306
 msgid ""
 "Para probar las voces Kokoro hay que descargar antes el paquete de voces."
@@ -2007,3 +1952,28 @@ msgstr "Híndi"
 #: ui/ajustes/voz.py:22
 msgid "Idioma de la voz: "
 msgstr "Idioma da voz: "
+
+#: controller/piper_downloader_controller.py:216
+#, python-format
+msgid "Descargando %s (%s) [%d/%d]..."
+msgstr "Baixando %s (%s) [%d/%d]..."
+
+#: controller/piper_downloader_controller.py:190
+msgid "Descargar variantes Rápidas (RT) donde estén disponibles"
+msgstr "Baixar variantes Rápidas (RT) onde estiverem disponíveis"
+
+#: controller/piper_downloader_controller.py:189
+msgid "Descargar variantes de Calidad Normal (Alta)"
+msgstr "Baixar variantes de Qualidade Normal (Alta)"
+
+#: ui/piper_downloader.py:53
+msgid "Variante rápida"
+msgstr "Variante rápida"
+
+#: controller/piper_downloader_controller.py:228
+msgid "Normal"
+msgstr "Normal"
+
+#: controller/piper_downloader_controller.py:125
+msgid "Catálogo cargado, pero no se pudo consultar la lista de variantes rápidas (RT). Selecciona idiomas para ver las voces."
+msgstr "Catálogo carregado, mas não foi possível consultar a lista de variantes rápidas (RT). Selecione os idiomas para ver as vozes."

@@ -171,7 +171,7 @@ class MainMenuController:
             reader._leer.set_voice(voices_leer[idx])
         
         if data_store.config['sistemaTTS'] in ("piper", "kokoro"):
-            # El puente sherpa usa la escala porcentaje_a_escala y no expone list_voices
+            # Los dos puentes usan la escala porcentaje_a_escala y no exponen list_voices
             reader._lector.set_rate(app_utilitys.porcentaje_a_escala(data_store.config['speed']))
             reader._lector.set_pitch(data_store.config['tono'])
             reader._lector.set_volume(data_store.config['volume'])

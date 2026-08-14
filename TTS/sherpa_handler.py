@@ -1,6 +1,5 @@
 import os
 import sys
-import json
 import asyncio
 import subprocess
 import socket
@@ -11,12 +10,15 @@ from pathlib import Path
 from sound_lib import stream
 from grpclib.client import Channel
 import grpclib.const
+from globals.paths import VOICES_DIR
 
 # Servidor TTS nativo: ejecutable Rust + sherpa-onnx (C-API oficial), proceso
 # separado sin Python ni numpy (el arranque de VeTube nunca depende de él,
 # incluso en CPUs antiguas sin AVX). Habla el mismo protocolo sonata_grpc que
-# el antiguo servidor de Piper y sintetiza AMBOS motores: las voces Piper del
-# catálogo rhasspy y el modelo Kokoro. Un solo proceso residente para los dos.
+# el antiguo servidor de Piper, pero aquí sintetiza SOLO el modelo Kokoro: las
+# voces Piper volvieron al puente sonata, que las fonemiza mejor. Todo lo que
+# hacía falta para servirlas desde aquí (preparación del tokens.txt, metadatos
+# del .onnx, resolución de rutas de fichero) se fue con ellas.
 _BASE_DIR = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BIN_PUENTE = _BASE_DIR / "64" / "sherpa"
 EXE_PUENTE = str(BIN_PUENTE / "vetube-sherpa-grpc.exe")
@@ -24,7 +26,7 @@ NOMBRE_EXE_PUENTE = "vetube-sherpa-grpc.exe"
 
 # Modelo Kokoro local: vive en voices/ junto a las voces de Piper y lo instala
 # el descargador propio (servicios/kokoro_manager.py, release tts-models de k2-fsa).
-KOKORO_MODEL_DIR = os.path.join("voices", "kokoro-multi-lang-v1_0")
+KOKORO_MODEL_DIR = str(VOICES_DIR / "kokoro-multi-lang-v1_0")
 
 def kokoro_model_instalado():
     """True si el modelo está instalado y completo (el descargador solo mueve la
@@ -61,15 +63,19 @@ VOCES_KOKORO = [
     ("am_onyx (inglés)", 17, "en-us"),
     ("am_puck (inglés)", 18, "en-us"),
     ("am_santa (inglés)", 19, "en-us"),
-    # Inglés británico
-    ("bf_alice (inglés británico)", 20, "en-gb"),
-    ("bf_emma (inglés británico)", 21, "en-gb"),
-    ("bf_isabella (inglés británico)", 22, "en-gb"),
-    ("bf_lily (inglés británico)", 23, "en-gb"),
-    ("bm_daniel (inglés británico)", 24, "en-gb"),
-    ("bm_fable (inglés británico)", 25, "en-gb"),
-    ("bm_george (inglés británico)", 26, "en-gb"),
-    ("bm_lewis (inglés británico)", 27, "en-gb"),
+    # Inglés británico. OJO: el código es «en» a secas, NO «en-gb». En espeak-ng
+    # el inglés británico es la variante por defecto y se llama «en»; «en-gb» no
+    # existe (sí en-GB-scotland, en-GB-x-rp...). Pedirlo tumbaba el servidor:
+    # ninguna voz británica sonaba y el puente se quedaba mudo hasta el
+    # siguiente cambio de idioma, que lo reinicia.
+    ("bf_alice (inglés británico)", 20, "en"),
+    ("bf_emma (inglés británico)", 21, "en"),
+    ("bf_isabella (inglés británico)", 22, "en"),
+    ("bf_lily (inglés británico)", 23, "en"),
+    ("bm_daniel (inglés británico)", 24, "en"),
+    ("bm_fable (inglés británico)", 25, "en"),
+    ("bm_george (inglés británico)", 26, "en"),
+    ("bm_lewis (inglés británico)", 27, "en"),
     # Hindi
     ("hf_alpha (hindi)", 31, "hi"),
     ("hf_beta (hindi)", 32, "hi"),
@@ -126,82 +132,6 @@ def kokoro_voice_config(index):
     # una ruta relativa a VeTube no resolvería allí.
     return f"{os.path.abspath(KOKORO_MODEL_DIR)}?sid={sid}&lang={lang}"
 
-def _varint(n):
-    salida = b""
-    while True:
-        septeto = n & 0x7F
-        n >>= 7
-        if n:
-            salida += bytes([septeto | 0x80])
-        else:
-            return salida + bytes([septeto])
-
-def _entrada_metadata(clave, valor):
-    """Serializa un metadata_props de ONNX: campo 14 del ModelProto (tag 0x72),
-    con un StringStringEntryProto {key=1, value=2} dentro."""
-    k = clave.encode("utf-8")
-    v = str(valor).encode("utf-8")
-    interno = b"\x0a" + _varint(len(k)) + k + b"\x12" + _varint(len(v)) + v
-    return b"\x72" + _varint(len(interno)) + interno
-
-def preparar_voz_piper(json_path, forzar=False):
-    """Prepara (una sola vez) una voz del catálogo rhasspy para sherpa-onnx.
-
-    Los paquetes oficiales k2-fsa traen de fábrica dos piezas que las voces
-    rhasspy no tienen: los metadatos del .onnx (sample_rate, n_speakers,
-    comment=piper…, sin los cuales el motor aborta) y el tokens.txt. Ambas se
-    derivan por completo del .json de la voz: los metadatos se añaden por
-    concatenación al .onnx (propiedad del wire format de protobuf: los campos
-    repetidos de mensajes concatenados se fusionan) y el tokens.txt replica
-    octeto a octeto el de los paquetes k2-fsa (una línea «símbolo id» por
-    entrada de phoneme_id_map).
-
-    El tokens.txt se escribe EL ÚLTIMO porque hace de marcador de «voz ya
-    preparada»: si algo se interrumpe a medias, el próximo intento rehace
-    todo (los metadatos repetidos con el mismo valor son inofensivos).
-
-    forzar=True rehace la preparación aunque el marcador esté: hay que usarlo
-    siempre que se sustituya el .onnx de una carpeta ya preparada (reinstalar
-    una voz), porque el tokens.txt viejo sobrevive al fichero nuevo y este se
-    quedaría sin metadatos — y un .onnx sin metadatos aborta el puente entero.
-    """
-    try:
-        carpeta = os.path.dirname(json_path)
-        marcador = os.path.join(carpeta, "tokens.txt")
-        if os.path.isfile(marcador) and not forzar:
-            return True
-        with open(json_path, encoding="utf-8") as f:
-            cfg = json.load(f)
-        mapa = cfg.get("phoneme_id_map")
-        if not mapa:
-            return False
-
-        onnx_path = json_path[:-len(".json")]
-        if not os.path.isfile(onnx_path):
-            return False
-        meta = {
-            "model_type": "vits",
-            "comment": "piper",
-            "language": cfg.get("language", {}).get("name_english", "unknown"),
-            "voice": cfg.get("espeak", {}).get("voice", ""),
-            "has_espeak": 1,
-            "n_speakers": cfg.get("num_speakers", 1),
-            "sample_rate": cfg["audio"]["sample_rate"],
-        }
-        blob = b"".join(_entrada_metadata(k, v) for k, v in meta.items())
-        with open(onnx_path, "ab") as f:
-            f.write(blob)
-
-        temporal = marcador + ".tmp"
-        with open(temporal, "w", encoding="utf-8", newline="") as f:
-            for simbolo, ids in mapa.items():
-                f.write(f"{simbolo} {ids[0]}\n")
-        os.replace(temporal, marcador)
-        return True
-    except Exception as e:
-        print(f"No se pudo preparar la voz {json_path}: {e}")
-        return False
-
 # Configuración de Job Objects para Windows
 if sys.platform == "win32":
     CreateJobObject = ctypes.windll.kernel32.CreateJobObjectW
@@ -234,12 +164,22 @@ if PROTO_DIR not in sys.path:
 
 from .sonata_protos import sonata_grpc_pb2
 
-# Instancia global para el Singleton: los modos «piper» y «kokoro» comparten
-# el mismo proceso puente (el servidor mantiene cada modelo cargado residente,
-# así que alternar entre motores no recarga nada).
+# Instancia global para el Singleton: un solo proceso puente para Kokoro, que
+# el servidor mantiene con su modelo cargado residente mientras el motor esté
+# activo. Al cambiar de motor, lector.configurar_tts cierra este puente.
 _INSTANCIA_SHERPA = None
+# El barrido de procesos huérfanos solo hace falta una vez por sesión.
+_ORFANOS_LIMPIADOS = False
 
 class sherpaSpeak:
+    # Cerrojo del stream BASS. Va en la CLASE, no en la instancia: __init__ se
+    # vuelve a ejecutar cada vez que el puente se reinicia, y un cerrojo nuevo
+    # no protegería de la tarea que quedó viva de la encarnación anterior.
+    # Hace falta porque silence()/close() liberan el stream desde el hilo de la
+    # interfaz mientras _speak_task_inner sigue empujando audio desde el hilo
+    # asíncrono: sin él, push() puede escribir en un handle ya liberado.
+    _bass_lock = threading.Lock()
+
     def __new__(cls, *args, **kwargs):
         global _INSTANCIA_SHERPA
         if _INSTANCIA_SHERPA is None:
@@ -277,6 +217,12 @@ class sherpaSpeak:
         # con el estado del stream BASS permite saber si aún se está hablando
         # (botón «Detener prueba» de los Ajustes).
         self._sintetizando = False
+        # close() lo levanta: el arranque del servidor es asíncrono y puede
+        # seguir en marcha cuando ya se ha pedido cerrar este puente.
+        self._cerrado = False
+        # Idioma de la voz Kokoro que tiene cargada el servidor: mientras no
+        # sepa cambiarlo en caliente, cambiar de idioma obliga a reiniciarlo.
+        self._idioma_cargado = None
 
         # Iniciar Job Object en Windows
         if sys.platform == "win32":
@@ -285,9 +231,14 @@ class sherpaSpeak:
             info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
             SetInformationJobObject(self.job_handle, JobObjectExtendedLimitInformation, ctypes.pointer(info), ctypes.sizeof(info))
 
-        # Limpiar instancias huérfanas de NUESTRO puente antes de empezar
-        if sys.platform == "win32":
+        # Limpiar instancias huérfanas de NUESTRO puente antes de empezar.
+        # Solo la primera vez de la sesión: sirve para barrer los restos de un
+        # cierre anterior, y a partir del segundo arranque (cambio de motor)
+        # acabamos de matar nosotros mismos el único proceso que podía haber.
+        global _ORFANOS_LIMPIADOS
+        if sys.platform == "win32" and not _ORFANOS_LIMPIADOS:
             self._cleanup_own_orphans()
+            _ORFANOS_LIMPIADOS = True
 
         # Iniciar loop asíncrono
         self.loop = asyncio.new_event_loop()
@@ -297,7 +248,12 @@ class sherpaSpeak:
         # Lanzar servidor
         asyncio.run_coroutine_threadsafe(self._start_server(), self.loop)
 
-        atexit.register(self.close)
+        # Solo la primera vez: __init__ se vuelve a ejecutar en cada cambio de
+        # motor (close() deja _inicializado en False) y se acumulaba un
+        # atexit por cada ida y vuelta.
+        if not getattr(self, "_atexit_puesto", False):
+            atexit.register(self.close)
+            self._atexit_puesto = True
 
         if model_path:
             self.load_model(model_path)
@@ -305,11 +261,34 @@ class sherpaSpeak:
         self._inicializado = True
 
     def _run_loop(self):
-        asyncio.set_event_loop(self.loop)
+        # Guardar el loop en una variable local: self.loop apunta a otro en
+        # cuanto el puente se reinicia, y limpiar «el loop de self» acabaría
+        # cancelando las tareas del puente NUEVO en vez de las del viejo.
+        loop = self.loop
+        asyncio.set_event_loop(loop)
         try:
-            self.loop.run_forever()
+            loop.run_forever()
         except:
             pass
+        finally:
+            # Cerrarlo aquí, ya fuera de run_forever: cada cambio de motor crea
+            # un loop nuevo, y los anteriores se quedaban abiertos con su
+            # socketpair interno hasta el final de la sesión. Antes de cerrar
+            # hay que cancelar lo que quedara en vuelo, o Python avisa por la
+            # salida de error de cada tarea destruida a medias.
+            try:
+                tareas = asyncio.all_tasks(loop)
+                for tarea in tareas:
+                    tarea.cancel()
+                if tareas:
+                    loop.run_until_complete(
+                        asyncio.gather(*tareas, return_exceptions=True))
+            except Exception:
+                pass
+            try:
+                loop.close()
+            except Exception:
+                pass
 
     def _cleanup_own_orphans(self):
         """Mata instancias del puente que hayan quedado huérfanas, pero SOLO las
@@ -345,6 +324,15 @@ class sherpaSpeak:
                 return s.getsockname()[1]
 
     async def _start_server(self):
+        # Puede haberse pedido el cierre mientras esta corrutina esperaba turno:
+        # cambiar de motor cierra este puente, y arrancar un servidor después
+        # dejaría un proceso que ya no es de nadie. No basta con mirar
+        # _cerrado: si el puente ya se ha vuelto a abrir, __init__ lo ha puesto
+        # otra vez en False y esta corrutina vieja se creería vigente. El loop
+        # sí distingue una encarnación de la siguiente.
+        mi_loop = asyncio.get_running_loop()
+        if self._cerrado or self.loop is not mi_loop:
+            return
         self.port = self._find_free_port()
         env = os.environ.copy()
         env["SONATA_GRPC_SERVER_PORT"] = str(self.port)
@@ -358,12 +346,31 @@ class sherpaSpeak:
             creationflags=(subprocess.CREATE_NO_WINDOW | CREATE_BREAKAWAY_FROM_JOB) if sys.platform == "win32" else 0
         )
 
+        # Si el cierre llegó justo mientras arrancábamos, close() ya no tenía
+        # nada que matar (self.process aún era None) y el Job Object está
+        # cerrado: hay que matarlo aquí o queda huérfano para siempre.
+        proceso = self.process
+        if self._cerrado or self.loop is not mi_loop:
+            try:
+                proceso.kill()
+            except Exception:
+                pass
+            if self.process is proceso:
+                self.process = None
+            return
+
         # Asignar proceso al Job Object
         if sys.platform == "win32" and self.job_handle and self.process:
             AssignProcessToJobObject(self.job_handle, self.process._handle)
 
         max_retries = 15
         for i in range(max_retries):
+            # El canal queda atado al loop donde se crea: si el puente ya se
+            # ha reiniciado, publicarlo aquí se lo daría al puente nuevo, que
+            # lo usaría desde OTRO loop («attached to a different loop») y no
+            # conseguiría cargar ninguna voz.
+            if self._cerrado or self.loop is not mi_loop:
+                return
             try:
                 self.channel = Channel('127.0.0.1', self.port)
                 await asyncio.sleep(2)
@@ -376,58 +383,61 @@ class sherpaSpeak:
             model_path = self.current_voice_path
         if not model_path: return
 
-        # Las rutas de Kokoro («carpeta?sid=..&lang=..») no son ficheros: pasan
-        # tal cual, sin buscarlas en el disco.
-        es_ruta_kokoro = "?" in model_path
+        # Aquí solo llegan rutas de Kokoro («carpeta?sid=..&lang=..»), que no
+        # son ficheros y pasan tal cual: desde que Piper habla por sonata, no
+        # hay ningún .onnx que buscar ni preparar en el disco.
 
-        # Si el .onnx no está en la ruta dada (nombres de carpeta que no
-        # coinciden), lo buscamos dentro de voices/. Solo en las carpetas
-        # «voice-*»: en voices/ vive también el paquete de Kokoro, y sus
-        # ficheros (model.onnx, tokens.txt) no son voces de Piper.
-        if not es_ruta_kokoro and not os.path.exists(model_path):
-            import glob
-            filename = os.path.basename(model_path)
-            coincidencias = glob.glob(os.path.join("voices", "voice-*", filename))
-            if coincidencias:
-                model_path = coincidencias[0]
-
-        if model_path.endswith(".onnx"):
-            json_path = model_path + ".json"
-            if not os.path.exists(json_path):
-                # Voz colocada a mano: su configuración puede llamarse de otro
-                # modo (config.json, <nombre>.json). Sin este repli se enviaría
-                # el .onnx crudo, que se salta la preparación de abajo y llega
-                # al puente sin tokens.txt.
-                import glob
-                otros = [j for j in glob.glob(os.path.join(os.path.dirname(model_path), "*.json"))
-                         if "+RT" not in os.path.basename(j)]
-                json_path = otros[0] if otros else json_path
-            if os.path.exists(json_path):
-                model_path = json_path
-
-        # Voz Piper: garantizar el tokens.txt y los metadatos que exige sherpa
-        # (las voces del catálogo rhasspy no los traen; se preparan una vez).
-        # Sin preparación no se intenta cargar: un .onnx sin metadatos aborta
-        # el proceso del puente entero, no solo la carga.
-        if model_path.endswith(".json") and not preparar_voz_piper(model_path):
-            print(f"Voz no preparada para sherpa, no se carga: {model_path}")
-            # Soltar la voz anterior: si no, el puente seguiría hablando con
-            # ella (puede ser la del otro motor) mientras Ajustes muestra la
-            # que se acaba de elegir.
-            self.unload_model()
-            return
+        # El servidor guarda el modelo Kokoro en caché por su ruta, y con él el
+        # idioma de la PRIMERA voz que se cargó: pedir después una voz de otro
+        # idioma cambia el timbre pero sigue fonemizando con el anterior — una
+        # voz francesa con acento español, muy audible. Mientras el puente no
+        # sepa cambiar de idioma en caliente, se reinicia: cuesta ~2 s y solo
+        # ocurre al cambiar de idioma de voz, no al cambiar de voz.
+        idioma_nuevo = self._idioma_de_ruta(model_path)
+        if (idioma_nuevo and self._idioma_cargado
+                and idioma_nuevo != self._idioma_cargado):
+            # __init__() devuelve los parámetros de audio a sus valores por
+            # defecto (dispositivo -1, volumen 100, velocidad y tono a 1), pero
+            # esos son del usuario y no tienen por qué cambiar porque el puente
+            # se reinicie: el volumen y la velocidad volvían al centro cada vez
+            # que se cambiaba de idioma de voz.
+            ajustes_audio = (self.device, self.volume, self.length_scale, self.pitch_ratio)
+            self.close()
+            self.__init__()
+            (self.device, self.volume, self.length_scale, self.pitch_ratio) = ajustes_audio
+        self._idioma_cargado = idioma_nuevo or self._idioma_cargado
 
         self.current_voice_path = model_path
         # Invalidar la voz anterior antes de pedir la nueva: mientras el puente
         # responde, un mensaje del chat encontraría el identificador viejo, no
         # esperaría (ver _speak_task_inner) y se leería con la voz que el
-        # usuario acaba de abandonar, incluso la del otro motor.
+        # usuario acaba de abandonar.
         self.voice_id = None
         asyncio.run_coroutine_threadsafe(self._load_voice_task(model_path), self.loop)
 
+    @staticmethod
+    def _idioma_de_ruta(model_path):
+        """Idioma pedido en una ruta de Kokoro («carpeta?sid=N&lang=xx»)."""
+        if "?" not in model_path:
+            return None
+        from urllib.parse import parse_qs
+        valores = parse_qs(model_path.split("?", 1)[1]).get("lang")
+        return valores[0] if valores else None
+
     async def _load_voice_task(self, model_path):
+        # Si el puente se reinicia (cambio de idioma) mientras esta tarea
+        # esperaba, su loop ya no es el del puente: hay que salir en vez de
+        # hablarle a un servidor que ya no existe, que era lo que llenaba el
+        # registro de «Connection closed» al recorrer la lista de voces.
+        mi_loop = asyncio.get_running_loop()
+        def vigente():
+            return not self._cerrado and self.loop is mi_loop
         while self.channel is None:
+            if not vigente():
+                return
             await asyncio.sleep(0.5)
+        if not vigente():
+            return
 
         req = sonata_grpc_pb2.VoicePath(config_path=model_path if "?" in model_path else os.path.abspath(model_path))
         try:
@@ -485,22 +495,21 @@ class sherpaSpeak:
     def is_multispeaker(self):
         return False
 
-    def piperSpeak(self, model_path):
-        # Nombre histórico del handler de Piper: carga la voz y devuelve la
-        # instancia (varios llamantes reasignan el lector con su resultado).
-        self.load_model(model_path)
-        return self
-
     def unload_model(self):
-        """Suelta la voz cargada. El puente es un singleton que comparten los
-        dos motores, así que al pasar a uno que no tiene ninguna voz instalada
-        hay que olvidar la anterior: si no, el chat se seguiría leyendo con la
-        voz del otro motor."""
+        """Suelta la voz cargada. El puente sobrevive a que Kokoro se quede sin
+        modelo instalado, así que hay que olvidar la voz anterior: si no, el
+        chat se seguiría leyendo con una voz que Ajustes ya no muestra."""
         self.current_voice_path = None
         self.voice_id = None
 
     def speak(self, text):
         if not text: return
+        # Puente cerrado porque se pasó al otro motor: nada que sintetizar.
+        # Se mira _cerrado y no _inicializado porque close() levanta el primero
+        # nada más empezar y solo baja el segundo al final: entre medias detiene
+        # el loop, y programar ahí una síntesis reventaría con «Event loop is
+        # closed» en el hilo de la interfaz.
+        if self._cerrado: return
         # Sin voz pedida no hay nada que esperar: _speak_task_inner aguanta 12
         # segundos a que termine de cargar, y eso solo tiene sentido si hay
         # alguna voz en camino.
@@ -513,12 +522,16 @@ class sherpaSpeak:
         # Invalida cualquier síntesis en curso o pendiente y corta el audio actual.
         self._speak_generation += 1
         self._sintetizando = False
-        if self.bass_stream is not None:
-            try:
-                self.bass_stream.stop()
-                self.bass_stream.free()
-            except: pass
-            self.bass_stream = None
+        # Bajo cerrojo: el hilo asíncrono puede estar empujando audio en este
+        # mismo stream, y liberarlo bajo sus pies es un uso después de liberar
+        # dentro de una biblioteca nativa.
+        with self._bass_lock:
+            if self.bass_stream is not None:
+                try:
+                    self.bass_stream.stop()
+                    self.bass_stream.free()
+                except: pass
+                self.bass_stream = None
 
     def is_playing(self):
         """True mientras la voz sigue sonando o generando (para el botón de
@@ -582,11 +595,15 @@ class sherpaSpeak:
             if self.device != -1:
                 try: local_stream.set_device(self.device)
                 except: pass
-            if gen != self._speak_generation:
-                try: local_stream.free()
-                except: pass
-                return
-            self.bass_stream = local_stream
+            # Comprobar y publicar en el mismo cerrojo: si se comprueba fuera,
+            # un silence() que entre justo aquí deja este stream sin dueño (ya
+            # no es self.bass_stream) y nadie lo libera nunca.
+            with self._bass_lock:
+                if gen != self._speak_generation:
+                    try: local_stream.free()
+                    except: pass
+                    return
+                self.bass_stream = local_stream
 
             # play() se llama tras empujar el primer bloque: un stream arrancado
             # sin datos queda STALLED y puede darse por terminado antes de sonar.
@@ -603,10 +620,17 @@ class sherpaSpeak:
                     if gen != self._speak_generation:
                         break  # silenciado: dejar de empujar audio
                     if result.wav_samples:
-                        local_stream.push(result.wav_samples)
-                        if primero:
-                            primero = False
-                            local_stream.play()
+                        # La generación se vuelve a mirar DENTRO del cerrojo: es
+                        # lo que hace segura la escritura. Comprobarla fuera deja
+                        # una rendija en la que silence() libera el handle entre
+                        # la comprobación y el push, y BASS reutiliza los handles.
+                        with self._bass_lock:
+                            if gen != self._speak_generation:
+                                break
+                            local_stream.push(result.wav_samples)
+                            if primero:
+                                primero = False
+                                local_stream.play()
 
         except Exception as e:
             # Un corte voluntario (silence()/cierre) también rompe el stream:
@@ -615,8 +639,11 @@ class sherpaSpeak:
                 print(f"Error en síntesis del puente sherpa: {e}")
 
     def close(self):
-        # Invalidar primero las síntesis en curso: así el cierre del canal no
-        # se confunde con un error de síntesis en las tareas aún a la escucha.
+        # Avisar cuanto antes: el servidor puede estar arrancando todavía en el
+        # otro hilo y no debe quedarse vivo detrás de nosotros.
+        self._cerrado = True
+        # Invalidar las síntesis en curso: así el cierre del canal no se
+        # confunde con un error de síntesis en las tareas aún a la escucha.
         self.silence()
 
         if self.channel:
@@ -656,3 +683,14 @@ class sherpaSpeak:
                 pass
 
         self._inicializado = False
+
+
+def detener_puente():
+    """Cierra el servidor de este motor si hay uno vivo.
+
+    Se llama al pasar al otro motor: cada puente tiene su propio proceso y
+    basta con uno a la vez. Si nunca se usó Kokoro no crea nada, y si ya
+    estaba cerrado no hace nada (close() deja _inicializado en False).
+    """
+    if _INSTANCIA_SHERPA is not None and getattr(_INSTANCIA_SHERPA, "_inicializado", False):
+        _INSTANCIA_SHERPA.close()

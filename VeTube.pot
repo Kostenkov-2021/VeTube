@@ -1823,54 +1823,6 @@ msgstr ""
 msgid "El paquete descargado está incompleto (falta %s)."
 msgstr ""
 
-#: controller/piper_downloader_controller.py:198
-#: controller/piper_migracion_rt_controller.py:46
-#, python-format
-msgid "Descargando %s [%d/%d]..."
-msgstr ""
-
-#: utils/app_utilitys.py:36
-#, python-format
-msgid ""
-"Las voces rápidas (RT) ya no existen en VeTube: el nuevo motor de voz no "
-"las necesita y la versión estándar suena igual. ¿Quieres descargar ahora "
-"la versión estándar de estas voces? %s"
-msgstr ""
-
-#: utils/app_utilitys.py:37
-msgid "Voces por actualizar"
-msgstr ""
-
-#: ui/piper_migracion_rt.py:10
-msgid "Actualizar las voces de Piper"
-msgstr ""
-
-#: ui/piper_migracion_rt.py:14
-msgid ""
-"Descargando la versión estándar de tus voces rápidas (RT). Cada voz "
-"quedará instalada en su mismo lugar y conservará su configuración."
-msgstr ""
-
-#: controller/piper_migracion_rt_controller.py:29
-msgid "Conectando con el catálogo de voces..."
-msgstr ""
-
-#: controller/piper_migracion_rt_controller.py:79
-#, python-format
-msgid "Proceso finalizado. %d de %d voces actualizadas."
-msgstr ""
-
-#: controller/piper_migracion_rt_controller.py:81
-#, python-format
-msgid ""
-"No se pudieron actualizar todas las voces: %s\n"
-"VeTube lo volverá a intentar en el próximo inicio."
-msgstr ""
-
-#: controller/piper_migracion_rt_controller.py:86
-msgid "Voces actualizadas correctamente."
-msgstr ""
-
 #: controller/ajustes_controller.py:306
 msgid ""
 "Para probar las voces Kokoro hay que descargar antes el paquete de voces."
@@ -1911,4 +1863,29 @@ msgstr ""
 
 #: ui/ajustes/voz.py:22
 msgid "Idioma de la voz: "
+msgstr ""
+
+#: controller/piper_downloader_controller.py:216
+#, python-format
+msgid "Descargando %s (%s) [%d/%d]..."
+msgstr ""
+
+#: controller/piper_downloader_controller.py:190
+msgid "Descargar variantes Rápidas (RT) donde estén disponibles"
+msgstr ""
+
+#: controller/piper_downloader_controller.py:189
+msgid "Descargar variantes de Calidad Normal (Alta)"
+msgstr ""
+
+#: ui/piper_downloader.py:53
+msgid "Variante rápida"
+msgstr ""
+
+#: controller/piper_downloader_controller.py:228
+msgid "Normal"
+msgstr ""
+
+#: controller/piper_downloader_controller.py:125
+msgid "Catálogo cargado, pero no se pudo consultar la lista de variantes rápidas (RT). Selecciona idiomas para ver las voces."
 msgstr ""
