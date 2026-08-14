@@ -91,8 +91,10 @@ class PiperDownloaderController:
             return
         
         voz_nombre = self.voces_locales[selection]
-        if wx.MessageBox(_("¿Estás seguro de que deseas eliminar la voz %s? Esta acción no se puede deshacer.") % voz_nombre, 
-                         _("Confirmar eliminación"), wx.YES_NO | wx.ICON_WARNING) == wx.ID_YES:
+        # wx.MessageBox devuelve wx.YES/wx.NO, no wx.ID_YES (eso es ShowModal):
+        # con wx.ID_YES la comparación nunca era cierta y el Sí no hacía nada.
+        if wx.MessageBox(_("¿Estás seguro de que deseas eliminar la voz %s? Esta acción no se puede deshacer.") % voz_nombre,
+                         _("Confirmar eliminación"), wx.YES_NO | wx.ICON_WARNING) == wx.YES:
             
             # piper_list_voices() ya devuelve el nombre de la carpeta (voice-...)
             path_to_remove = str(VOICES_DIR / voz_nombre)
