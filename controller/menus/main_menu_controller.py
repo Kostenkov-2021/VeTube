@@ -166,7 +166,10 @@ class MainMenuController:
         reader._leer.set_volume(data_store.config['volume'])
         voices_leer = reader._leer.list_voices()
         if voices_leer:
-            idx = data_store.config['voz']
+            # La voz SAPI tiene su propia clave: config['voz'] es la posición
+            # dentro de la lista del motor elegido, y aplicarla aquí cargaba
+            # una voz SAPI cualquiera (o la primera, al salirse de rango).
+            idx = data_store.config.get('voz_sapi', 0)
             if idx >= len(voices_leer): idx = 0
             reader._leer.set_voice(voices_leer[idx])
         

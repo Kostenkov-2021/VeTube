@@ -12,6 +12,11 @@ configuraciones ={
 	'voz_piper': 0,
 	'voz_kokoro': 0,
 	'voz_edge': 0,
+	# La voz SAPI 5 que lee el chat cuando la casilla «Usar voz sapi» está
+	# marcada. Aparte por lo mismo que las otras tres: su lista no tiene nada
+	# que ver con la del motor elegido, y sin clave propia marcar la casilla y
+	# desmarcarla le cambiaba la voz al motor de debajo.
+	'voz_sapi': 0,
 	"tono": 0,
 	'tono_onecore': 0,
 	"volume": 100,
