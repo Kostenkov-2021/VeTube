@@ -1954,3 +1954,121 @@ msgstr "Normální"
 #: controller/piper_downloader_controller.py:125
 msgid "Catálogo cargado, pero no se pudo consultar la lista de variantes rápidas (RT). Selecciona idiomas para ver las voces."
 msgstr "Katalog načten, ale seznam rychlých variant (RT) se nepodařilo načíst. Vyberte jazyky pro zobrazení hlasů."
+
+#: update/wxUpdater.py:18
+msgid "Canal de actualizaciones"
+msgstr "Kanál aktualizací"
+
+#: update/wxUpdater.py:22
+msgid "Elige qué actualizaciones quieres recibir:"
+msgstr "Vyberte, které aktualizace chcete dostávat:"
+
+#: update/wxUpdater.py:32
+msgid "Solo versiones oficiales. Lo recomendado para la mayoría."
+msgstr "Pouze oficiální verze. Doporučeno pro většinu uživatelů."
+
+#: update/wxUpdater.py:41
+msgid "Incluye versiones previas y novedades tempranas. Puede ser inestable."
+msgstr "Zahrnuje předběžné verze a novinky v předstihu. Může být nestabilní."
+
+#: update/wxUpdater.py:79
+msgid "Copia de seguridad"
+msgstr "Záloha"
+
+#: update/wxUpdater.py:80
+msgid "Creando la copia de seguridad..."
+msgstr "Vytváří se záloha..."
+
+#: update/wxUpdater.py:93
+#, python-format
+msgid "Creando la copia de seguridad... %d%%"
+msgstr "Vytváří se záloha... %d%%"
+
+#: update/wxUpdater.py:110
+#, python-format
+msgid "La actualización ha fallado: %s\n\nVolviendo a la versión anterior. Tus datos están a salvo."
+msgstr "Aktualizace selhala: %s\n\nProbíhá návrat k předchozí verzi. Vaše data jsou v bezpečí."
+
+#: update/wxUpdater.py:115
+msgid "Actualización fallida: volviendo atrás"
+msgstr "Aktualizace selhala: probíhá návrat"
+
+#: update/wxUpdater.py:129
+msgid "Comprobando actualizaciones"
+msgstr "Kontrola aktualizací"
+
+#: update/wxUpdater.py:130
+msgid "Conectando con el servidor de actualizaciones..."
+msgstr "Připojování k serveru aktualizací..."
+
+#: update/wxUpdater.py:150
+#, python-format
+msgid "Ya tienes la última versión (v%s), canal %s."
+msgstr "Máte nejnovější verzi (v%s), kanál %s."
+
+#: update/wxUpdater.py:164
+#, python-format
+msgid "Hay una versión nueva en el canal %s.\n\nVersión de VeTube: %s\n\n¿Quieres descargarla ahora?\n\nCambios:\n%s"
+msgstr "Je k dispozici nová verze v kanálu %s.\n\nVerze VeTube: %s\n\nChcete ji nyní stáhnout?\n\nZměny:\n%s"
+
+#: update/wxUpdater.py:218
+msgid "La actualización se ha descargado e instalado exitosamente. Pulse en aceptar para continuar."
+msgstr "Aktualizace byla úspěšně stažena a nainstalována. Pokračujte stisknutím tlačítka OK."
+
+#: update/release_notes_dialog.py:151
+#, python-format
+msgid "Novedades - v%s"
+msgstr "Novinky - v%s"
+
+#: update/release_notes_dialog.py:233
+#, python-format
+msgid "Novedades de la versión %s"
+msgstr "Novinky ve verzi %s"
+
+#: update/release_notes_dialog.py:177
+msgid "✓ Se creará una copia de seguridad antes de actualizar"
+msgstr "✓ Před aktualizací se vytvoří záloha"
+
+#: update/release_notes_dialog.py:180
+msgid "⚠ No se creará ninguna copia de seguridad. Si la actualización falla, no podrás volver atrás."
+msgstr "⚠ Nevytvoří se žádná záloha. Pokud aktualizace selže, nepůjde se vrátit zpět."
+
+#: update/release_notes_dialog.py:191
+msgid "Cambiar los ajustes"
+msgstr "Změnit nastavení"
+
+#: update/release_notes_dialog.py:206
+msgid "&Actualizar ahora"
+msgstr "&Aktualizovat nyní"
+
+#: update/release_notes_dialog.py:211
+msgid "Más &tarde"
+msgstr "&Později"
+
+#: update/release_notes_dialog.py:243
+msgid "Error al cargar las novedades"
+msgstr "Chyba při načítání novinek"
+
+#: update/release_notes_dialog.py:244
+msgid "No se han podido interpretar las novedades. Se muestra el texto tal cual:"
+msgstr "Novinky se nepodařilo zpracovat. Zobrazuje se původní text:"
+
+#: update/updater.py:92
+msgid "Las actualizaciones no están disponibles al ejecutar desde el código fuente.\n\nUsa la versión compilada (.exe) para buscar actualizaciones."
+msgstr "Aktualizace nejsou dostupné při spuštění ze zdrojového kódu.\n\nPro kontrolu aktualizací použijte zkompilovanou verzi (.exe)."
+
+#: update/updater.py:94
+msgid "Modo de desarrollo"
+msgstr "Vývojový režim"
+
+#: update/wxUpdater.py:28
+msgid "Estable"
+msgstr "Stabilní"
+
+#: update/wxUpdater.py:152
+msgid "No hay actualizaciones"
+msgstr "Žádné aktualizace"
+
+#: update/wxUpdater.py:37
+msgid "Beta"
+msgstr "Beta"

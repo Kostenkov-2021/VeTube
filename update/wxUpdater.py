@@ -34,7 +34,7 @@ def channel_selection_dialog() -> bool:
     desc_stable.SetForegroundColour(wx.Colour(100, 100, 100))
     vbox.Add(desc_stable, 0, wx.LEFT | wx.BOTTOM, 24)
 
-    radio_beta = wx.RadioButton(dlg, label=_(u"Beta"))
+    radio_beta = wx.RadioButton(dlg, label=_("Beta"))
     vbox.Add(radio_beta, 0, wx.LEFT | wx.RIGHT, 24)
     desc_beta = wx.StaticText(
         dlg,
@@ -178,8 +178,8 @@ def available_update_dialog(version, description):
 
 def create_progress_dialog():
     return wx.ProgressDialog(
-        _("Descarga en curso"),
-        _("Descargando la actualización..."),
+        _("Descarga en progreso"),
+        _("Descargando la actualización"),
         parent=None,
         maximum=100,
     )
@@ -200,7 +200,7 @@ def progress_callback(total_downloaded, total_size):
             pct = int((total_downloaded * 100) / total_size)
             progress_dialog.Update(
                 pct,
-                _("Descargando... %s de %s")
+                _("Actualizando... %s de %s")
                 % (
                     str(utils.convert_bytes(total_downloaded)),
                     str(utils.convert_bytes(total_size)),
@@ -215,10 +215,10 @@ def update_finished():
         wx.MessageDialog(
             None,
             _(
-                "La actualización se ha descargado e instalado correctamente. "
-                "Pulsa Aceptar para continuar."
+                "La actualización se ha descargado e instalado exitosamente. "
+                "Pulse en aceptar para continuar."
             ),
-            _("¡Listo!"),
+            _("¡Hecho!"),
         ).ShowModal()
 
     wx.CallAfter(show_msg)

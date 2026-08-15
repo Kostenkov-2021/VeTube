@@ -1976,3 +1976,121 @@ msgstr "Normal"
 #: controller/piper_downloader_controller.py:125
 msgid "Catálogo cargado, pero no se pudo consultar la lista de variantes rápidas (RT). Selecciona idiomas para ver las voces."
 msgstr "Katalog dimuat, tetapi daftar varian cepat (RT) tidak dapat diambil. Pilih bahasa untuk melihat suara."
+
+#: update/wxUpdater.py:18
+msgid "Canal de actualizaciones"
+msgstr "Saluran pembaruan"
+
+#: update/wxUpdater.py:22
+msgid "Elige qué actualizaciones quieres recibir:"
+msgstr "Pilih pembaruan yang ingin Anda terima:"
+
+#: update/wxUpdater.py:32
+msgid "Solo versiones oficiales. Lo recomendado para la mayoría."
+msgstr "Hanya rilis resmi. Disarankan untuk sebagian besar pengguna."
+
+#: update/wxUpdater.py:41
+msgid "Incluye versiones previas y novedades tempranas. Puede ser inestable."
+msgstr "Termasuk pra-rilis dan fitur awal. Mungkin tidak stabil."
+
+#: update/wxUpdater.py:79
+msgid "Copia de seguridad"
+msgstr "Cadangan"
+
+#: update/wxUpdater.py:80
+msgid "Creando la copia de seguridad..."
+msgstr "Membuat cadangan..."
+
+#: update/wxUpdater.py:93
+#, python-format
+msgid "Creando la copia de seguridad... %d%%"
+msgstr "Membuat cadangan... %d%%"
+
+#: update/wxUpdater.py:110
+#, python-format
+msgid "La actualización ha fallado: %s\n\nVolviendo a la versión anterior. Tus datos están a salvo."
+msgstr "Pembaruan gagal: %s\n\nKembali ke versi sebelumnya. Data Anda aman."
+
+#: update/wxUpdater.py:115
+msgid "Actualización fallida: volviendo atrás"
+msgstr "Pembaruan gagal: mengembalikan"
+
+#: update/wxUpdater.py:129
+msgid "Comprobando actualizaciones"
+msgstr "Memeriksa pembaruan"
+
+#: update/wxUpdater.py:130
+msgid "Conectando con el servidor de actualizaciones..."
+msgstr "Menghubungkan ke server pembaruan..."
+
+#: update/wxUpdater.py:150
+#, python-format
+msgid "Ya tienes la última versión (v%s), canal %s."
+msgstr "Anda sudah memiliki versi terbaru (v%s), saluran %s."
+
+#: update/wxUpdater.py:164
+#, python-format
+msgid "Hay una versión nueva en el canal %s.\n\nVersión de VeTube: %s\n\n¿Quieres descargarla ahora?\n\nCambios:\n%s"
+msgstr "Tersedia versi baru di saluran %s.\n\nVersi VeTube: %s\n\nApakah Anda ingin mengunduhnya sekarang?\n\nPerubahan:\n%s"
+
+#: update/wxUpdater.py:218
+msgid "La actualización se ha descargado e instalado exitosamente. Pulse en aceptar para continuar."
+msgstr "Pembaruan berhasil diunduh dan dipasang. Tekan OK untuk melanjutkan."
+
+#: update/release_notes_dialog.py:151
+#, python-format
+msgid "Novedades - v%s"
+msgstr "Yang baru - v%s"
+
+#: update/release_notes_dialog.py:233
+#, python-format
+msgid "Novedades de la versión %s"
+msgstr "Yang baru di versi %s"
+
+#: update/release_notes_dialog.py:177
+msgid "✓ Se creará una copia de seguridad antes de actualizar"
+msgstr "✓ Cadangan akan dibuat sebelum memperbarui"
+
+#: update/release_notes_dialog.py:180
+msgid "⚠ No se creará ninguna copia de seguridad. Si la actualización falla, no podrás volver atrás."
+msgstr "⚠ Tidak ada cadangan yang akan dibuat. Jika pembaruan gagal, Anda tidak dapat kembali."
+
+#: update/release_notes_dialog.py:191
+msgid "Cambiar los ajustes"
+msgstr "Ubah pengaturan"
+
+#: update/release_notes_dialog.py:206
+msgid "&Actualizar ahora"
+msgstr "&Perbarui sekarang"
+
+#: update/release_notes_dialog.py:211
+msgid "Más &tarde"
+msgstr "&Nanti"
+
+#: update/release_notes_dialog.py:243
+msgid "Error al cargar las novedades"
+msgstr "Gagal memuat info yang baru"
+
+#: update/release_notes_dialog.py:244
+msgid "No se han podido interpretar las novedades. Se muestra el texto tal cual:"
+msgstr "Info yang baru tidak dapat diproses. Teks aslinya ditampilkan:"
+
+#: update/updater.py:92
+msgid "Las actualizaciones no están disponibles al ejecutar desde el código fuente.\n\nUsa la versión compilada (.exe) para buscar actualizaciones."
+msgstr "Pembaruan tidak tersedia saat dijalankan dari kode sumber.\n\nGunakan versi terkompilasi (.exe) untuk memeriksa pembaruan."
+
+#: update/updater.py:94
+msgid "Modo de desarrollo"
+msgstr "Mode pengembangan"
+
+#: update/wxUpdater.py:28
+msgid "Estable"
+msgstr "Stabil"
+
+#: update/wxUpdater.py:152
+msgid "No hay actualizaciones"
+msgstr "Tidak ada pembaruan"
+
+#: update/wxUpdater.py:37
+msgid "Beta"
+msgstr "Beta"
