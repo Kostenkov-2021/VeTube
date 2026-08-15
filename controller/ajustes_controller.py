@@ -1,5 +1,5 @@
 from logging import getLogger
-from globals.data_store import config
+from globals.data_store import config, motor_de_interfaz
 from globals.resources import rutasonidos,lista_voces,lista_voces_piper,recargar_rutasonidos
 from setup import player,reader
 from utils import app_utilitys, languageHandler
@@ -30,12 +30,12 @@ class AccesibleInstalador(Accesible):
     el rol que anuncia el lector de pantalla debe decir la verdad en ambos
     casos, así que se decide en el momento en que se consulta."""
     def GetRole(self, childId):
-        if config['sistemaTTS'] == "kokoro":
+        if motor_de_interfaz() == "kokoro":
             return (wx.ACC_OK, wx.ROLE_SYSTEM_PUSHBUTTON)
         return super().GetRole(childId)
 
     def GetDefaultAction(self, childId):
-        if config['sistemaTTS'] == "kokoro":
+        if motor_de_interfaz() == "kokoro":
             # Sin acción especial: que wx anuncie la de un botón normal
             return (wx.ACC_NOT_IMPLEMENTED, "")
         return super().GetDefaultAction(childId)
@@ -78,18 +78,20 @@ class AjustesController:
         # a mano para que el lector de pantalla siempre anuncie una.
         self._seleccionar_voz_activa()
 
-        # Sincronización inicial de parámetros
-        if config['sistemaTTS'] in ("piper", "kokoro"):
+        # Sincronización inicial de parámetros. Con la casilla marcada quien
+        # lee el programa es el lector de pantalla: no hay motor que ajustar.
+        motor = motor_de_interfaz()
+        if motor in ("piper", "kokoro"):
             reader._lector.set_volume(config['volume'])
             reader._lector.set_pitch(config['tono'])
             # Aplicamos la velocidad inicial usando la escala correcta
             reader._lector.set_rate(app_utilitys.porcentaje_a_escala(config['speed']))
-        elif config['sistemaTTS'] == "edge":
+        elif motor == "edge":
             reader._lector.set_volume(config['volume'])
             reader._lector.set_pitch(config['tono'])
             # Edge usa la velocidad nativa (-10 a 10) sin reescalar
             reader._lector.set_rate(config['speed'])
-        elif config['sistemaTTS'] == "onecore":
+        elif motor == "onecore":
             reader._lector.set_volume(config['volume'])
             reader._lector.set_rate(config['speed'])
             # Aplicar el tono guardado para OneCore (posición 0-4, por defecto 0.6 = 0.6)
@@ -171,6 +173,11 @@ class AjustesController:
         mover ninguna voz de sitio: cada estado lee y escribe SU clave (ver
         _voz_editada).
         """
+        # Quien lee el programa cambia con la casilla: marcada vuelve el lector
+        # de pantalla, desmarcada vuelve el motor elegido. set_tts pasa por
+        # configurar_tts, que de paso cierra el puente del motor que se aparta
+        # en vez de dejarlo en memoria con su modelo cargado (Kokoro, 350 MB).
+        reader.set_tts(motor_de_interfaz())
         self.dialog.seleccionar_TTS.Enable(not config['sapi'])
         self.actualizar_visibilidad_instalador()
         # actualizar_filtro_idioma recoloca el filtro en el idioma del programa.
@@ -240,7 +247,7 @@ class AjustesController:
             # recupera la del que entra, así cada uno vuelve donde lo dejaste.
             self._recordar_voz(motor_anterior)
             self._recuperar_voz(config['sistemaTTS'])
-        reader.set_tts(config['sistemaTTS'])
+        reader.set_tts(motor_de_interfaz())
         if config['sistemaTTS'] in ("piper", "kokoro", "edge"):
             # Cada motor arranca de cero, con la salida de audio por defecto.
             # Antes Piper y Kokoro compartían un único puente que ya la tenía
@@ -610,15 +617,16 @@ class AjustesController:
         config['dispositivo'] = valor
         player.setdevice(config["dispositivo"])
         player.play(f"sounds/{config['directorio']}/cambiardispositivo.mp3")
-        if config['sistemaTTS'] in ("piper", "kokoro"):
-            hay_voz = config['sistemaTTS'] == "kokoro" or (
+        motor = motor_de_interfaz()
+        if motor in ("piper", "kokoro"):
+            hay_voz = motor == "kokoro" or (
                 lista_voces_piper and lista_voces_piper[0] != _("No hay voces instaladas"))
             if hay_voz:
                 # La lista del diálogo se construye con player.devicenames, así que
                 # el nombre elegido y el que saca config['dispositivo'] son el mismo.
                 app_utilitys.fijar_dispositivo_lector()
             reader.leer_auto(_("Hablaré a través de este dispositivo."))
-        elif config['sistemaTTS'] == "edge":
+        elif motor == "edge":
             app_utilitys.fijar_dispositivo_lector()
             reader.leer_auto(_("Hablaré a través de este dispositivo."))
 
@@ -743,7 +751,14 @@ class AjustesController:
             config['tono'] = value
     def cambiarVelocidad(self, event):
         value = self.dialog.slider_3.GetValue() - 10
+        config['speed'] = value
         reader._leer.set_rate(value)
+        if config['sapi']:
+            # La velocidad es la de la voz SAPI que lee el chat; el motor está
+            # apartado y el lector de pantalla lleva la suya. Además la rama de
+            # piper indexa lista_voces_piper con la selección de la lista, que
+            # ahora son las voces SAPI: entrar ahí cogería una voz cualquiera.
+            return
         if config['sistemaTTS'] == "piper":
             voz_actual = lista_voces_piper[self.dialog.choice_2.GetSelection()]
             if voz_actual != _("No hay voces instaladas"):
@@ -755,7 +770,6 @@ class AjustesController:
             reader._lector.set_rate(value)
         else:
             reader._lector.set_rate(value)
-        config['speed'] = value
     def instalar_paquete_voz(self, event):
         if config['sistemaTTS'] == "kokoro":
             KokoroDownloaderController(self.dialog).show()

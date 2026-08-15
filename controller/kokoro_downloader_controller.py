@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import wx
 from setup import network, reader
-from globals.data_store import config
+from globals.data_store import config, motor_de_interfaz
 from servicios.kokoro_manager import KokoroManager, TAMANO_DESCARGA
 from ui.kokoro_downloader import KokoroDownloaderDialog
 from TTS.sherpa_handler import kokoro_model_instalado, kokoro_voice_config
@@ -85,7 +85,7 @@ class KokoroDownloaderController:
     def _recargar_voz_activa(self):
         """Si Kokoro es el sistema activo, carga la voz recién instalada para
         que funcione al momento, sin tener que reabrir los Ajustes."""
-        if config.get('sistemaTTS') != "kokoro":
+        if motor_de_interfaz() != "kokoro":
             return
         config_kokoro = kokoro_voice_config(config.get('voz', 0))
         if config_kokoro is not None:

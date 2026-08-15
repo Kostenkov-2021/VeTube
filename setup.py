@@ -1,5 +1,5 @@
 from utils import languageHandler
-from globals.data_store import config
+from globals.data_store import config, motor_de_interfaz
 from players.sound_helper import SoundPlayer
 from helpers.reader_handler import ReaderHandler
 languageHandler.setLanguage(config['idioma'])
@@ -14,12 +14,18 @@ reader._leer.set_pitch(config['tono'])
 reader._leer.set_volume(config['volume'])
 voices_leer = reader._leer.list_voices()
 if voices_leer:
-    idx = config['voz']
+    # La voz SAPI tiene su propia clave: config['voz'] es la posición dentro de
+    # la lista del motor elegido, y aplicarla aquí cargaba una voz SAPI
+    # cualquiera (o la primera, al salirse de rango).
+    idx = config.get('voz_sapi', 0)
     if idx >= len(voices_leer): idx = 0
     reader._leer.set_voice(voices_leer[idx])
 
-# Configurar el lector principal según el motor elegido
-if config['sistemaTTS'] in ("piper", "kokoro"):
+# Configurar el lector principal según el motor que lee el programa (con la
+# casilla «Usar voz sapi» marcada vuelve a leerlo el lector de pantalla, aunque
+# en la lista siga elegido otro motor).
+motor = motor_de_interfaz()
+if motor in ("piper", "kokoro"):
     # Los dos puentes (sonata para Piper, sherpa para Kokoro) guardan los
     # parámetros y los aplican en cada speak; la voz se carga en
     # run_main_window. Misma escala que app_utilitys.porcentaje_a_escala (no se
@@ -27,7 +33,7 @@ if config['sistemaTTS'] in ("piper", "kokoro"):
     reader._lector.set_rate(1.25 + config['speed'] * 0.125)
     reader._lector.set_pitch(config['tono'])
     reader._lector.set_volume(config['volume'])
-elif config['sistemaTTS'] == "edge":
+elif motor == "edge":
     # Edge guarda los parámetros y los aplica en cada speak; la voz se carga
     # en run_main_window. La velocidad va nativa (-10 a 10) a edge-tts.
     reader._lector.set_rate(config['speed'])
@@ -35,7 +41,7 @@ elif config['sistemaTTS'] == "edge":
     reader._lector.set_volume(config['volume'])
 else:
     reader._lector.set_rate(config['speed'])
-    if config['sistemaTTS'] == "onecore":
+    if motor == "onecore":
         reader._lector.set_pitch(config.get('tono_onecore', 0.6))
     else:
         reader._lector.set_pitch(config['tono'])

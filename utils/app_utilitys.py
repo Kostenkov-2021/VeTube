@@ -22,7 +22,8 @@ def restart_program():
     os.execv(sys.executable, args)
 def porcentaje_a_escala(porcentaje): return 1.25 + porcentaje * 0.125
 def fijar_dispositivo_lector():
-    """Fija en el motor de voz activo (sonata o sherpa, según config['sistemaTTS'])
+    """Fija en el motor de voz activo (sonata o sherpa, según motor_de_interfaz(),
+    que no es config['sistemaTTS'] cuando manda la casilla «Usar voz sapi»)
     la salida de audio que marca config['dispositivo'] (1 = el primero de la
     lista, igual que para el player).
 
