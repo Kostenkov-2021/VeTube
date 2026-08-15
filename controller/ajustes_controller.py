@@ -159,14 +159,28 @@ class AjustesController:
 
     def checar_sapi(self, event):
         config['sapi'] = event.IsChecked()
+        self._recargar_panel_de_voz()
+
+    def _recargar_panel_de_voz(self):
+        """Deja el panel al día de quien lee el chat: lista de voces, filtro de
+        idioma, mandos y selección.
+
+        Lo usan la casilla «Usar voz sapi» y su revert de Cancelar, para que no
+        puedan separarse. Marcada, quien lee es SAPI 5, que sabe cambiar de voz
+        aunque el motor de debajo sea el lector de pantalla, que no. No hay que
+        mover ninguna voz de sitio: cada estado lee y escribe SU clave (ver
+        _voz_editada).
+        """
         self.dialog.seleccionar_TTS.Enable(not config['sapi'])
         self.actualizar_visibilidad_instalador()
+        # actualizar_filtro_idioma recoloca el filtro en el idioma del programa.
+        # Al desmarcar con kokoro o edge eso dejaba fuera de la lista una voz de
+        # otro idioma, y _seleccionar_voz_activa caía en la primera: un simple
+        # ida y vuelta por la casilla le cambiaba la voz al motor sin decirlo.
+        idioma_voz = None if config['sapi'] else self._idioma_de_voz(config.get('voz', 0))
         self.actualizar_filtro_idioma()
-        # La lista pasa a enseñar las voces del que ahora lee el chat, y los
-        # mandos vuelven a estar vivos: marcada, quien lee es SAPI 5, que sabe
-        # cambiar de voz aunque el motor de debajo sea el lector de pantalla,
-        # que no. No hay que mover ninguna voz de sitio al marcar ni al
-        # desmarcar: cada estado lee y escribe SU clave (ver _voz_editada).
+        if idioma_voz and idioma_voz in self.codigos_idioma:
+            self.dialog.choice_idioma_voz.SetSelection(self.codigos_idioma.index(idioma_voz))
         self._cargar_lista_de_voces()
         self.actualizar_habilitacion_controles()
         self._seleccionar_voz_activa()
@@ -429,7 +443,10 @@ class AjustesController:
         motor que no se oía, y no había forma de elegir la que sí hablaba.
         """
         if config['sapi']:
-            self._mostrar_voces(lista_voces)
+            # Red de seguridad por si el sistema no diera ninguna voz SAPI: una lista
+            # vacía deja al lector de pantalla anunciando un desplegable sin
+            # valor, sin decir por qué.
+            self._mostrar_voces(lista_voces or [_("No hay voces instaladas")])
         elif config['sistemaTTS'] == "piper":
             self._mostrar_voces(lista_voces_piper)
         elif config['sistemaTTS'] == "kokoro":
@@ -496,7 +513,11 @@ class AjustesController:
         wx.CallAfter(self._poblar_voces_edge)
 
     def _poblar_voces_edge(self):
-        if config['sistemaTTS'] != "edge":
+        # Con la casilla marcada la lista es la de SAPI: el catálogo de Edge
+        # puede llegar mientras tanto (se pide al abrir el diálogo) y la
+        # reescribiría entera bajo los dedos del usuario, colocando además la
+        # voz del chat en la posición que tocara.
+        if config['sapi'] or config['sistemaTTS'] != "edge":
             return
         try:
             # El diálogo pudo cerrarse antes de que terminara la descarga: no
@@ -703,7 +724,14 @@ class AjustesController:
         reader._lector.set_volume(value)
         config['volume'] = value
     def cambiarTono(self, event):
-        if config['sistemaTTS'] == "onecore":
+        if config['sapi']:
+            # El tono es el de la voz SAPI que lee el chat. El motor no se toca:
+            # puede ser onecore, cuyo tono va en otra escala (0-4), y escribirle
+            # un valor de esta (-10 a 10) le estropeaba el suyo en silencio.
+            value = self.dialog.slider_1.GetValue() - 10
+            reader._leer.set_pitch(value)
+            config['tono'] = value
+        elif config['sistemaTTS'] == "onecore":
             # OneCore: el slider va de 0 a 4, cada posición = 0.6, 0.7, 0.8, 0.9, 1.0
             pos = self.dialog.slider_1.GetValue()
             config['tono_onecore'] = pos
@@ -890,12 +918,7 @@ class AjustesController:
             # que hay que dejar puesta es la del que habla, no la del elegido.
             try:
                 self.dialog.check_1.SetValue(config['sapi'])
-                self.dialog.seleccionar_TTS.Enable(not config['sapi'])
-                self.actualizar_visibilidad_instalador()
-                self._cargar_lista_de_voces()
-                self.actualizar_habilitacion_controles()
-                self._seleccionar_voz_activa()
-                self.cambiarVoz(None)
+                self._recargar_panel_de_voz()
             except Exception:
                 logger.exception("No se pudo restaurar la casilla «Usar voz sapi» al cancelar Ajustes (sapi=%s)", config['sapi'])
 
