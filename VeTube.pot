@@ -2027,3 +2027,7 @@ msgstr ""
 #: update/
 msgid "Crear backup de seguridad antes de actualizar"
 msgstr ""
+
+#: update/
+msgid "&Buscar actualizaciones"
+msgstr ""

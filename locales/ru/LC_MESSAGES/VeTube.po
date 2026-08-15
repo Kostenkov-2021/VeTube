@@ -1797,3 +1797,7 @@ msgstr "Бета (включает пробные версии)"
 #: update/
 msgid "Crear backup de seguridad antes de actualizar"
 msgstr "Создавать резервную копию перед обновлением"
+
+#: update/
+msgid "&Buscar actualizaciones"
+msgstr "Прове&рить обновления"

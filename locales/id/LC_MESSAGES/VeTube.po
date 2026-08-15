@@ -2114,3 +2114,7 @@ msgstr "Beta (termasuk versi uji coba)"
 #: update/
 msgid "Crear backup de seguridad antes de actualizar"
 msgstr "Buat cadangan sebelum memperbarui"
+
+#: update/
+msgid "&Buscar actualizaciones"
+msgstr "&Periksa pembaruan"

@@ -2092,3 +2092,7 @@ msgstr "Beta (zahrnuje zkušební verze)"
 #: update/
 msgid "Crear backup de seguridad antes de actualizar"
 msgstr "Před aktualizací vytvořit zálohu"
+
+#: update/
+msgid "&Buscar actualizaciones"
+msgstr "&Zkontrolovat aktualizace"

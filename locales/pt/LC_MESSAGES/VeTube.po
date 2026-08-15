@@ -2115,3 +2115,7 @@ msgstr "Beta (inclui versões de teste)"
 #: update/
 msgid "Crear backup de seguridad antes de actualizar"
 msgstr "Criar backup de segurança antes de atualizar"
+
+#: update/
+msgid "&Buscar actualizaciones"
+msgstr "&Procurar atualizações"
