@@ -121,12 +121,28 @@ class ReaderHandler:
         config['sapi'] = sapi
 
     def leer_mensaje(self, mensaje):
+        """El chat: los mensajes y los eventos del directo.
+
+        Con la casilla «Usar voz sapi» marcada salen por la voz SAPI 5
+        secundaria y por ahí solamente, tenga el usuario el motor que tenga.
+        Eso es justo lo que la casilla ofrece: una segunda voz que lee el chat
+        mientras el lector de pantalla sigue libre para moverse por el
+        programa. Habla con _leer directamente y no llamando a leer_sapi()
+        porque ese otro camino lleva los avisos del programa, donde la
+        excepción de piper/kokoro/edge sí tiene sentido (ver leer_sapi).
+        """
         if config['sapi']:
-            self.leer_sapi(mensaje)
+            self._leer.speak(mensaje)
         else:
             self.leer_auto(mensaje)
 
     def leer_sapi(self, mensaje):
+        """Avisos del programa: «Ingresando al chat», errores de conexión…
+
+        Salen por el motor activo cuando ese motor tiene voz propia, y caen en
+        la voz SAPI secundaria con auto, sapi5 y onecore. No mira la casilla:
+        estos avisos no son chat.
+        """
         if config['sistemaTTS'] in ("piper", "kokoro", "edge"):
             self.leer_auto(mensaje)
         else:
