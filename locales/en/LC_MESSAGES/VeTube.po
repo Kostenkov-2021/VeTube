@@ -2093,3 +2093,19 @@ msgstr "Could not check for updates. Check your connection."
 #: update/updater.py:147
 msgid "Error al comprobar actualizaciones."
 msgstr "Error checking for updates."
+
+#: update/
+msgid "Canal de actualizaciones:"
+msgstr "Update channel:"
+
+#: update/
+msgid "Estable (solo versiones oficiales)"
+msgstr "Stable (official releases only)"
+
+#: update/
+msgid "Beta (incluye versiones de prueba)"
+msgstr "Beta (includes test versions)"
+
+#: update/
+msgid "Crear backup de seguridad antes de actualizar"
+msgstr "Create a backup before updating"

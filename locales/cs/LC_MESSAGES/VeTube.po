@@ -2076,3 +2076,19 @@ msgstr "Nepodařilo se zkontrolovat aktualizace. Zkontrolujte připojení."
 #: update/updater.py:147
 msgid "Error al comprobar actualizaciones."
 msgstr "Chyba při kontrole aktualizací."
+
+#: update/
+msgid "Canal de actualizaciones:"
+msgstr "Kanál aktualizací:"
+
+#: update/
+msgid "Estable (solo versiones oficiales)"
+msgstr "Stabilní (pouze oficiální verze)"
+
+#: update/
+msgid "Beta (incluye versiones de prueba)"
+msgstr "Beta (zahrnuje zkušební verze)"
+
+#: update/
+msgid "Crear backup de seguridad antes de actualizar"
+msgstr "Před aktualizací vytvořit zálohu"

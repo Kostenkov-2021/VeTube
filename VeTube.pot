@@ -2011,3 +2011,19 @@ msgstr ""
 #: update/updater.py:147
 msgid "Error al comprobar actualizaciones."
 msgstr ""
+
+#: update/
+msgid "Canal de actualizaciones:"
+msgstr ""
+
+#: update/
+msgid "Estable (solo versiones oficiales)"
+msgstr ""
+
+#: update/
+msgid "Beta (incluye versiones de prueba)"
+msgstr ""
+
+#: update/
+msgid "Crear backup de seguridad antes de actualizar"
+msgstr ""

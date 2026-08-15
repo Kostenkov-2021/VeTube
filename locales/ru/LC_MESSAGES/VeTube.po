@@ -1781,3 +1781,19 @@ msgstr "Не удалось проверить обновления. Прове�
 #: update/updater.py:147
 msgid "Error al comprobar actualizaciones."
 msgstr "Ошибка при проверке обновлений."
+
+#: update/
+msgid "Canal de actualizaciones:"
+msgstr "Канал обновлений:"
+
+#: update/
+msgid "Estable (solo versiones oficiales)"
+msgstr "Стабильный (только официальные выпуски)"
+
+#: update/
+msgid "Beta (incluye versiones de prueba)"
+msgstr "Бета (включает пробные версии)"
+
+#: update/
+msgid "Crear backup de seguridad antes de actualizar"
+msgstr "Создавать резервную копию перед обновлением"

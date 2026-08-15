@@ -2101,3 +2101,19 @@ msgstr "Impossible de vérifier les mises à jour. Vérifiez votre connexion."
 #: update/updater.py:147
 msgid "Error al comprobar actualizaciones."
 msgstr "Erreur lors de la recherche de mises à jour."
+
+#: update/
+msgid "Canal de actualizaciones:"
+msgstr "Canal de mises à jour :"
+
+#: update/
+msgid "Estable (solo versiones oficiales)"
+msgstr "Stable (versions officielles uniquement)"
+
+#: update/
+msgid "Beta (incluye versiones de prueba)"
+msgstr "Bêta (inclut les versions d'essai)"
+
+#: update/
+msgid "Crear backup de seguridad antes de actualizar"
+msgstr "Créer une sauvegarde avant la mise à jour"

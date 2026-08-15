@@ -2099,3 +2099,19 @@ msgstr "Não foi possível verificar atualizações. Verifique sua conexão."
 #: update/updater.py:147
 msgid "Error al comprobar actualizaciones."
 msgstr "Erro ao procurar atualizações."
+
+#: update/
+msgid "Canal de actualizaciones:"
+msgstr "Canal de atualizações:"
+
+#: update/
+msgid "Estable (solo versiones oficiales)"
+msgstr "Estável (apenas versões oficiais)"
+
+#: update/
+msgid "Beta (incluye versiones de prueba)"
+msgstr "Beta (inclui versões de teste)"
+
+#: update/
+msgid "Crear backup de seguridad antes de actualizar"
+msgstr "Criar backup de segurança antes de atualizar"

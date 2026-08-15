@@ -2098,3 +2098,19 @@ msgstr "Tidak dapat memeriksa pembaruan. Periksa koneksi Anda."
 #: update/updater.py:147
 msgid "Error al comprobar actualizaciones."
 msgstr "Terjadi kesalahan saat memeriksa pembaruan."
+
+#: update/
+msgid "Canal de actualizaciones:"
+msgstr "Saluran pembaruan:"
+
+#: update/
+msgid "Estable (solo versiones oficiales)"
+msgstr "Stabil (hanya rilis resmi)"
+
+#: update/
+msgid "Beta (incluye versiones de prueba)"
+msgstr "Beta (termasuk versi uji coba)"
+
+#: update/
+msgid "Crear backup de seguridad antes de actualizar"
+msgstr "Buat cadangan sebelum memperbarui"
