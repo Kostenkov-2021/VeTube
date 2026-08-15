@@ -7,6 +7,18 @@ progress_dialog = None
 backup_dialog = None
 
 
+def _nombre_canal() -> str:
+    """El canal, traducido y con la misma redacción que los botones del diálogo.
+
+    get_channel() devuelve «stable» o «beta», en inglés y en minúsculas, y se
+    estaba colando tal cual dentro de frases ya traducidas: «Ya tienes la
+    última versión (v3.95), canal Stable», «канал Stable». Se reutilizan los
+    mismos msgid que los botones de arriba, así que no hace falta traducir
+    nada nuevo.
+    """
+    return _("Estable") if get_channel() == "stable" else _("Beta")
+
+
 def channel_selection_dialog() -> bool:
     """Show a dialog for selecting the update channel (stable or beta).
 
@@ -144,7 +156,7 @@ def no_updates_dialog(version: str) -> None:
     """
 
     def _show():
-        ch = get_channel().capitalize()
+        ch = _nombre_canal()
         wx.MessageDialog(
             None,
             _("Ya tienes la última versión (v%s), canal %s.")
@@ -157,7 +169,7 @@ def no_updates_dialog(version: str) -> None:
 
 
 def available_update_dialog(version, description):
-    ch = get_channel().capitalize()
+    ch = _nombre_canal()
     dialog = wx.MessageDialog(
         None,
         _(

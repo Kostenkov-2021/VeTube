@@ -2032,10 +2032,6 @@ msgstr "Masz już najnowszą wersję (v%s), kanał %s."
 msgid "Hay una versión nueva en el canal %s.\n\nVersión de VeTube: %s\n\n¿Quieres descargarla ahora?\n\nCambios:\n%s"
 msgstr "Dostępna jest nowa wersja w kanale %s.\n\nWersja VeTube: %s\n\nCzy chcesz ją teraz pobrać?\n\nZmiany:\n%s"
 
-#: update/wxUpdater.py:218
-msgid "La actualización se ha descargado e instalado exitosamente. Pulse en aceptar para continuar."
-msgstr "Aktualizacja została pobrana i zainstalowana. Naciśnij OK, aby kontynuować."
-
 #: update/release_notes_dialog.py:151
 #, python-format
 msgid "Novedades - v%s"
@@ -2093,3 +2089,11 @@ msgstr "Brak aktualizacji"
 #: update/wxUpdater.py:37
 msgid "Beta"
 msgstr "Beta"
+
+#: update/updater.py:113
+msgid "No se pudo comprobar actualizaciones. Verifica tu conexión."
+msgstr "Nie udało się sprawdzić aktualizacji. Sprawdź połączenie."
+
+#: update/updater.py:147
+msgid "Error al comprobar actualizaciones."
+msgstr "Błąd podczas sprawdzania aktualizacji."

@@ -2033,10 +2033,6 @@ msgstr "Anda sudah memiliki versi terbaru (v%s), saluran %s."
 msgid "Hay una versión nueva en el canal %s.\n\nVersión de VeTube: %s\n\n¿Quieres descargarla ahora?\n\nCambios:\n%s"
 msgstr "Tersedia versi baru di saluran %s.\n\nVersi VeTube: %s\n\nApakah Anda ingin mengunduhnya sekarang?\n\nPerubahan:\n%s"
 
-#: update/wxUpdater.py:218
-msgid "La actualización se ha descargado e instalado exitosamente. Pulse en aceptar para continuar."
-msgstr "Pembaruan berhasil diunduh dan dipasang. Tekan OK untuk melanjutkan."
-
 #: update/release_notes_dialog.py:151
 #, python-format
 msgid "Novedades - v%s"
@@ -2094,3 +2090,11 @@ msgstr "Tidak ada pembaruan"
 #: update/wxUpdater.py:37
 msgid "Beta"
 msgstr "Beta"
+
+#: update/updater.py:113
+msgid "No se pudo comprobar actualizaciones. Verifica tu conexión."
+msgstr "Tidak dapat memeriksa pembaruan. Periksa koneksi Anda."
+
+#: update/updater.py:147
+msgid "Error al comprobar actualizaciones."
+msgstr "Terjadi kesalahan saat memeriksa pembaruan."

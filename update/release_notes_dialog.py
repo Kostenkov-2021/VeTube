@@ -239,9 +239,14 @@ class ReleaseNotesDialog(wx.Dialog):
         except Exception as e:
             logger.exception("Failed to load release notes")
             # Fallback to plain text
+            # La cadena sale de la f-string a propósito: los extractores de
+            # gettext no siempre ven un _() metido dentro de un campo de
+            # sustitución, y la entrada desaparecería del .pot en la próxima
+            # regeneración sin que nadie se diera cuenta.
+            aviso = _("No se han podido interpretar las novedades. Se muestra el texto tal cual:")
             fallback_html = _get_styled_html(
                 _("Error al cargar las novedades"),
-                f"<p>{_("No se han podido interpretar las novedades. Se muestra el texto tal cual:")}</p><pre>{self.release_notes}</pre>"
+                f"<p>{aviso}</p><pre>{self.release_notes}</pre>"
             )
             self.webview.SetPage(fallback_html, "")
     

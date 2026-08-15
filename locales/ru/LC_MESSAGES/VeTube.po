@@ -1773,3 +1773,11 @@ msgstr "Обновлений нет"
 #: update/wxUpdater.py:37
 msgid "Beta"
 msgstr "Бета"
+
+#: update/updater.py:113
+msgid "No se pudo comprobar actualizaciones. Verifica tu conexión."
+msgstr "Не удалось проверить обновления. Проверьте подключение."
+
+#: update/updater.py:147
+msgid "Error al comprobar actualizaciones."
+msgstr "Ошибка при проверке обновлений."

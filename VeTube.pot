@@ -1954,10 +1954,6 @@ msgstr ""
 msgid "Hay una versión nueva en el canal %s.\n\nVersión de VeTube: %s\n\n¿Quieres descargarla ahora?\n\nCambios:\n%s"
 msgstr ""
 
-#: update/wxUpdater.py:218
-msgid "La actualización se ha descargado e instalado exitosamente. Pulse en aceptar para continuar."
-msgstr ""
-
 #: update/release_notes_dialog.py:151
 #, python-format
 msgid "Novedades - v%s"
@@ -2006,4 +2002,12 @@ msgstr ""
 
 #: update/wxUpdater.py:37
 msgid "Beta"
+msgstr ""
+
+#: update/updater.py:113
+msgid "No se pudo comprobar actualizaciones. Verifica tu conexión."
+msgstr ""
+
+#: update/updater.py:147
+msgid "Error al comprobar actualizaciones."
 msgstr ""
