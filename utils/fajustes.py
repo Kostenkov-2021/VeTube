@@ -69,22 +69,12 @@ def leerConfiguracion():
 			# Completar listas que crecieron en versiones nuevas, conservando las preferencias existentes (evita IndexError)
 			configs[clave] = configs[clave] + valor_pred[len(configs[clave]):]
 			actualizar_configuracion = True
-	# Migración única de la casilla «Usar voz sapi», que vuelve a mandar sobre
-	# el chat. Viene marcada de fábrica, y desde la 3.8 no hacía nada con
-	# piper, kokoro ni edge: un True junto a uno de esos motores no es una
-	# elección del usuario, es el valor que nadie tenía motivo de tocar. Sin
-	# esto, quien eligió Piper actualizaría y se encontraría el chat leído por
-	# SAPI 5 sin haber pedido nada.
-	# Con «auto» se queda marcada a propósito: ahí la casilla sí funcionaba (el
-	# chat ya salía por la voz SAPI secundaria), y desmarcarla le cambiaría la
-	# voz a quien no ha pedido nada.
-	# El testigo evita repetirlo: quien marque la casilla a propósito con un
-	# motor elegido se la encontrará marcada en el siguiente arranque.
-	if 'sapi_migrado' not in configs:
-		if configs.get('sapi') and configs.get('sistemaTTS', "auto") != "auto":
-			configs['sapi'] = False
-		configs['sapi_migrado'] = True
-		actualizar_configuracion = True
+	# La casilla «Usar voz sapi» no se migra: el valor de fábrica ya es el
+	# comportamiento bueno. Marcada, el chat sale por la voz SAPI 5 y el
+	# programa se lo queda el lector de pantalla, que es lo que hace falta
+	# para moverse deprisa por la lista. Desmarcarla al actualizar dejaría a
+	# quien eligió piper, kokoro o edge con la navegación leída por su motor,
+	# justo lo contrario de lo que se busca.
 	# actualizar al archivo en caso de ser necesario:
 	if actualizar_configuracion:
 		with open(DATA_FILE, 'w+') as file:
