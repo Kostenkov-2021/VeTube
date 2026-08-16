@@ -33,7 +33,7 @@ class ServicioSala:
             self._hilo.daemon = True
             self._hilo.start()
             player.play(rutasonidos[6])
-            reader.leer_sapi(_("Ingresando al chat."))
+            reader.leer_aviso(_("Ingresando al chat."))
             title = _("Chat de la sala de juegos")
             wx.CallAfter(self.chat_controller.agregar_titulo, title)
             wx.CallAfter(self.chat_controller.chat_dialog.update_chat_page_title, self.chat_controller, title)

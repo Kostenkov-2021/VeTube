@@ -30,7 +30,7 @@ class ServicioTwich:
         self._hilo = threading.Thread(target=self.recibir, daemon=True)
         self._hilo.start()
         player.play(rutasonidos[6])
-        reader.leer_sapi(_("Ingresando al chat."))
+        reader.leer_aviso(_("Ingresando al chat."))
 
     def detener(self):
         self._detener = True

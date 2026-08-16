@@ -68,6 +68,6 @@ class ChatItemController:
             mensajes_destacados.append({'mensaje': mensaje, 'titulo': titulo})
             
             escribirJsonLista(MENSAJES_DESTACADOS_FILE, mensajes_destacados)
-            reader.leer_sapi(_("El mensaje ha sido archivado correctamente."))
+            reader.leer_aviso(_("El mensaje ha sido archivado correctamente."))
         else: 
-            reader.leer_sapi(_("Este mensaje ya está en la lista de archivados."))
+            reader.leer_aviso(_("Este mensaje ya está en la lista de archivados."))

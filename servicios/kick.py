@@ -40,7 +40,7 @@ class ServicioKick:
 
         if not os.path.exists(bypass_executable):
             logger.error("No se encuentra el archivo '%s'.", bypass_executable)
-            wx.CallAfter(reader.leer_sapi, _("error_bypass_no_encontrado"))
+            wx.CallAfter(reader.leer_aviso, _("error_bypass_no_encontrado"))
             return False
 
         creation_flags = subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
@@ -70,10 +70,10 @@ class ServicioKick:
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         try:
-            wx.CallAfter(reader.leer_sapi, _("Cargando..."))
+            wx.CallAfter(reader.leer_aviso, _("Cargando..."))
             if not self._run_bypass_and_wait():
                 if self.is_running:
-                    wx.CallAfter(reader.leer_sapi, _("error_iniciar_bypass"))
+                    wx.CallAfter(reader.leer_aviso, _("error_iniciar_bypass"))
                 self.detener()
                 return
 
@@ -100,7 +100,7 @@ class ServicioKick:
         self.client.event(self.on_follow)
 
     async def on_ready(self):
-        wx.CallAfter(reader.leer_sapi, _("Ingresando al chat"))
+        wx.CallAfter(reader.leer_aviso, _("Ingresando al chat"))
         if data_store.config['sonidos'] and data_store.config['listasonidos'][6]:
             wx.CallAfter(player.play, rutasonidos[6])
         try:
@@ -118,7 +118,7 @@ class ServicioKick:
                 self.chat_controller.set_media_controller(self.media_controller)
         except Exception:
             logger.exception("Error al conectar al chatroom de Kick")
-            wx.CallAfter(reader.leer_sapi, _("error_conectar_kick_chatroom"))
+            wx.CallAfter(reader.leer_aviso, _("error_conectar_kick_chatroom"))
             self.detener()
 
     async def on_message(self, message: kick.Message):
