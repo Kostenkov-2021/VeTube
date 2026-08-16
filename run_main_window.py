@@ -3,7 +3,7 @@
 from utils.logging_setup import configurar_logs
 configurar_logs()
 import asyncio,sys,wx,setup
-from globals.data_store import config
+from globals.data_store import config, motor_de_interfaz
 from globals.resources import carpeta_voces,lista_voces_piper
 from controller.main_controller import MainController
 from update import updater,update
@@ -13,12 +13,15 @@ if sys.platform == "win32": asyncio.set_event_loop_policy(asyncio.WindowsSelecto
 
 def run_app():
     app = wx.App(False)
-    if config['sistemaTTS'] in ("piper", "kokoro"):
+    # El motor que lee el programa, no el elegido en la lista: con la casilla
+    # «Usar voz sapi» marcada no hay ningún modelo local que cargar.
+    motor = motor_de_interfaz()
+    if motor in ("piper", "kokoro"):
         # Cada motor tiene su propio puente (sonata para Piper, sherpa para
         # Kokoro) y setup.reader ya arrancó el que toca: aquí solo hay que
         # localizar la voz configurada y cargarla en el proceso residente.
         modelo = None
-        if config['sistemaTTS'] == "piper":
+        if motor == "piper":
             if detect_onnx_models(carpeta_voces) is not None:
                 from TTS.list_voices import obtener_ruta_voz
                 if not (0 <= config['voz'] < len(lista_voces_piper)):
@@ -30,11 +33,11 @@ def run_app():
         if modelo is not None:
             setup.reader._lector.load_model(modelo)
             fijar_dispositivo_lector()
-        elif config['sistemaTTS'] == "kokoro":
+        elif motor == "kokoro":
             # Modelo Kokoro no disponible: avisar con la voz secundaria en lugar
             # de arrancar con la voz principal muda (revisión de accesibilidad).
             setup.reader._leer.speak(_("No hay voces instaladas"))
-    elif config['sistemaTTS'] == "edge":
+    elif motor == "edge":
         # Edge no tiene modelo local: basta con apuntar el lector al nombre
         # corto de la voz elegida y fijar el dispositivo de salida.
         from TTS.edge_handler import edge_voz_shortname, edge_iniciar_carga, edge_list_voices

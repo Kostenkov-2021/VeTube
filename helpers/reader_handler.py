@@ -1,5 +1,5 @@
 import os
-from globals.data_store import config
+from globals.data_store import config, motor_de_interfaz
 from prism import Context, BackendId
 
 # Instancia única del contexto de Prism para compartir recursos
@@ -86,7 +86,7 @@ class PrismBackendWrapper:
 
 class ReaderHandler:
     def __init__(self, lector=None):
-        sistema = config['sistemaTTS'] if lector is None else lector
+        sistema = motor_de_interfaz() if lector is None else lector
         # TODOS los lectores pasan por configurar_tts, también los que no usan
         # ningún puente: es ahí donde se cierran los puentes de los demás. Si
         # sapi5/onecore/auto se construyeran aquí, el servidor del motor
@@ -121,13 +121,30 @@ class ReaderHandler:
         config['sapi'] = sapi
 
     def leer_mensaje(self, mensaje):
+        """El chat: los mensajes y los eventos del directo.
+
+        Con la casilla «Usar voz sapi» marcada salen por la voz SAPI 5
+        secundaria y por ahí solamente, tenga el usuario el motor que tenga.
+        Eso es justo lo que la casilla ofrece: una segunda voz que lee el chat
+        mientras el lector de pantalla sigue libre para moverse por el
+        programa. Habla con _leer directamente y no llamando a leer_sapi()
+        porque ese otro camino lleva los avisos del programa, donde la
+        excepción de piper/kokoro/edge sí tiene sentido (ver leer_sapi).
+        """
         if config['sapi']:
-            self.leer_sapi(mensaje)
+            self._leer.speak(mensaje)
         else:
             self.leer_auto(mensaje)
 
     def leer_sapi(self, mensaje):
-        if config['sistemaTTS'] in ("piper", "kokoro", "edge"):
+        """Avisos del programa: «Ingresando al chat», errores de conexión…
+
+        Salen por el motor que lee el programa cuando ese motor tiene voz
+        propia, y caen en la voz SAPI secundaria con auto, sapi5 y onecore —o
+        sea también con la casilla marcada, que devuelve el programa al lector
+        de pantalla y no le deja voz propia (ver motor_de_interfaz).
+        """
+        if motor_de_interfaz() in ("piper", "kokoro", "edge"):
             self.leer_auto(mensaje)
         else:
             self._leer.speak(mensaje)

@@ -1,5 +1,5 @@
 import wx
-from globals.data_store import favorite, mensajes_destacados, favs, msjs,config
+from globals.data_store import favorite, mensajes_destacados, favs, msjs,config,motor_de_interfaz
 from globals.paths import FAVORITOS_FILE, MENSAJES_DESTACADOS_FILE
 from ui.main_window import MyFrame, PLATAFORMAS
 from os import remove
@@ -34,7 +34,7 @@ class MainController:
 
     def iniciar_secuencia_arranque(self):
         # 1. Verificar e instalar voces si es necesario
-        if config.get('sistemaTTS') == "piper": configurar_piper(self.frame, carpeta_voces)
+        if motor_de_interfaz() == "piper": configurar_piper(self.frame, carpeta_voces)
         # 2. Comprobar actualizaciones en segundo plano de forma segura
         if config.get('updates', False):
             updater.do_update()

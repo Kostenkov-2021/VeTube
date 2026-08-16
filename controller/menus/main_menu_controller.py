@@ -58,7 +58,7 @@ class MainMenuController:
         # Pedido de César (2026-08-01): al Aceptar con Kokoro elegido y sin el
         # modelo en el equipo, ofrecer la descarga en el acto — así el paquete
         # de 334 MB solo lo baja quien de verdad va a usar estas voces.
-        if resultado == wx.ID_OK and data_store.config['sistemaTTS'] == "kokoro" and not kokoro_model_instalado():
+        if resultado == wx.ID_OK and data_store.motor_de_interfaz() == "kokoro" and not kokoro_model_instalado():
             KokoroDownloaderController(self.frame).show()
 
     def restaurar(self, event):
@@ -166,23 +166,29 @@ class MainMenuController:
         reader._leer.set_volume(data_store.config['volume'])
         voices_leer = reader._leer.list_voices()
         if voices_leer:
-            idx = data_store.config['voz']
+            # La voz SAPI tiene su propia clave: config['voz'] es la posición
+            # dentro de la lista del motor elegido, y aplicarla aquí cargaba
+            # una voz SAPI cualquiera (o la primera, al salirse de rango).
+            idx = data_store.config.get('voz_sapi', 0)
             if idx >= len(voices_leer): idx = 0
             reader._leer.set_voice(voices_leer[idx])
         
-        if data_store.config['sistemaTTS'] in ("piper", "kokoro"):
+        # El motor que lee el programa, no el elegido en la lista: con la
+        # casilla «Usar voz sapi» marcada quien lee es el lector de pantalla.
+        motor = data_store.motor_de_interfaz()
+        if motor in ("piper", "kokoro"):
             # Los dos puentes usan la escala porcentaje_a_escala y no exponen list_voices
             reader._lector.set_rate(app_utilitys.porcentaje_a_escala(data_store.config['speed']))
             reader._lector.set_pitch(data_store.config['tono'])
             reader._lector.set_volume(data_store.config['volume'])
-        elif data_store.config['sistemaTTS'] == "edge":
+        elif motor == "edge":
             # Edge: la velocidad va nativa (-10 a 10) a edge-tts
             reader._lector.set_rate(data_store.config['speed'])
             reader._lector.set_pitch(data_store.config['tono'])
             reader._lector.set_volume(data_store.config['volume'])
         else:
             reader._lector.set_rate(data_store.config['speed'])
-            if data_store.config['sistemaTTS'] == "onecore":
+            if motor == "onecore":
                 reader._lector.set_pitch(data_store.config.get('tono_onecore', 0.6))
             else:
                 reader._lector.set_pitch(data_store.config['tono'])
@@ -194,11 +200,11 @@ class MainMenuController:
                 reader._lector.set_voice(voices_lector[idx])
 
         reader.set_sapi(data_store.config['sapi'])
-        if data_store.config['sistemaTTS'] in ("piper", "kokoro"):
+        if motor in ("piper", "kokoro"):
             app_utilitys.fijar_dispositivo_lector()
-            if data_store.config['sistemaTTS'] == "piper":
+            if motor == "piper":
                 app_utilitys.configurar_piper(self.frame, carpeta_voces)
-        elif data_store.config['sistemaTTS'] == "edge":
+        elif motor == "edge":
             app_utilitys.fijar_dispositivo_lector()
         if cf.choice_moneditas.GetStringSelection()!='Por defecto':
             monedita=cf.choice_moneditas.GetStringSelection().split(', (')
