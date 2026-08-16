@@ -89,9 +89,9 @@ def do_update(is_manual: bool = False) -> None:
         if is_manual:
             wx.CallAfter(
                 wx.MessageBox,
-                _("Updates are not available when running from source code.\n\n"
-                  "Please use the compiled version (.exe) to check for updates."),
-                _("Development Mode"),
+                _("Las actualizaciones no están disponibles al ejecutar desde el código fuente.\n\n"
+                  "Usa la versión compilada (.exe) para buscar actualizaciones."),
+                _("Modo de desarrollo"),
                 wx.ICON_INFORMATION,
             )
         return

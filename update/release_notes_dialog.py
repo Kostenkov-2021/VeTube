@@ -148,7 +148,7 @@ class ReleaseNotesDialog(wx.Dialog):
         """
         super().__init__(
             parent,
-            title=_("Release Notes - v%s") % version,
+            title=_("Novedades - v%s") % version,
             size=(650, 550),
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER
         )
@@ -174,10 +174,10 @@ class ReleaseNotesDialog(wx.Dialog):
         create_backup = config.get('create_backup_before_update', True)
         
         if create_backup:
-            backup_text = _("✓ A security backup will be created before updating")
+            backup_text = _("✓ Se creará una copia de seguridad antes de actualizar")
             backup_color = wx.Colour(39, 174, 96)  # Green
         else:
-            backup_text = _("⚠ No backup will be created. If the update fails, you won't be able to revert.")
+            backup_text = _("⚠ No se creará ninguna copia de seguridad. Si la actualización falla, no podrás volver atrás.")
             backup_color = wx.Colour(231, 76, 60)  # Red
         
         backup_label = wx.StaticText(self, label=backup_text)
@@ -188,7 +188,7 @@ class ReleaseNotesDialog(wx.Dialog):
         settings_link = wx.adv.HyperlinkCtrl(
             self, 
             wx.ID_ANY,
-            _("Change settings"),
+            _("Cambiar los ajustes"),
             "",
             style=wx.adv.HL_ALIGN_RIGHT
         )
@@ -203,12 +203,12 @@ class ReleaseNotesDialog(wx.Dialog):
         button_sizer = wx.StdDialogButtonSizer()
         
         # Update button
-        self.btn_update = wx.Button(self, wx.ID_OK, _("&Update Now"))
+        self.btn_update = wx.Button(self, wx.ID_OK, _("&Actualizar ahora"))
         self.btn_update.SetDefault()
         button_sizer.AddButton(self.btn_update)
         
         # Cancel button
-        self.btn_cancel = wx.Button(self, wx.ID_CANCEL, _("&Later"))
+        self.btn_cancel = wx.Button(self, wx.ID_CANCEL, _("Más &tarde"))
         button_sizer.AddButton(self.btn_cancel)
         
         button_sizer.Realize()
@@ -230,7 +230,7 @@ class ReleaseNotesDialog(wx.Dialog):
             content_html = _markdown_to_html(self.release_notes)
             
             # Wrap in styled page
-            title = _("What's New in Version %s") % self.version
+            title = _("Novedades de la versión %s") % self.version
             full_html = _get_styled_html(title, content_html)
             
             # Load into WebView
@@ -239,9 +239,14 @@ class ReleaseNotesDialog(wx.Dialog):
         except Exception as e:
             logger.exception("Failed to load release notes")
             # Fallback to plain text
+            # La cadena sale de la f-string a propósito: los extractores de
+            # gettext no siempre ven un _() metido dentro de un campo de
+            # sustitución, y la entrada desaparecería del .pot en la próxima
+            # regeneración sin que nadie se diera cuenta.
+            aviso = _("No se han podido interpretar las novedades. Se muestra el texto tal cual:")
             fallback_html = _get_styled_html(
-                _("Error Loading Release Notes"),
-                f"<p>{_('Could not parse release notes. Showing raw text:')}</p><pre>{self.release_notes}</pre>"
+                _("Error al cargar las novedades"),
+                f"<p>{aviso}</p><pre>{self.release_notes}</pre>"
             )
             self.webview.SetPage(fallback_html, "")
     

@@ -7,6 +7,18 @@ progress_dialog = None
 backup_dialog = None
 
 
+def _nombre_canal() -> str:
+    """El canal, traducido y con la misma redacción que los botones del diálogo.
+
+    get_channel() devuelve «stable» o «beta», en inglés y en minúsculas, y se
+    estaba colando tal cual dentro de frases ya traducidas: «Ya tienes la
+    última versión (v3.95), canal Stable», «канал Stable». Se reutilizan los
+    mismos msgid que los botones de arriba, así que no hace falta traducir
+    nada nuevo.
+    """
+    return _("Estable") if get_channel() == "stable" else _("Beta")
+
+
 def channel_selection_dialog() -> bool:
     """Show a dialog for selecting the update channel (stable or beta).
 
@@ -15,30 +27,30 @@ def channel_selection_dialog() -> bool:
     """
     current = get_channel()
 
-    dlg = wx.Dialog(None, title=_(u"Update Channel"), size=(420, 260))
+    dlg = wx.Dialog(None, title=_("Canal de actualizaciones"), size=(420, 260))
     vbox = wx.BoxSizer(wx.VERTICAL)
 
     header = wx.StaticText(
-        dlg, label=_(u"Choose which updates you want to receive:")
+        dlg, label=_("Elige qué actualizaciones quieres recibir:")
     )
     header.SetFont(header.GetFont().Bold())
     vbox.Add(header, 0, wx.ALL | wx.EXPAND, 12)
 
     radio_stable = wx.RadioButton(
-        dlg, label=_(u"Stable"), style=wx.RB_GROUP
+        dlg, label=_("Estable"), style=wx.RB_GROUP
     )
     vbox.Add(radio_stable, 0, wx.LEFT | wx.RIGHT, 24)
     desc_stable = wx.StaticText(
-        dlg, label=_(u"Only official releases. Recommended for most users.")
+        dlg, label=_("Solo versiones oficiales. Lo recomendado para la mayoría.")
     )
     desc_stable.SetForegroundColour(wx.Colour(100, 100, 100))
     vbox.Add(desc_stable, 0, wx.LEFT | wx.BOTTOM, 24)
 
-    radio_beta = wx.RadioButton(dlg, label=_(u"Beta"))
+    radio_beta = wx.RadioButton(dlg, label=_("Beta"))
     vbox.Add(radio_beta, 0, wx.LEFT | wx.RIGHT, 24)
     desc_beta = wx.StaticText(
         dlg,
-        label=_(u"Includes pre-releases and early features. May be unstable."),
+        label=_("Incluye versiones previas y novedades tempranas. Puede ser inestable."),
     )
     desc_beta.SetForegroundColour(wx.Colour(100, 100, 100))
     vbox.Add(desc_beta, 0, wx.LEFT | wx.BOTTOM, 24)
@@ -76,8 +88,8 @@ def backup_progress_callback(current: int, total: int) -> None:
         global backup_dialog
         if backup_dialog is None:
             backup_dialog = wx.ProgressDialog(
-                _(u"Backup"),
-                _(u"Creating backup..."),
+                _("Copia de seguridad"),
+                _("Creando la copia de seguridad..."),
                 maximum=max(total, 1),
                 parent=None,
                 style=wx.PD_CAN_ABORT | wx.PD_APP_MODAL,
@@ -90,7 +102,7 @@ def backup_progress_callback(current: int, total: int) -> None:
         else:
             pct = int((current * 100) / max(total, 1))
             backup_dialog.Update(
-                current, _(u"Creating backup... %d%%") % pct
+                current, _("Creando la copia de seguridad... %d%%") % pct
             )
 
     wx.CallAfter(_update)
@@ -107,12 +119,12 @@ def rollback_notification(reason: str) -> None:
         wx.MessageDialog(
             None,
             _(
-                u"Update failed: %s\n\n"
-                u"Rolling back to the previous version. "
-                u"Your data is safe."
+                "La actualización ha fallado: %s\n\n"
+                "Volviendo a la versión anterior. "
+                "Tus datos están a salvo."
             )
             % reason,
-            _(u"Update Failed — Rolling Back"),
+            _("Actualización fallida: volviendo atrás"),
             style=wx.OK | wx.ICON_WARNING,
         ).ShowModal()
 
@@ -126,8 +138,8 @@ def checking_updates_dialog() -> wx.ProgressDialog:
         The dialog instance. Caller must call ``Destroy()`` when done.
     """
     dlg = wx.ProgressDialog(
-        _(u"Checking for Updates"),
-        _(u"Connecting to update server..."),
+        _("Comprobando actualizaciones"),
+        _("Conectando con el servidor de actualizaciones..."),
         parent=None,
         style=wx.PD_APP_MODAL | wx.PD_AUTO_HIDE,
     )
@@ -144,12 +156,12 @@ def no_updates_dialog(version: str) -> None:
     """
 
     def _show():
-        ch = get_channel().capitalize()
+        ch = _nombre_canal()
         wx.MessageDialog(
             None,
-            _(u"You are running the latest version (v%s) — %s channel.")
+            _("Ya tienes la última versión (v%s), canal %s.")
             % (version, ch),
-            _(u"No Updates Available"),
+            _("No hay actualizaciones"),
             style=wx.OK | wx.ICON_INFORMATION,
         ).ShowModal()
 
@@ -157,17 +169,17 @@ def no_updates_dialog(version: str) -> None:
 
 
 def available_update_dialog(version, description):
-    ch = get_channel().capitalize()
+    ch = _nombre_canal()
     dialog = wx.MessageDialog(
         None,
         _(
-            u"New version available for %s channel.\n\n"
-            u"VeTube version: %s\n\n"
-            u"Would you like to download it now?\n\n"
-            u"Changes:\n%s"
+            "Hay una versión nueva en el canal %s.\n\n"
+            "Versión de VeTube: %s\n\n"
+            "¿Quieres descargarla ahora?\n\n"
+            "Cambios:\n%s"
         )
         % (ch, version, description),
-        _(u"New VeTube Version"),
+        _("Nueva versión de VeTube"),
         style=wx.YES | wx.NO | wx.ICON_WARNING,
     )
     if dialog.ShowModal() == wx.ID_YES:
@@ -178,8 +190,8 @@ def available_update_dialog(version, description):
 
 def create_progress_dialog():
     return wx.ProgressDialog(
-        _(u"Download in Progress"),
-        _(u"Downloading update..."),
+        _("Descarga en progreso"),
+        _("Descargando la actualización"),
         parent=None,
         maximum=100,
     )
@@ -200,7 +212,7 @@ def progress_callback(total_downloaded, total_size):
             pct = int((total_downloaded * 100) / total_size)
             progress_dialog.Update(
                 pct,
-                _(u"Downloading... %s of %s")
+                _("Actualizando... %s de %s")
                 % (
                     str(utils.convert_bytes(total_downloaded)),
                     str(utils.convert_bytes(total_size)),
@@ -215,10 +227,10 @@ def update_finished():
         wx.MessageDialog(
             None,
             _(
-                u"The update has been downloaded and installed successfully. "
-                u"Click OK to continue."
+                "La actualización se ha descargado e instalado exitosamente. "
+                "Pulse en aceptar para continuar."
             ),
-            _(u"Done!"),
+            _("¡Hecho!"),
         ).ShowModal()
 
     wx.CallAfter(show_msg)

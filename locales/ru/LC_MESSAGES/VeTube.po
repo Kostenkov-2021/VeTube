@@ -1659,3 +1659,145 @@ msgstr "Готово!"
 #: utils/languageHandler.py:72
 msgid "Idioma del sistema"
 msgstr "Язык системы"
+
+#: update/wxUpdater.py:18
+msgid "Canal de actualizaciones"
+msgstr "Канал обновлений"
+
+#: update/wxUpdater.py:22
+msgid "Elige qué actualizaciones quieres recibir:"
+msgstr "Выберите, какие обновления вы хотите получать:"
+
+#: update/wxUpdater.py:32
+msgid "Solo versiones oficiales. Lo recomendado para la mayoría."
+msgstr "Только официальные выпуски. Рекомендуется большинству пользователей."
+
+#: update/wxUpdater.py:41
+msgid "Incluye versiones previas y novedades tempranas. Puede ser inestable."
+msgstr "Включает предварительные выпуски и ранние новинки. Может быть нестабильным."
+
+#: update/wxUpdater.py:79
+msgid "Copia de seguridad"
+msgstr "Резервная копия"
+
+#: update/wxUpdater.py:80
+msgid "Creando la copia de seguridad..."
+msgstr "Создание резервной копии..."
+
+#: update/wxUpdater.py:93
+#, python-format
+msgid "Creando la copia de seguridad... %d%%"
+msgstr "Создание резервной копии... %d%%"
+
+#: update/wxUpdater.py:110
+#, python-format
+msgid "La actualización ha fallado: %s\n\nVolviendo a la versión anterior. Tus datos están a salvo."
+msgstr "Не удалось обновить: %s\n\nВыполняется возврат к предыдущей версии. Ваши данные в безопасности."
+
+#: update/wxUpdater.py:115
+msgid "Actualización fallida: volviendo atrás"
+msgstr "Не удалось обновить: возврат к прежней версии"
+
+#: update/wxUpdater.py:129
+msgid "Comprobando actualizaciones"
+msgstr "Проверка обновлений"
+
+#: update/wxUpdater.py:130
+msgid "Conectando con el servidor de actualizaciones..."
+msgstr "Подключение к серверу обновлений..."
+
+#: update/wxUpdater.py:150
+#, python-format
+msgid "Ya tienes la última versión (v%s), canal %s."
+msgstr "У вас уже последняя версия (v%s), канал %s."
+
+#: update/wxUpdater.py:164
+#, python-format
+msgid "Hay una versión nueva en el canal %s.\n\nVersión de VeTube: %s\n\n¿Quieres descargarla ahora?\n\nCambios:\n%s"
+msgstr "Доступна новая версия в канале %s.\n\nВерсия VeTube: %s\n\nХотите скачать её сейчас?\n\nИзменения:\n%s"
+
+#: update/release_notes_dialog.py:151
+#, python-format
+msgid "Novedades - v%s"
+msgstr "Что нового - v%s"
+
+#: update/release_notes_dialog.py:233
+#, python-format
+msgid "Novedades de la versión %s"
+msgstr "Что нового в версии %s"
+
+#: update/release_notes_dialog.py:177
+msgid "✓ Se creará una copia de seguridad antes de actualizar"
+msgstr "✓ Перед обновлением будет создана резервная копия"
+
+#: update/release_notes_dialog.py:180
+msgid "⚠ No se creará ninguna copia de seguridad. Si la actualización falla, no podrás volver atrás."
+msgstr "⚠ Резервная копия создана не будет. Если обновление не удастся, вернуться назад не получится."
+
+#: update/release_notes_dialog.py:191
+msgid "Cambiar los ajustes"
+msgstr "Изменить настройки"
+
+#: update/release_notes_dialog.py:206
+msgid "&Actualizar ahora"
+msgstr "&Обновить сейчас"
+
+#: update/release_notes_dialog.py:211
+msgid "Más &tarde"
+msgstr "&Позже"
+
+#: update/release_notes_dialog.py:243
+msgid "Error al cargar las novedades"
+msgstr "Не удалось загрузить список изменений"
+
+#: update/release_notes_dialog.py:244
+msgid "No se han podido interpretar las novedades. Se muestra el texto tal cual:"
+msgstr "Не удалось разобрать список изменений. Показан исходный текст:"
+
+#: update/updater.py:92
+msgid "Las actualizaciones no están disponibles al ejecutar desde el código fuente.\n\nUsa la versión compilada (.exe) para buscar actualizaciones."
+msgstr "Обновления недоступны при запуске из исходного кода.\n\nИспользуйте скомпилированную версию (.exe), чтобы проверить обновления."
+
+#: update/updater.py:94
+msgid "Modo de desarrollo"
+msgstr "Режим разработки"
+
+#: update/wxUpdater.py:28
+msgid "Estable"
+msgstr "Стабильный"
+
+#: update/wxUpdater.py:152
+msgid "No hay actualizaciones"
+msgstr "Обновлений нет"
+
+#: update/wxUpdater.py:37
+msgid "Beta"
+msgstr "Бета"
+
+#: update/updater.py:113
+msgid "No se pudo comprobar actualizaciones. Verifica tu conexión."
+msgstr "Не удалось проверить обновления. Проверьте подключение."
+
+#: update/updater.py:147
+msgid "Error al comprobar actualizaciones."
+msgstr "Ошибка при проверке обновлений."
+
+#: update/
+msgid "Canal de actualizaciones:"
+msgstr "Канал обновлений:"
+
+#: update/
+msgid "Estable (solo versiones oficiales)"
+msgstr "Стабильный (только официальные выпуски)"
+
+#: update/
+msgid "Beta (incluye versiones de prueba)"
+msgstr "Бета (включает пробные версии)"
+
+#: update/
+msgid "Crear backup de seguridad antes de actualizar"
+msgstr "Создавать резервную копию перед обновлением"
+
+#: update/
+msgid "&Buscar actualizaciones"
+msgstr "Прове&рить обновления"
