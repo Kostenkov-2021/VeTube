@@ -1504,7 +1504,7 @@ msgid "Opciones del habla"
 msgstr ""
 
 #: ui/ajustes/voz.py:11
-msgid "Usar voz sapi en lugar de lector de pantalla."
+msgid "Leer el chat con la voz SAPI 5 y dejar el programa al lector de pantalla."
 msgstr ""
 
 #: ui/ajustes/voz.py:14

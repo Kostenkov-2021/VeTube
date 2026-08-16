@@ -1568,8 +1568,8 @@ msgid "Opciones del habla"
 msgstr "Speech options"
 
 #: ui/ajustes/voz.py:11
-msgid "Usar voz sapi en lugar de lector de pantalla."
-msgstr "Use Sapi voice instead of screen reader."
+msgid "Leer el chat con la voz SAPI 5 y dejar el programa al lector de pantalla."
+msgstr "Read the chat with the SAPI 5 voice and leave the program to the screen reader."
 
 #: ui/ajustes/voz.py:14
 msgid "Sistema TTS a usar: "

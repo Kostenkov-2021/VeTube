@@ -8,7 +8,7 @@ class PanelVoz(wx.Panel):
 		panel_sizer_2 = wx.BoxSizer(wx.VERTICAL)
 		box_2 = wx.StaticBox(self, -1, _("Opciones del habla"))
 		boxSizer_2 = wx.StaticBoxSizer(box_2, wx.VERTICAL)
-		self.check_1 = wx.CheckBox(self, wx.ID_ANY, _("Usar voz sapi en lugar de lector de pantalla."))
+		self.check_1 = wx.CheckBox(self, wx.ID_ANY, _("Leer el chat con la voz SAPI 5 y dejar el programa al lector de pantalla."))
 		self.check_1.SetValue(config['sapi'])
 		boxSizer_2.Add(self.check_1, 0, wx.ALL, 5)
 		label_tts = wx.StaticText(self, wx.ID_ANY, _("Sistema TTS a usar: "))
