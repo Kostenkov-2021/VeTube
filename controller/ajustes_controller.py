@@ -625,10 +625,10 @@ class AjustesController:
                 # La lista del diálogo se construye con player.devicenames, así que
                 # el nombre elegido y el que saca config['dispositivo'] son el mismo.
                 app_utilitys.fijar_dispositivo_lector()
-            reader.leer_auto(_("Hablaré a través de este dispositivo."))
+            reader.leer_motor(_("Hablaré a través de este dispositivo."))
         elif motor == "edge":
             app_utilitys.fijar_dispositivo_lector()
-            reader.leer_auto(_("Hablaré a través de este dispositivo."))
+            reader.leer_motor(_("Hablaré a través de este dispositivo."))
 
     def reproducirPrueva(self, event):
         # El botón alterna entre reproducir y detener con cualquier motor:
@@ -674,10 +674,10 @@ class AjustesController:
             reader._lector.silence()
 
         saludo = _("Hola, soy la voz que te acompañará de ahora en adelante a leer los mensajes de tus canales favoritos.")
-        if config['sapi']:
-            reader._leer.speak(saludo)
-        else:
-            reader.leer_auto(saludo)
+        # La prueba tiene que sonar por la voz que va a leer el chat, que es lo
+        # que la frase promete y lo que enseña la lista de voces de al lado:
+        # con la casilla marcada, la voz SAPI 5.
+        reader.leer_mensaje(saludo)
         self.dialog.boton_prueva.SetLabel(_("&Detener prueba."))
         self.reproduciendo_prueba = True
         self.play_timer.Start(200)

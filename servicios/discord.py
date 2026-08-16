@@ -56,7 +56,7 @@ class ServicioDiscord:
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         try:
-            wx.CallAfter(reader.leer_sapi, _("Cargando..."))
+            wx.CallAfter(reader.leer_aviso, _("Cargando..."))
             if data_store.dst: self.translator = translator.TranslatorWrapper()
 
             intents = discord.Intents.default()
@@ -107,7 +107,7 @@ class ServicioDiscord:
         self.client.event(self.on_message)
 
     async def on_ready(self):
-        wx.CallAfter(reader.leer_sapi, _("Ingresando al chat"))
+        wx.CallAfter(reader.leer_aviso, _("Ingresando al chat"))
         if data_store.config['sonidos'] and data_store.config['listasonidos'][6]:
             wx.CallAfter(player.play, rutasonidos[6])
         try:
@@ -119,7 +119,7 @@ class ServicioDiscord:
             wx.CallAfter(self.chat_controller.chat_dialog.update_chat_page_title, self.chat_controller, title)
         except Exception:
             logger.exception("Error al acceder al canal de Discord")
-            wx.CallAfter(reader.leer_sapi, _("No se encontró el canal de Discord. Comprueba que el bot está invitado al servidor y que el enlace del canal es correcto."))
+            wx.CallAfter(reader.leer_aviso, _("No se encontró el canal de Discord. Comprueba que el bot está invitado al servidor y que el enlace del canal es correcto."))
             self.detener()
 
     async def on_message(self, message):

@@ -53,7 +53,7 @@ def configurar_piper(parent, carpeta_voces):
                 lista_voces_piper.extend(piper_list_voices())
                 config['voz'] = 0
                 _cargar_voz_piper_actual()
-                reader.leer_auto(_("Lector Piper inicializado correctamente."))
+                reader.leer_motor(_("Lector Piper inicializado correctamente."))
     elif isinstance(onnx_models, str) or isinstance(onnx_models, list):
         # Solo se recoloca la voz si el índice guardado quedó fuera de rango:
         # resetearla siempre hacía perder la voz elegida en cada Aceptar.

@@ -117,7 +117,7 @@ class ChatController:
             if list_box.GetSelection() == wx.NOT_FOUND:
                 return
             reader.silence()
-            reader.leer_auto(list_box.GetString(list_box.GetSelection()))
+            reader.leer_interfaz(list_box.GetString(list_box.GetSelection()))
 
     def agregar_mensaje_general(self, mensaje):
         if hasattr(self.ui, 'list_box_general'):
@@ -206,7 +206,7 @@ class ChatController:
         if next_selection >= page_count:
             next_selection = 0
         self.ui.treebook.SetSelection(next_selection)
-        reader.leer_auto(self.ui.treebook.GetPageText(next_selection))
+        reader.leer_interfaz(self.ui.treebook.GetPageText(next_selection))
 
     def retrocederCategorias(self):
         if not self.ui: return
@@ -217,7 +217,7 @@ class ChatController:
         if next_selection < 0:
             next_selection = page_count - 1
         self.ui.treebook.SetSelection(next_selection)
-        reader.leer_auto(self.ui.treebook.GetPageText(next_selection))
+        reader.leer_interfaz(self.ui.treebook.GetPageText(next_selection))
 
     def elementoAnterior(self):
         listbox = self.current_listbox
@@ -229,7 +229,7 @@ class ChatController:
             selection -= 1
         listbox.SetSelection(selection)
         self.reproducirMsg()
-        reader.leer_auto(listbox.GetString(selection))
+        reader.leer_interfaz(listbox.GetString(selection))
 
     def elementoSiguiente(self):
         listbox = self.current_listbox
@@ -241,7 +241,7 @@ class ChatController:
             selection += 1
         listbox.SetSelection(selection)
         self.reproducirMsg()
-        reader.leer_auto(listbox.GetString(selection))
+        reader.leer_interfaz(listbox.GetString(selection))
 
     def reproducirMsg(self):
         listbox = self.current_listbox
@@ -258,7 +258,7 @@ class ChatController:
         if not listbox or listbox.GetCount() == 0: return
         listbox.SetSelection(0)
         self.reproducirMsg()
-        reader.leer_auto(listbox.GetString(0))
+        reader.leer_interfaz(listbox.GetString(0))
 
     def elemento_final(self):
         listbox = self.current_listbox
@@ -266,14 +266,14 @@ class ChatController:
         last_index = listbox.GetCount() - 1
         listbox.SetSelection(last_index)
         self.reproducirMsg()
-        reader.leer_auto(listbox.GetString(last_index))
+        reader.leer_interfaz(listbox.GetString(last_index))
 
     def copiarMensajeActual(self):
         listbox = self.current_listbox
         if not listbox or listbox.GetSelection() == wx.NOT_FOUND: return
         selected_text = listbox.GetString(listbox.GetSelection())
         copy(selected_text)
-        reader.leer_auto(_("Mensaje copiado"))
+        reader.leer_aviso(_("Mensaje copiado"))
 
     def mostrar_mensaje_actual(self):
         listbox = self.current_listbox
@@ -293,10 +293,10 @@ class ChatController:
             self.ui.list_box_favoritos.Bind(wx.EVT_CONTEXT_MENU, self.on_context_menu)
             self.ui.list_box_favoritos.Bind(wx.EVT_KEY_UP, self.on_listbox_keyup)
         if mensaje in self.ui.list_box_favoritos.GetStrings():
-            reader.leer_auto(_("Este mensaje ya se encuentra en favoritos"))
+            reader.leer_aviso(_("Este mensaje ya se encuentra en favoritos"))
             return
         self.ui.list_box_favoritos.Append(mensaje)
-        reader.leer_auto(_("Mensaje agregado a favoritos"))
+        reader.leer_aviso(_("Mensaje agregado a favoritos"))
 
     def archivar_mensaje(self):
         listbox = self.current_listbox
@@ -324,20 +324,20 @@ class ChatController:
             data_store.mensajes_destacados.append({'mensaje': mensaje, 'titulo': titulo})
             
             escribirJsonLista(MENSAJES_DESTACADOS_FILE, data_store.mensajes_destacados)
-            reader.leer_auto(_("El mensaje ha sido archivado correctamente."))
+            reader.leer_aviso(_("El mensaje ha sido archivado correctamente."))
         else: 
-            reader.leer_sapi(_("Este mensaje ya está en la lista de archivados."))
+            reader.leer_aviso(_("Este mensaje ya está en la lista de archivados."))
 
     def borrar_pagina_actual(self):
         page_index = self.ui.treebook.GetSelection()
         page_count = self.ui.treebook.GetPageCount()
 
         if page_count <= 1:
-            reader.leer_auto(_("No se puede borrar la última página."))
+            reader.leer_aviso(_("No se puede borrar la última página."))
             return
 
         self.ui.treebook.DeletePage(page_index)
-        reader.leer_auto(_("Página borrada."))
+        reader.leer_aviso(_("Página borrada."))
         self.actualizar_estado_boton_eliminar()
 
     def toggle_lectura_automatica(self):
@@ -345,9 +345,9 @@ class ChatController:
             reader.silence()
             data_store.config['reader'] = False
         else: data_store.config['reader'] = True
-        reader.leer_auto(_("Lectura automática activada.") if data_store.config['reader'] else _("Lectura automática desactivada."))
+        reader.leer_aviso(_("Lectura automática activada.") if data_store.config['reader'] else _("Lectura automática desactivada."))
 
     def toggle_sounds(self):
         if data_store.config['sonidos']: data_store.config['sonidos'] = False
         else: data_store.config['sonidos'] = True
-        reader.leer_auto(_("sonidos activados.") if data_store.config['sonidos'] else _("sonidos desactivados."))
+        reader.leer_aviso(_("sonidos activados.") if data_store.config['sonidos'] else _("sonidos desactivados."))

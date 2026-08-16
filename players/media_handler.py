@@ -21,14 +21,14 @@ class MediaHandler:
             print("Error: No se ha proporcionado ninguna URL.")
             return
         if self.cargando:
-            reader.leer_auto("ya está cargando un reproductor")
+            reader.leer_aviso("ya está cargando un reproductor")
             return
         if self.sonando and self.player and self.player.is_playing(): # Already playing
             self._notify_state_change('playing') # Re-confirm playing state
             return
 
         self.cargando = True
-        reader.leer_auto("Cargando el reproductor")
+        reader.leer_aviso("Cargando el reproductor")
         self._notify_state_change('loading')
 
         def playback_task():

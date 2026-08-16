@@ -102,7 +102,7 @@ class KokoroDownloaderController:
         self.cancelacion_pedida = True
         self.manager.cancelar()
         self.view.set_status(_("Cancelando la descarga..."))
-        # Con _leer (voz secundaria) y no leer_auto: la voz principal puede ser
+        # Con _leer (voz secundaria) y no leer_aviso: la voz principal puede ser
         # justamente el Kokoro aún sin instalar, es decir, muda.
         reader._leer.speak(_("Cancelando la descarga..."))
         return False

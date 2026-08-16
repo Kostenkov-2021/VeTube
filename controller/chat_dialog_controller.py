@@ -164,7 +164,7 @@ class ChatDialogController:
         if self.active_chat_session and self.active_chat_session.ui:
             self.active_chat_session.ui.treebook.SetFocus()
         
-        reader.leer_auto(self.view.notebook.GetPageText(next_selection))
+        reader.leer_interfaz(self.view.notebook.GetPageText(next_selection))
 
     def previous_session(self):
         page_count = self.view.notebook.GetPageCount()
@@ -179,7 +179,7 @@ class ChatDialogController:
         if self.active_chat_session and self.active_chat_session.ui:
             self.active_chat_session.ui.treebook.SetFocus()
 
-        reader.leer_auto(self.view.notebook.GetPageText(next_selection))
+        reader.leer_interfaz(self.view.notebook.GetPageText(next_selection))
 
     def on_media_player_state_change(self, media_controller, state):
         if state == 'playing':

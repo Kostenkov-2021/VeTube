@@ -120,36 +120,57 @@ class ReaderHandler:
     def set_sapi(self, sapi):
         config['sapi'] = sapi
 
+    def _voz_del_chat(self):
+        """La voz que dice el chat: la voz SAPI 5 secundaria con la casilla
+        «Usar voz sapi» marcada, y el motor elegido cuando no lo está.
+        """
+        return self._leer if config['sapi'] else self._lector
+
     def leer_mensaje(self, mensaje):
         """El chat: los mensajes y los eventos del directo.
 
-        Con la casilla «Usar voz sapi» marcada salen por la voz SAPI 5
-        secundaria y por ahí solamente, tenga el usuario el motor que tenga.
-        Eso es justo lo que la casilla ofrece: una segunda voz que lee el chat
-        mientras el lector de pantalla sigue libre para moverse por el
-        programa. Habla con _leer directamente y no llamando a leer_sapi()
-        porque ese otro camino lleva los avisos del programa, donde la
-        excepción de piper/kokoro/edge sí tiene sentido (ver leer_sapi).
+        Con la casilla marcada salen por la voz SAPI 5 secundaria y por ahí
+        solamente, tenga el usuario el motor que tenga. Eso es justo lo que la
+        casilla ofrece: una segunda voz que lee el chat mientras el lector de
+        pantalla sigue libre para moverse por el programa.
         """
-        if config['sapi']:
-            self._leer.speak(mensaje)
-        else:
-            self.leer_auto(mensaje)
+        self._voz_del_chat().speak(mensaje)
 
-    def leer_sapi(self, mensaje):
-        """Avisos del programa: «Ingresando al chat», errores de conexión…
+    def leer_aviso(self, mensaje):
+        """Los avisos del programa: «Ingresando al chat», los errores de
+        conexión, «Mensaje copiado», «Página borrada»…
 
-        Salen por el motor que lee el programa cuando ese motor tiene voz
-        propia, y caen en la voz SAPI secundaria con auto, sapi5 y onecore —o
-        sea también con la casilla marcada, que devuelve el programa al lector
-        de pantalla y no le deja voz propia (ver motor_de_interfaz).
+        Salen por la misma voz que el chat, y nunca por el lector de pantalla.
+        Lo decidió César: oír «Ingresando al chat» en la voz del motor le
+        confirma al usuario que el motor que eligió en los Ajustes funciona; y
+        una frase corta dicha por el lector de pantalla «se pasa súper rápido»,
+        porque el siguiente evento de foco la corta y uno se la pierde.
+
+        Tiene nombre propio aunque hoy comparta regla con leer_mensaje: son dos
+        familias distintas, y así cada llamada dice a cuál pertenece.
         """
-        if motor_de_interfaz() in ("piper", "kokoro", "edge"):
-            self.leer_auto(mensaje)
-        else:
-            self._leer.speak(mensaje)
+        self._voz_del_chat().speak(mensaje)
 
-    def leer_auto(self, mensaje):
+    def leer_interfaz(self, mensaje):
+        """Moverse por el programa: las flechas en la lista de mensajes, Inicio
+        y Fin, cambiar de pestaña.
+
+        Va por el lector que lee el programa, que con la casilla marcada es el
+        lector de pantalla. Es la voz que sigue el ritmo del teclado cuando uno
+        recorre la lista deprisa, que es de lo que se trata.
+        """
+        self._lector.speak(mensaje)
+
+    def leer_motor(self, mensaje):
+        """Las pruebas del motor: las frases que solo significan algo dichas
+        por el motor elegido, como «Hablaré a través de este dispositivo».
+
+        Hoy hace lo mismo que leer_interfaz, porque las dos hablan con el
+        lector que está cargado, pero no son lo mismo: con la casilla marcada
+        no hay ningún motor cargado y estas frases mentirían en boca del lector
+        de pantalla. Por eso quien llama mira antes motor_de_interfaz() y no
+        llega hasta aquí en ese caso.
+        """
         self._lector.speak(mensaje)
 
     def silence(self):

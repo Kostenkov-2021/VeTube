@@ -102,7 +102,7 @@ class ServicioTiktok:
                 is_live_now = await self.chat.is_live()
                 if is_live_now:
                     if self.last_live_status is not True:
-                        wx.CallAfter(reader.leer_sapi, _("El usuario está en vivo. Conectando..."))
+                        wx.CallAfter(reader.leer_aviso, _("El usuario está en vivo. Conectando..."))
                     self.last_live_status = True
                     if data_store.dst: self.translator = translator.TranslatorWrapper()
                     # Casilla «Leer los mensajes anteriores al chat» desmarcada: se ignoran los
@@ -113,7 +113,7 @@ class ServicioTiktok:
                     await self.chat.connect()
                 else:
                     if self.last_live_status is not False:
-                        wx.CallAfter(reader.leer_sapi, _("El usuario no está en vivo. Reintentando en un minuto."))
+                        wx.CallAfter(reader.leer_aviso, _("El usuario no está en vivo. Reintentando en un minuto."))
                     self.last_live_status = False
                     if self.is_running: await asyncio.sleep(60)
             except asyncio.CancelledError:
@@ -185,7 +185,7 @@ class ServicioTiktok:
 
     async def finalizado(self, event: LiveEndEvent):
         self.last_live_status = False
-        wx.CallAfter(reader.leer_sapi, _("El directo ha finalizado. Se buscará de nuevo en un minuto."))
+        wx.CallAfter(reader.leer_aviso, _("El directo ha finalizado. Se buscará de nuevo en un minuto."))
 
     async def on_disconnect(self, event: DisconnectEvent):
         # TikTokLive emite DisconnectEvent en cada cierre del websocket, incluido el fin
@@ -193,11 +193,11 @@ class ServicioTiktok:
         # así que dejamos que el bucle de _run_client_async siga sondeando cada minuto.
         if self.is_running and self.last_live_status is not False:
             self.is_running = False
-            wx.CallAfter(reader.leer_sapi, _("Se ha perdido la conexión. El servicio se ha detenido."))
+            wx.CallAfter(reader.leer_aviso, _("Se ha perdido la conexión. El servicio se ha detenido."))
 
     async def on_connect(self,event: ConnectEvent):
         self.last_live_status = True
-        wx.CallAfter(reader.leer_sapi, _("Ingresando al chat"))
+        wx.CallAfter(reader.leer_aviso, _("Ingresando al chat"))
         if not self.media_controller:
             threading.Thread(target=self.prepare_player, daemon=True).start()
         if data_store.config['sonidos'] and data_store.config['listasonidos'][6]:
