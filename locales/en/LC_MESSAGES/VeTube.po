@@ -1736,10 +1736,6 @@ msgstr "&Support us"
 msgid "&Visita nuestra página de github"
 msgstr "&Visit our Github page"
 
-#: ui/menus/main_menu.py:17
-msgid "&buscar actualizaciones"
-msgstr "&Check for updates"
-
 #: ui/menus/main_menu.py:18
 msgid "Actualizar &idiomas"
 msgstr "Update &languages"
@@ -1760,10 +1756,6 @@ msgstr ""
 "With your support, you contribute to keeping this program free. Do you "
 "want to support us?"
 
-#: update/updater.py:26
-msgid "Error al comprobar actualizaciones: "
-msgstr "Update error"
-
 #: update/updater.py:31
 msgid "Al parecer tienes la última versión del programa"
 msgstr "It seems you have the latest version of the program"
@@ -1771,23 +1763,6 @@ msgstr "It seems you have the latest version of the program"
 #: update/updater.py:31
 msgid "Información"
 msgstr "Information"
-
-#: update/wxUpdater.py:8
-#, python-format
-msgid ""
-"Hay una nueva versión de VeTube. Te gustaría descargarla ahora?\n"
-"\n"
-" VeTube versión: %s\n"
-"\n"
-"Cambios:\n"
-"%s"
-msgstr ""
-"There is a new version of VeTube. Would you like to download it now?\n"
-"\n"
-" VeTube version: %s\n"
-"\n"
-"changes:\n"
-"%s"
 
 #: update/wxUpdater.py:8
 msgid "Nueva versión de VeTube"
@@ -2094,22 +2069,26 @@ msgstr "Could not check for updates. Check your connection."
 msgid "Error al comprobar actualizaciones."
 msgstr "Error checking for updates."
 
-#: update/
+#: ui/ajustes/general.py:30
 msgid "Canal de actualizaciones:"
 msgstr "Update channel:"
 
-#: update/
+#: ui/ajustes/general.py:32
 msgid "Estable (solo versiones oficiales)"
 msgstr "Stable (official releases only)"
 
-#: update/
+#: ui/ajustes/general.py:32
 msgid "Beta (incluye versiones de prueba)"
 msgstr "Beta (includes test versions)"
 
-#: update/
+#: ui/ajustes/general.py:36
 msgid "Crear backup de seguridad antes de actualizar"
 msgstr "Create a backup before updating"
 
-#: update/
+#: ui/menus/main_menu.py:17
 msgid "&Buscar actualizaciones"
 msgstr "&Check for updates"
+
+#: controller/ajustes_controller.py:667
+msgid "Cargando las voces de Edge TTS, espera un momento."
+msgstr "Loading the Edge TTS voices, please wait a moment."

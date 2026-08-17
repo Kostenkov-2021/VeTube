@@ -1719,10 +1719,6 @@ msgstr "&Podpořit nás"
 msgid "&Visita nuestra página de github"
 msgstr "&Navštívit naši stránku na Githubu"
 
-#: ui/menus/main_menu.py:17
-msgid "&buscar actualizaciones"
-msgstr "&Vyhledat aktualizace"
-
 #: ui/menus/main_menu.py:18
 msgid "Actualizar &idiomas"
 msgstr "Aktualizovat &jazyky"
@@ -1743,10 +1739,6 @@ msgstr ""
 "Svou podporou přispěješ k tomu, že tento program zůstane zdarma. Chceš "
 "nás podpořit?"
 
-#: update/updater.py:26
-msgid "Error al comprobar actualizaciones: "
-msgstr "Chyba při aktualizaci"
-
 #: update/updater.py:31
 msgid "Al parecer tienes la última versión del programa"
 msgstr "Zdá se, že už máš nejnovější verzi programu"
@@ -1754,23 +1746,6 @@ msgstr "Zdá se, že už máš nejnovější verzi programu"
 #: update/updater.py:31
 msgid "Información"
 msgstr "Informace"
-
-#: update/wxUpdater.py:8
-#, python-format
-msgid ""
-"Hay una nueva versión de VeTube. Te gustaría descargarla ahora?\n"
-"\n"
-" VeTube versión: %s\n"
-"\n"
-"Cambios:\n"
-"%s"
-msgstr ""
-"Je k dispozici nová verze VeTube. Chceš ji nyní stáhnout?\n"
-"\n"
-"Verze VeTube: %s\n"
-"\n"
-"Novinky:\n"
-"%s"
 
 #: update/wxUpdater.py:8
 msgid "Nueva versión de VeTube"
@@ -2077,22 +2052,26 @@ msgstr "Nepodařilo se zkontrolovat aktualizace. Zkontrolujte připojení."
 msgid "Error al comprobar actualizaciones."
 msgstr "Chyba při kontrole aktualizací."
 
-#: update/
+#: ui/ajustes/general.py:30
 msgid "Canal de actualizaciones:"
 msgstr "Kanál aktualizací:"
 
-#: update/
+#: ui/ajustes/general.py:32
 msgid "Estable (solo versiones oficiales)"
 msgstr "Stabilní (pouze oficiální verze)"
 
-#: update/
+#: ui/ajustes/general.py:32
 msgid "Beta (incluye versiones de prueba)"
 msgstr "Beta (zahrnuje zkušební verze)"
 
-#: update/
+#: ui/ajustes/general.py:36
 msgid "Crear backup de seguridad antes de actualizar"
 msgstr "Před aktualizací vytvořit zálohu"
 
-#: update/
+#: ui/menus/main_menu.py:17
 msgid "&Buscar actualizaciones"
 msgstr "&Zkontrolovat aktualizace"
+
+#: controller/ajustes_controller.py:667
+msgid "Cargando las voces de Edge TTS, espera un momento."
+msgstr "Načítají se hlasy Edge TTS, chvíli počkejte."

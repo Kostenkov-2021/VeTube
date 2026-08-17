@@ -1743,10 +1743,6 @@ msgstr "Gabung &komunitas kami"
 msgid "&Visita nuestra página de github"
 msgstr "&Kunjungi halaman GitHub kami"
 
-#: ui/menus/main_menu.py:17
-msgid "&buscar actualizaciones"
-msgstr "&Periksa pembaruan"
-
 #: ui/menus/main_menu.py:18
 msgid "Actualizar &idiomas"
 msgstr "Pembaruan &bahasa"
@@ -1767,10 +1763,6 @@ msgstr ""
 "Dengan dukungan Anda, Anda berkontribusi agar program ini tetap gratis. "
 "Maukah anda bergabung dengan tujuan kami?"
 
-#: update/updater.py:26
-msgid "Error al comprobar actualizaciones: "
-msgstr "Kesalahan saat memeriksa pembaruan: "
-
 #: update/updater.py:31
 msgid "Al parecer tienes la última versión del programa"
 msgstr "Tampaknya aplikasi ini sudah versi terbaru"
@@ -1778,22 +1770,6 @@ msgstr "Tampaknya aplikasi ini sudah versi terbaru"
 #: update/updater.py:31
 msgid "Información"
 msgstr "Informasi"
-
-#: update/wxUpdater.py:8
-#, python-format
-msgid ""
-"Hay una nueva versión de VeTube. Te gustaría descargarla ahora?\n"
-"\n"
-" VeTube versión: %s\n"
-"\n"
-"Cambios:\n"
-"%s"
-msgstr ""
-"Ada versi baru VeTube. Apakah Anda ingin mengunduhnya sekarang?\n"
-"\n"
-"Versi VeTube: %s\n"
-"Perubahan:\n"
-"%s"
 
 #: update/wxUpdater.py:8
 msgid "Nueva versión de VeTube"
@@ -2099,22 +2075,26 @@ msgstr "Tidak dapat memeriksa pembaruan. Periksa koneksi Anda."
 msgid "Error al comprobar actualizaciones."
 msgstr "Terjadi kesalahan saat memeriksa pembaruan."
 
-#: update/
+#: ui/ajustes/general.py:30
 msgid "Canal de actualizaciones:"
 msgstr "Saluran pembaruan:"
 
-#: update/
+#: ui/ajustes/general.py:32
 msgid "Estable (solo versiones oficiales)"
 msgstr "Stabil (hanya rilis resmi)"
 
-#: update/
+#: ui/ajustes/general.py:32
 msgid "Beta (incluye versiones de prueba)"
 msgstr "Beta (termasuk versi uji coba)"
 
-#: update/
+#: ui/ajustes/general.py:36
 msgid "Crear backup de seguridad antes de actualizar"
 msgstr "Buat cadangan sebelum memperbarui"
 
-#: update/
+#: ui/menus/main_menu.py:17
 msgid "&Buscar actualizaciones"
 msgstr "&Periksa pembaruan"
+
+#: controller/ajustes_controller.py:667
+msgid "Cargando las voces de Edge TTS, espera un momento."
+msgstr "Memuat suara Edge TTS, mohon tunggu sebentar."

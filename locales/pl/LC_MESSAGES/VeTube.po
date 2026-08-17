@@ -1740,10 +1740,6 @@ msgstr "&Wesprzyj nas"
 msgid "&Visita nuestra página de github"
 msgstr "Od&wiedź nasząstronę Github"
 
-#: ui/menus/main_menu.py:17
-msgid "&buscar actualizaciones"
-msgstr "&Sprawdź aktualizacje"
-
 #: ui/menus/main_menu.py:18
 msgid "Actualizar &idiomas"
 msgstr "Aktualizuj języki"
@@ -1764,10 +1760,6 @@ msgstr ""
 "Dzięki Twojemu wsparciu ten program może pozostać darmowy. Czy chcesz nas"
 " wesprzeć?"
 
-#: update/updater.py:26
-msgid "Error al comprobar actualizaciones: "
-msgstr "Błąd podczas sprawdzania aktualizacji: "
-
 #: update/updater.py:31
 msgid "Al parecer tienes la última versión del programa"
 msgstr "Wygląda na to, że Twoja wersja programu jest aktualna"
@@ -1775,23 +1767,6 @@ msgstr "Wygląda na to, że Twoja wersja programu jest aktualna"
 #: update/updater.py:31
 msgid "Información"
 msgstr "Informacja"
-
-#: update/wxUpdater.py:8
-#, python-format
-msgid ""
-"Hay una nueva versión de VeTube. Te gustaría descargarla ahora?\n"
-"\n"
-" VeTube versión: %s\n"
-"\n"
-"Cambios:\n"
-"%s"
-msgstr ""
-"Dostępna jest nowa wersja VeTube. Czy chcesz ją teraz pobrać?\n"
-"\n"
-" Wersja:: %s\n"
-"\n"
-"Zmiany:\n"
-"%s"
 
 #: update/wxUpdater.py:8
 msgid "Nueva versión de VeTube"
@@ -2098,22 +2073,26 @@ msgstr "Nie udało się sprawdzić aktualizacji. Sprawdź połączenie."
 msgid "Error al comprobar actualizaciones."
 msgstr "Błąd podczas sprawdzania aktualizacji."
 
-#: update/
+#: ui/ajustes/general.py:30
 msgid "Canal de actualizaciones:"
 msgstr "Kanał aktualizacji:"
 
-#: update/
+#: ui/ajustes/general.py:32
 msgid "Estable (solo versiones oficiales)"
 msgstr "Stabilny (tylko oficjalne wersje)"
 
-#: update/
+#: ui/ajustes/general.py:32
 msgid "Beta (incluye versiones de prueba)"
 msgstr "Beta (zawiera wersje testowe)"
 
-#: update/
+#: ui/ajustes/general.py:36
 msgid "Crear backup de seguridad antes de actualizar"
 msgstr "Utwórz kopię zapasową przed aktualizacją"
 
-#: update/
+#: ui/menus/main_menu.py:17
 msgid "&Buscar actualizaciones"
 msgstr "&Sprawdź aktualizacje"
+
+#: controller/ajustes_controller.py:667
+msgid "Cargando las voces de Edge TTS, espera un momento."
+msgstr "Ładowanie głosów Edge TTS, proszę chwilę poczekać."
