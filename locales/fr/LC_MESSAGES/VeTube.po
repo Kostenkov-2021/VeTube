@@ -1742,10 +1742,6 @@ msgstr "Rejoignez notre &cause"
 msgid "&Visita nuestra página de github"
 msgstr "&Visitez notre page GitHub"
 
-#: ui/menus/main_menu.py:17
-msgid "&buscar actualizaciones"
-msgstr "&Rechercher des mises à jour"
-
 #: ui/menus/main_menu.py:18
 msgid "Actualizar &idiomas"
 msgstr "Mettre à jour les &langues"
@@ -1766,10 +1762,6 @@ msgstr ""
 "Avec votre soutien, vous contribuez à maintenir ce programme gratuit. "
 "Souhaitez-vous vous joindre à notre cause ?"
 
-#: update/updater.py:26
-msgid "Error al comprobar actualizaciones: "
-msgstr "Erreur lors de la vérification des mises à jour : "
-
 #: update/updater.py:31
 msgid "Al parecer tienes la última versión del programa"
 msgstr "Vous semblez avoir la dernière version du programme"
@@ -1777,24 +1769,6 @@ msgstr "Vous semblez avoir la dernière version du programme"
 #: update/updater.py:31
 msgid "Información"
 msgstr "Informations"
-
-#: update/wxUpdater.py:8
-#, python-format
-msgid ""
-"Hay una nueva versión de VeTube. Te gustaría descargarla ahora?\n"
-"\n"
-" VeTube versión: %s\n"
-"\n"
-"Cambios:\n"
-"%s"
-msgstr ""
-"Il y a une nouvelle version de VeTube. Souhaitez-vous la télécharger "
-"maintenant ?\n"
-"\n"
-" Version de VeTube : %s\n"
-"\n"
-"Changements :\n"
-"%s"
 
 #: update/wxUpdater.py:8
 msgid "Nueva versión de VeTube"
@@ -2102,22 +2076,26 @@ msgstr "Impossible de vérifier les mises à jour. Vérifiez votre connexion."
 msgid "Error al comprobar actualizaciones."
 msgstr "Erreur lors de la recherche de mises à jour."
 
-#: update/
+#: ui/ajustes/general.py:30
 msgid "Canal de actualizaciones:"
 msgstr "Canal de mises à jour :"
 
-#: update/
+#: ui/ajustes/general.py:32
 msgid "Estable (solo versiones oficiales)"
 msgstr "Stable (versions officielles uniquement)"
 
-#: update/
+#: ui/ajustes/general.py:32
 msgid "Beta (incluye versiones de prueba)"
 msgstr "Bêta (inclut les versions d'essai)"
 
-#: update/
+#: ui/ajustes/general.py:36
 msgid "Crear backup de seguridad antes de actualizar"
 msgstr "Créer une sauvegarde avant la mise à jour"
 
-#: update/
+#: ui/menus/main_menu.py:17
 msgid "&Buscar actualizaciones"
 msgstr "&Rechercher des mises à jour"
+
+#: controller/ajustes_controller.py:667
+msgid "Cargando las voces de Edge TTS, espera un momento."
+msgstr "Chargement des voix d'Edge TTS, veuillez patienter un instant."

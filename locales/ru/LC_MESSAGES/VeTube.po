@@ -1586,10 +1586,6 @@ msgstr "&Поддержать нас"
 msgid "&Visita nuestra página de github"
 msgstr "&Открыть страницу на GitHub"
 
-#: ui/menus/main_menu.py:17
-msgid "&buscar actualizaciones"
-msgstr "&Проверить обновления"
-
 #: ui/menus/main_menu.py:18
 msgid "Actualizar &idiomas"
 msgstr "Обновить &языки"
@@ -1606,30 +1602,9 @@ msgstr "&Выход…\tAlt+F4"
 msgid "Con tu apoyo contribuyes a que este programa siga siendo gratuito. ¿Te unes a nuestra causa?"
 msgstr "Ваша поддержка помогает сохранять программу бесплатной. Хотите поддержать нас?"
 
-#: update/updater.py:26
-msgid "Error al comprobar actualizaciones: "
-msgstr "Ошибка обновления "
-
 #: update/updater.py:31
 msgid "Al parecer tienes la última versión del programa"
 msgstr "У вас установлена последняя версия программы"
-
-#: update/wxUpdater.py:8
-#, python-format
-msgid ""
-"Hay una nueva versión de VeTube. Te gustaría descargarla ahora?\n"
-"\n"
-" VeTube versión: %s\n"
-"\n"
-"Cambios:\n"
-"%s"
-msgstr ""
-"Доступна новая версия VeTube. Скачать её сейчас?\n"
-"\n"
-"Версия VeTube: %s\n"
-"\n"
-"Изменения:\n"
-"%s"
 
 #: update/wxUpdater.py:8
 msgid "Nueva versión de VeTube"
@@ -1782,22 +1757,26 @@ msgstr "Не удалось проверить обновления. Прове�
 msgid "Error al comprobar actualizaciones."
 msgstr "Ошибка при проверке обновлений."
 
-#: update/
+#: ui/ajustes/general.py:30
 msgid "Canal de actualizaciones:"
 msgstr "Канал обновлений:"
 
-#: update/
+#: ui/ajustes/general.py:32
 msgid "Estable (solo versiones oficiales)"
 msgstr "Стабильный (только официальные выпуски)"
 
-#: update/
+#: ui/ajustes/general.py:32
 msgid "Beta (incluye versiones de prueba)"
 msgstr "Бета (включает пробные версии)"
 
-#: update/
+#: ui/ajustes/general.py:36
 msgid "Crear backup de seguridad antes de actualizar"
 msgstr "Создавать резервную копию перед обновлением"
 
-#: update/
+#: ui/menus/main_menu.py:17
 msgid "&Buscar actualizaciones"
 msgstr "Прове&рить обновления"
+
+#: controller/ajustes_controller.py:667
+msgid "Cargando las voces de Edge TTS, espera un momento."
+msgstr "Загрузка голосов Edge TTS, подождите немного."
