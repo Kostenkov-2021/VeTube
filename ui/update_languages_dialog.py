@@ -1,11 +1,18 @@
 import wx
 
+
 class UpdateLanguagesDialog(wx.Dialog):
     def __init__(self, parent, languages_to_update):
-        super().__init__(parent, title=_("Actualizar idiomas"), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        super().__init__(
+            parent,
+            title=_("Actualizar idiomas"),
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+        )
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        label = wx.StaticText(self, label=_("Selecciona los idiomas que deseas actualizar:"))
+        label = wx.StaticText(
+            self, label=_("Selecciona los idiomas que deseas actualizar:")
+        )
         main_sizer.Add(label, 0, wx.ALL, 10)
 
         self.check_list_box = wx.ListCtrl(self, style=wx.LC_REPORT)
@@ -15,7 +22,7 @@ class UpdateLanguagesDialog(wx.Dialog):
         for i, lang_text in enumerate(languages_to_update):
             self.check_list_box.InsertItem(i, lang_text)
             self.check_list_box.CheckItem(i, check=False)
-        
+
         main_sizer.Add(self.check_list_box, 1, wx.EXPAND | wx.ALL, 10)
 
         self.progress_gauge = wx.Gauge(self, range=100, style=wx.GA_HORIZONTAL)
@@ -34,7 +41,7 @@ class UpdateLanguagesDialog(wx.Dialog):
         self.SetSizerAndFit(main_sizer)
         self.SetSize((400, 450))
         self.Centre()
-        
+
         # Establecer el foco al final para asegurar que no lo roben otros controles
         if self.check_list_box.GetItemCount() > 0:
             self.check_list_box.Focus(0)

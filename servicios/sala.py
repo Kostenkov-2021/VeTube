@@ -1,16 +1,16 @@
-import wx
 from logging import getLogger
-from helpers.timer import Timer
-from helpers.playroom_helper import PlayroomHelper
-from controller.chat_controller import ChatController
+
+import wx
+
 from globals import data_store
 from globals.resources import rutasonidos
+from helpers.playroom_helper import PlayroomHelper
+from helpers.timer import Timer
+from setup import player, reader
 from utils import translator
-from setup import player,reader
-from controller.chat_controller import ChatController
-from servicios.estadisticas_manager import EstadisticasManager
 
 logger = getLogger(__name__)
+
 
 class ServicioSala:
     def __init__(self, main_controller, url, frame, plataforma, chat_controller):
@@ -28,7 +28,8 @@ class ServicioSala:
         try:
             self._detener = False
             self.chat = PlayroomHelper()
-            if data_store.dst: self.translator=translator.TranslatorWrapper()
+            if data_store.dst:
+                self.translator = translator.TranslatorWrapper()
             self._hilo = Timer(0.5, self.recibir)
             self._hilo.daemon = True
             self._hilo.start()
@@ -36,7 +37,11 @@ class ServicioSala:
             reader.leer_aviso(_("Ingresando al chat."))
             title = _("Chat de la sala de juegos")
             wx.CallAfter(self.chat_controller.agregar_titulo, title)
-            wx.CallAfter(self.chat_controller.chat_dialog.update_chat_page_title, self.chat_controller, title)
+            wx.CallAfter(
+                self.chat_controller.chat_dialog.update_chat_page_title,
+                self.chat_controller,
+                title,
+            )
         except Exception as e:
             logger.exception("Error al iniciar el chat de la sala de juegos")
             wx.CallAfter(self.chat_controller.notificar_error, str(e))
@@ -47,30 +52,72 @@ class ServicioSala:
             self._hilo.stop()
 
     def recibir(self):
-        if self._detener: return
+        if self._detener:
+            return
         try:
             self.chat.get_new_messages()
             for message in self.chat.new_messages:
-                wx.CallAfter(self.estadisticas_manager.agregar_mensaje, message['author'])
-                if self._detener: break
-                if message['message']==None: message['message']=''
-                if data_store.dst and self.translator: message['message'] = self.translator.translate(text=message['message'], target=data_store.dst)
-                if (message['type'] == 'private'):
-                    if data_store.config['categorias'][2] and hasattr(self.chat_controller.ui, 'list_box_miembros'):
-                        if data_store.config['eventos'][1]:
-                            wx.CallAfter(self.chat_controller.agregar_mensaje_miembro, message['author'] +': ' +message['message'])
-                            if data_store.config['reader'] and data_store.config['unread'][1]: wx.CallAfter(reader.leer_mensaje, message['author'] +': ' +message['message'])
-                            if data_store.config['sonidos'] and data_store.config['listasonidos'][1]: wx.CallAfter(player.play, rutasonidos[1])
+                wx.CallAfter(
+                    self.estadisticas_manager.agregar_mensaje, message["author"]
+                )
+                if self._detener:
+                    break
+                if message["message"] == None:
+                    message["message"] = ""
+                if data_store.dst and self.translator:
+                    message["message"] = self.translator.translate(
+                        text=message["message"], target=data_store.dst
+                    )
+                if message["type"] == "private":
+                    if data_store.config["categorias"][2] and hasattr(
+                        self.chat_controller.ui, "list_box_miembros"
+                    ):
+                        if data_store.config["eventos"][1]:
+                            wx.CallAfter(
+                                self.chat_controller.agregar_mensaje_miembro,
+                                message["author"] + ": " + message["message"],
+                            )
+                            if (
+                                data_store.config["reader"]
+                                and data_store.config["unread"][1]
+                            ):
+                                wx.CallAfter(
+                                    reader.leer_mensaje,
+                                    message["author"] + ": " + message["message"],
+                                )
+                            if (
+                                data_store.config["sonidos"]
+                                and data_store.config["listasonidos"][1]
+                            ):
+                                wx.CallAfter(player.play, rutasonidos[1])
                 else:
-                    if data_store.config['categorias'][0] and hasattr(self.chat_controller.ui, 'list_box_general'):
-                        if data_store.config['eventos'][0]:
-                            wx.CallAfter(self.chat_controller.agregar_mensaje_general, message['author'] +': ' +message['message'])
-                            if data_store.config['reader'] and data_store.config['unread'][0]: wx.CallAfter(reader.leer_mensaje, message['author'] +': ' +message['message'])
-                            if data_store.config['sonidos'] and data_store.config['listasonidos'][0]: wx.CallAfter(player.play, rutasonidos[0])
+                    if data_store.config["categorias"][0] and hasattr(
+                        self.chat_controller.ui, "list_box_general"
+                    ):
+                        if data_store.config["eventos"][0]:
+                            wx.CallAfter(
+                                self.chat_controller.agregar_mensaje_general,
+                                message["author"] + ": " + message["message"],
+                            )
+                            if (
+                                data_store.config["reader"]
+                                and data_store.config["unread"][0]
+                            ):
+                                wx.CallAfter(
+                                    reader.leer_mensaje,
+                                    message["author"] + ": " + message["message"],
+                                )
+                            if (
+                                data_store.config["sonidos"]
+                                and data_store.config["listasonidos"][0]
+                            ):
+                                wx.CallAfter(player.play, rutasonidos[0])
         except Exception as e:
             # Detener el sondeo antes de notificar: si la ventana de la sala se cierra,
             # el Timer seguiría fallando cada medio segundo y mostraría errores sin fin.
             if not self._detener:
                 self.detener()
-                logger.exception("Error fatal en la recepción del chat de la sala de juegos")
+                logger.exception(
+                    "Error fatal en la recepción del chat de la sala de juegos"
+                )
                 wx.CallAfter(self.chat_controller.notificar_error, str(e))

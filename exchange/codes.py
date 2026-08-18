@@ -156,5 +156,5 @@ CODES = {
     "VND": "Vietnamese dong",
     "XOF": "West African CFA franc",
     "YER": "Yemeni Rial",
-    "ZMW": "Zambian Kwacha"
+    "ZMW": "Zambian Kwacha",
 }

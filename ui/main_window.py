@@ -1,17 +1,29 @@
-from utils.menu_accesible import Accesible
-from update import updater
 import wx
+
+from update import updater
+from utils.menu_accesible import Accesible
 
 # Identificadores internos de las plataformas, en el mismo orden que el wx.Choice.
 # NO traducir ni reordenar: el código los compara tal cual (p. ej. == 'La sala de juegos').
-PLATAFORMAS = ["detectar", "YouTube", "Twich", "TikTok", "La sala de juegos", "Kick", "Discord"]
+PLATAFORMAS = [
+    "detectar",
+    "YouTube",
+    "Twich",
+    "TikTok",
+    "La sala de juegos",
+    "Kick",
+    "Discord",
+]
+
 
 class MyFrame(wx.Frame):
     def __init__(self, *args, **kwds):
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
-        self.SetTitle("VeTube "+str(updater.VERSION))
-        self.SetWindowStyle(wx.RESIZE_BORDER | wx.CAPTION | wx.CLOSE_BOX | wx.CLIP_CHILDREN)
+        self.SetTitle("VeTube " + str(updater.VERSION))
+        self.SetWindowStyle(
+            wx.RESIZE_BORDER | wx.CAPTION | wx.CLOSE_BOX | wx.CLIP_CHILDREN
+        )
         self.SetSize((800, 600))
         self.panel_1 = wx.Panel(self, wx.ID_ANY)
         self.sizer_1 = wx.BoxSizer(wx.VERTICAL)
@@ -25,14 +37,32 @@ class MyFrame(wx.Frame):
         tap1_sizer = wx.BoxSizer(wx.VERTICAL)
         tap1_sizer.AddStretchSpacer()
         content_sizer = wx.BoxSizer(wx.VERTICAL)
-        self.label_1 = wx.StaticText(self.tap_1, wx.ID_ANY, _("Escriba o pegue una URL o usuario"))
+        self.label_1 = wx.StaticText(
+            self.tap_1, wx.ID_ANY, _("Escriba o pegue una URL o usuario")
+        )
         content_sizer.Add(self.label_1, 0, wx.ALIGN_CENTER | wx.ALL, 5)
-        self.text_ctrl_1 = wx.TextCtrl(self.tap_1, wx.ID_ANY, "", style=wx.TE_AUTO_URL | wx.TE_CENTRE)
+        self.text_ctrl_1 = wx.TextCtrl(
+            self.tap_1, wx.ID_ANY, "", style=wx.TE_AUTO_URL | wx.TE_CENTRE
+        )
         self.text_ctrl_1.SetFocus()
         content_sizer.Add(self.text_ctrl_1, 0, wx.EXPAND | wx.ALL, 5)
-        label_plataforma = wx.StaticText(self.tap_1, wx.ID_ANY, _("Capturar el chat de: "))
+        label_plataforma = wx.StaticText(
+            self.tap_1, wx.ID_ANY, _("Capturar el chat de: ")
+        )
         content_sizer.Add(label_plataforma, 0, wx.ALIGN_CENTER | wx.ALL, 5)
-        self.plataforma = wx.Choice(self.tap_1, wx.ID_ANY, choices=[_("detectar"), _("YouTube"), _("Twich"), _("TikTok"), _("La sala de juegos"), _("Kick"), _("Discord")])
+        self.plataforma = wx.Choice(
+            self.tap_1,
+            wx.ID_ANY,
+            choices=[
+                _("detectar"),
+                _("YouTube"),
+                _("Twich"),
+                _("TikTok"),
+                _("La sala de juegos"),
+                _("Kick"),
+                _("Discord"),
+            ],
+        )
         self.plataforma.SetSelection(0)
         content_sizer.Add(self.plataforma, 0, wx.EXPAND | wx.ALL, 5)
         content_sizer.AddSpacer(10)
@@ -44,35 +74,47 @@ class MyFrame(wx.Frame):
         self.button_2.Disable()
         button_sizer.Add(self.button_2, 1, wx.EXPAND | wx.ALL, 5)
         content_sizer.Add(button_sizer, 0, wx.EXPAND)
-        tap1_sizer.Add(content_sizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.LEFT | wx.RIGHT, 20)
+        tap1_sizer.Add(
+            content_sizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.LEFT | wx.RIGHT, 20
+        )
         tap1_sizer.AddStretchSpacer()
         self.tap_1.SetSizer(tap1_sizer)
 
         self.tap_2 = wx.Panel(self.notebook_1, wx.ID_ANY)
         self.notebook_1.AddPage(self.tap_2, _("Favoritos"))
         sizer_favoritos = wx.BoxSizer(wx.VERTICAL)
-        label_favoritos = wx.StaticText(self.tap_2, wx.ID_ANY, _( "&Tus favoritos: "))
+        label_favoritos = wx.StaticText(self.tap_2, wx.ID_ANY, _("&Tus favoritos: "))
         sizer_favoritos.Add(label_favoritos)
         self.list_favorite = wx.ListBox(self.tap_2, wx.ID_ANY)
         self.favoritos_num = 0
-        self.notebook_1.SetPageText(1, _( "Favoritos (%s)") % self.favoritos_num)
+        self.notebook_1.SetPageText(1, _("Favoritos (%s)") % self.favoritos_num)
         sizer_favoritos.Add(self.list_favorite)
-        self.button_borrar_favoritos = wx.Button(self.tap_2, wx.ID_ANY, _( "&Borrar favorito"))
-        sizer_favoritos.Add(self.button_borrar_favoritos,0,0,0)
-        self.borrar_todos_favs = wx.CheckBox(self.tap_2, wx.ID_ANY, _( "&Seleccionar todos los elementos"))
-        sizer_favoritos.Add(self.borrar_todos_favs,0,0,0)
+        self.button_borrar_favoritos = wx.Button(
+            self.tap_2, wx.ID_ANY, _("&Borrar favorito")
+        )
+        sizer_favoritos.Add(self.button_borrar_favoritos, 0, 0, 0)
+        self.borrar_todos_favs = wx.CheckBox(
+            self.tap_2, wx.ID_ANY, _("&Seleccionar todos los elementos")
+        )
+        sizer_favoritos.Add(self.borrar_todos_favs, 0, 0, 0)
         self.tap_2.SetSizer(sizer_favoritos)
         self.tap_3 = wx.Panel(self.notebook_1, wx.ID_ANY)
-        self.notebook_1.AddPage(self.tap_3, _( "mensajes archivados"))
+        self.notebook_1.AddPage(self.tap_3, _("mensajes archivados"))
         sizer_mensajes = wx.BoxSizer(wx.VERTICAL)
-        label_mensajes = wx.StaticText(self.tap_3, wx.ID_ANY, _( "&Mensajes archivados: "))
+        label_mensajes = wx.StaticText(
+            self.tap_3, wx.ID_ANY, _("&Mensajes archivados: ")
+        )
         self.list_mensajes = wx.ListBox(self.tap_3, wx.ID_ANY)
         sizer_mensajes.Add(label_mensajes)
         sizer_mensajes.Add(self.list_mensajes)
-        self.button_borrar_mensajes = wx.Button(self.tap_3, wx.ID_ANY, _( "&Borrar mensaje"))
-        sizer_mensajes.Add(self.button_borrar_mensajes,0,0,0)
-        self.check_borrar_todos = wx.CheckBox(self.tap_3, wx.ID_ANY, _( "&Seleccionar todos los elementos"))
-        sizer_mensajes.Add(self.check_borrar_todos,0,0,0)
+        self.button_borrar_mensajes = wx.Button(
+            self.tap_3, wx.ID_ANY, _("&Borrar mensaje")
+        )
+        sizer_mensajes.Add(self.button_borrar_mensajes, 0, 0, 0)
+        self.check_borrar_todos = wx.CheckBox(
+            self.tap_3, wx.ID_ANY, _("&Seleccionar todos los elementos")
+        )
+        sizer_mensajes.Add(self.check_borrar_todos, 0, 0, 0)
         self.tap_3.SetSizer(sizer_mensajes)
         self.panel_1.SetSizer(self.sizer_1)
         frame_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -82,4 +124,3 @@ class MyFrame(wx.Frame):
         self.Centre()
         self.Show()
         self.Raise()  # Trae la ventana al frente
-

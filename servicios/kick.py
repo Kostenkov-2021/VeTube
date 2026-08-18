@@ -1,13 +1,22 @@
-import asyncio, threading, subprocess, os, platform, wx, kick
+import asyncio
+import os
+import platform
+import subprocess
+import threading
 from logging import getLogger
+
+import kick
+import wx
+
+from controller.media_controller import MediaController
 from globals import data_store
 from globals.resources import rutasonidos
-from setup import reader, player
-from controller.media_controller import MediaController
-from utils.play_mp4 import extract_stream_url
+from setup import player, reader
 from utils import translator
+from utils.play_mp4 import extract_stream_url
 
 logger = getLogger(__name__)
+
 
 class ServicioKick:
     def __init__(self, main_controller, url, frame, plataforma, chat_controller):
@@ -16,7 +25,7 @@ class ServicioKick:
         self.frame = frame
         self.chat_controller = chat_controller
         self.estadisticas_manager = chat_controller.estadisticas_manager
-        
+
         self.is_running = False
         self.loop = None
         self.client = None
@@ -35,7 +44,7 @@ class ServicioKick:
         dir_current_script = os.path.dirname(os.path.abspath(__file__))
         arch = "64" if platform.architecture()[0][:2] == "64" else "32"
         # Ruta relativa al código, no al cwd: en el build instalado la carpeta 64 vive dentro de _internal (igual que en players/vlc_helper.py)
-        path_to_arch_dir = os.path.abspath(os.path.join(dir_current_script, '..', arch))
+        path_to_arch_dir = os.path.abspath(os.path.join(dir_current_script, "..", arch))
         bypass_executable = os.path.join(path_to_arch_dir, f"bypass{arch}.exe")
 
         if not os.path.exists(bypass_executable):
@@ -43,23 +52,23 @@ class ServicioKick:
             wx.CallAfter(reader.leer_aviso, _("error_bypass_no_encontrado"))
             return False
 
-        creation_flags = subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
-        
+        creation_flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+
         try:
             self.bypass_process = subprocess.Popen(
                 [bypass_executable],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
-                encoding='utf-8',
-                errors='replace',
-                creationflags=creation_flags
+                encoding="utf-8",
+                errors="replace",
+                creationflags=creation_flags,
             )
         except Exception:
             logger.exception("Error al intentar ejecutar %s", bypass_executable)
             return False
 
-        for line in iter(self.bypass_process.stdout.readline, ''):
+        for line in iter(self.bypass_process.stdout.readline, ""):
             if not self.is_running:
                 return False
             if "starting" in line.lower():
@@ -77,10 +86,11 @@ class ServicioKick:
                 self.detener()
                 return
 
-            if data_store.dst: self.translator = translator.TranslatorWrapper()
+            if data_store.dst:
+                self.translator = translator.TranslatorWrapper()
             self.client = kick.Client()
             self._add_listeners()
-            
+
             self.client_task = self.loop.create_task(self.client.start())
             self.loop.run_forever()
         except Exception as e:
@@ -101,20 +111,27 @@ class ServicioKick:
 
     async def on_ready(self):
         wx.CallAfter(reader.leer_aviso, _("Ingresando al chat"))
-        if data_store.config['sonidos'] and data_store.config['listasonidos'][6]:
+        if data_store.config["sonidos"] and data_store.config["listasonidos"][6]:
             wx.CallAfter(player.play, rutasonidos[6])
         try:
             user = await self.client.fetch_user(self.url)
             title = user.chatroom.streamer.livestream.title
             wx.CallAfter(self.chat_controller.agregar_titulo, title)
-            wx.CallAfter(self.chat_controller.chat_dialog.update_chat_page_title, self.chat_controller, title)
+            wx.CallAfter(
+                self.chat_controller.chat_dialog.update_chat_page_title,
+                self.chat_controller,
+                title,
+            )
             await user.chatroom.connect()
             self.loop.create_task(self._refrescar_espectadores_loop())
-            
+
             kick_page_url = f"https://kick.com/{self.url}"
             video_url = extract_stream_url(kick_page_url)
             if video_url and not self.media_controller:
-                self.media_controller = MediaController(url=video_url, state_callback=self.chat_controller.chat_dialog.on_media_player_state_change)
+                self.media_controller = MediaController(
+                    url=video_url,
+                    state_callback=self.chat_controller.chat_dialog.on_media_player_state_change,
+                )
                 self.chat_controller.set_media_controller(self.media_controller)
         except Exception:
             logger.exception("Error al conectar al chatroom de Kick")
@@ -124,52 +141,88 @@ class ServicioKick:
     async def on_message(self, message: kick.Message):
         wx.CallAfter(self.estadisticas_manager.agregar_mensaje, message.author.username)
         cadena = message.content
-        if data_store.dst and self.translator: cadena = self.translator.translate(text=cadena, target=data_store.dst)
-        
+        if data_store.dst and self.translator:
+            cadena = self.translator.translate(text=cadena, target=data_store.dst)
+
         # Obtener los tipos de insignias de forma segura
         badge_types = []
         if message.author.badges:
             for b in message.author.badges:
                 if isinstance(b, dict):
-                    badge_types.append(b.get('type'))
+                    badge_types.append(b.get("type"))
                 else:
-                    badge_types.append(getattr(b, 'type', ''))
+                    badge_types.append(getattr(b, "type", ""))
 
         full_message = f"{message.author.username}: {cadena}"
 
         # 1. Prioridad: Moderador o Propietario (broadcaster)
-        if ('moderator' in badge_types or 'broadcaster' in badge_types) and data_store.config['eventos'][4] and data_store.config['categorias'][4] and hasattr(self.chat_controller.ui, 'list_box_moderadores'):
+        if (
+            ("moderator" in badge_types or "broadcaster" in badge_types)
+            and data_store.config["eventos"][4]
+            and data_store.config["categorias"][4]
+            and hasattr(self.chat_controller.ui, "list_box_moderadores")
+        ):
             wx.CallAfter(self.chat_controller.agregar_mensaje_moderador, full_message)
-            if data_store.config['sonidos'] and data_store.config['listasonidos'][4]: wx.CallAfter(player.play, rutasonidos[4])
-            if data_store.config['reader'] and data_store.config['unread'][4]: wx.CallAfter(reader.leer_mensaje, full_message)
+            if data_store.config["sonidos"] and data_store.config["listasonidos"][4]:
+                wx.CallAfter(player.play, rutasonidos[4])
+            if data_store.config["reader"] and data_store.config["unread"][4]:
+                wx.CallAfter(reader.leer_mensaje, full_message)
             return
 
         # 2. Prioridad: Suscriptor (miembro)
-        if 'subscriber' in badge_types and data_store.config['eventos'][1] and data_store.config['categorias'][2] and hasattr(self.chat_controller.ui, 'list_box_miembros'):
+        if (
+            "subscriber" in badge_types
+            and data_store.config["eventos"][1]
+            and data_store.config["categorias"][2]
+            and hasattr(self.chat_controller.ui, "list_box_miembros")
+        ):
             wx.CallAfter(self.chat_controller.agregar_mensaje_miembro, full_message)
-            if data_store.config['sonidos'] and data_store.config['listasonidos'][1]: wx.CallAfter(player.play, rutasonidos[1])
-            if data_store.config['reader'] and data_store.config['unread'][1]: wx.CallAfter(reader.leer_mensaje, full_message)
+            if data_store.config["sonidos"] and data_store.config["listasonidos"][1]:
+                wx.CallAfter(player.play, rutasonidos[1])
+            if data_store.config["reader"] and data_store.config["unread"][1]:
+                wx.CallAfter(reader.leer_mensaje, full_message)
             return
 
         # 3. Prioridad: Verificado
-        if 'verified' in badge_types and data_store.config['eventos'][5] and data_store.config['categorias'][5] and hasattr(self.chat_controller.ui, 'list_box_verificados'):
+        if (
+            "verified" in badge_types
+            and data_store.config["eventos"][5]
+            and data_store.config["categorias"][5]
+            and hasattr(self.chat_controller.ui, "list_box_verificados")
+        ):
             wx.CallAfter(self.chat_controller.agregar_mensaje_verificado, full_message)
-            if data_store.config['sonidos'] and data_store.config['listasonidos'][5]: wx.CallAfter(player.play, rutasonidos[5])
-            if data_store.config['reader'] and data_store.config['unread'][5]: wx.CallAfter(reader.leer_mensaje, full_message)
+            if data_store.config["sonidos"] and data_store.config["listasonidos"][5]:
+                wx.CallAfter(player.play, rutasonidos[5])
+            if data_store.config["reader"] and data_store.config["unread"][5]:
+                wx.CallAfter(reader.leer_mensaje, full_message)
             return
 
         # 4. Fallback: General
-        if data_store.config['eventos'][0] and hasattr(self.chat_controller.ui, 'list_box_general'):
+        if data_store.config["eventos"][0] and hasattr(
+            self.chat_controller.ui, "list_box_general"
+        ):
             wx.CallAfter(self.chat_controller.agregar_mensaje_general, full_message)
-            if data_store.config['sonidos'] and data_store.config['listasonidos'][0]: wx.CallAfter(player.play, rutasonidos[0])
-            if data_store.config['reader'] and data_store.config['unread'][0]: wx.CallAfter(reader.leer_mensaje, full_message)
+            if data_store.config["sonidos"] and data_store.config["listasonidos"][0]:
+                wx.CallAfter(player.play, rutasonidos[0])
+            if data_store.config["reader"] and data_store.config["unread"][0]:
+                wx.CallAfter(reader.leer_mensaje, full_message)
 
     async def on_follow(self, user: kick.User):
-        if data_store.config['eventos'][7] and hasattr(self.chat_controller.ui, 'list_box_eventos'):
+        if data_store.config["eventos"][7] and hasattr(
+            self.chat_controller.ui, "list_box_eventos"
+        ):
             wx.CallAfter(self.estadisticas_manager.agregar_seguidor)
-            wx.CallAfter(self.chat_controller.agregar_mensaje_evento, user.username + _(" comenzó a seguirte!"), "follow")
-            if data_store.config['sonidos'] and data_store.config['listasonidos'][10]: wx.CallAfter(player.play, rutasonidos[10])
-            if data_store.config['reader'] and data_store.config['unread'][7]: wx.CallAfter(reader.leer_mensaje, user.username + _(" comenzó a seguirte!"))
+            wx.CallAfter(
+                self.chat_controller.agregar_mensaje_evento,
+                user.username + _(" comenzó a seguirte!"),
+                "follow",
+            )
+            if data_store.config["sonidos"] and data_store.config["listasonidos"][10]:
+                wx.CallAfter(player.play, rutasonidos[10])
+            if data_store.config["reader"] and data_store.config["unread"][7]:
+                wx.CallAfter(
+                    reader.leer_mensaje, user.username + _(" comenzó a seguirte!")
+                )
 
     def detener(self):
         if not self.is_running:
@@ -207,14 +260,23 @@ class ServicioKick:
                     espectadores = livestream.viewer_count
                     if espectadores is None:
                         break
-                    
-                    title = livestream.title + _(" en vivo, actualmente ") + str(espectadores) + _(" viendo ahora")
+
+                    title = (
+                        livestream.title
+                        + _(" en vivo, actualmente ")
+                        + str(espectadores)
+                        + _(" viendo ahora")
+                    )
                     wx.CallAfter(self.chat_controller.agregar_titulo, title)
-                    wx.CallAfter(self.chat_controller.chat_dialog.update_chat_page_title, self.chat_controller, title)
+                    wx.CallAfter(
+                        self.chat_controller.chat_dialog.update_chat_page_title,
+                        self.chat_controller,
+                        title,
+                    )
                 else:
                     break
             except Exception:
                 logger.exception("Error al refrescar espectadores de Kick")
                 break
-            
+
             await asyncio.sleep(10)

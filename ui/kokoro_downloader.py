@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 import wx
+
 
 class KokoroDownloaderDialog(wx.Dialog):
     """Instalador del modelo Kokoro: un único paquete con todas las voces.
@@ -7,14 +7,20 @@ class KokoroDownloaderDialog(wx.Dialog):
     el avance por sí mismos (los pitidos de progreso de NVDA)."""
 
     def __init__(self, parent, tamano_mb):
-        super().__init__(parent, title=_("Instalar las voces Kokoro"), style=wx.DEFAULT_DIALOG_STYLE)
+        super().__init__(
+            parent, title=_("Instalar las voces Kokoro"), style=wx.DEFAULT_DIALOG_STYLE
+        )
 
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.intro = wx.StaticText(self, label=_(
-            "Las voces Kokoro se instalan con un único paquete para todos los idiomas. "
-            "Se descarga una sola vez y ocupa %d MB aproximadamente."
-        ) % tamano_mb)
+        self.intro = wx.StaticText(
+            self,
+            label=_(
+                "Las voces Kokoro se instalan con un único paquete para todos los idiomas. "
+                "Se descarga una sola vez y ocupa %d MB aproximadamente."
+            )
+            % tamano_mb,
+        )
         self.intro.Wrap(520)
         main_sizer.Add(self.intro, 0, wx.ALL, 10)
 

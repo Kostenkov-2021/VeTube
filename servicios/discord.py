@@ -1,21 +1,28 @@
-import asyncio, threading, re, wx
-import discord
+import asyncio
+import re
+import threading
 from logging import getLogger
+
+import discord
+import wx
+
 from globals import data_store
 from globals.resources import rutasonidos
-from setup import reader, player
+from setup import player, reader
 from utils import translator
 from utils.network import network_manager
 
 logger = getLogger(__name__)
 
+
 def extraer_id_canal(url):
     """Devuelve el id del canal si la URL es un enlace de canal de Discord
     (https://discord.com/channels/<servidor>/<canal>), o None si no lo es."""
-    match = re.search(r'discord(?:app)?\.com/channels/(\d+)/(\d+)', url)
+    match = re.search(r"discord(?:app)?\.com/channels/(\d+)/(\d+)", url)
     if match:
         return match.group(2)
     return None
+
 
 async def validar_token(token):
     """Comprueba el token contra la API de Discord usando el cliente de red
@@ -30,6 +37,7 @@ async def validar_token(token):
         return respuesta.status_code == 200
     except Exception:
         return None
+
 
 class ServicioDiscord:
     def __init__(self, main_controller, url, frame, plataforma, chat_controller):
@@ -57,7 +65,8 @@ class ServicioDiscord:
         asyncio.set_event_loop(self.loop)
         try:
             wx.CallAfter(reader.leer_aviso, _("Cargando..."))
-            if data_store.dst: self.translator = translator.TranslatorWrapper()
+            if data_store.dst:
+                self.translator = translator.TranslatorWrapper()
 
             intents = discord.Intents.default()
             intents.message_content = True
@@ -79,17 +88,27 @@ class ServicioDiscord:
 
     async def _conectar(self):
         try:
-            await self.client.start(data_store.config.get('discord_token', ''))
+            await self.client.start(data_store.config.get("discord_token", ""))
         except discord.LoginFailure:
             if self.is_running:
                 # El token guardado ya no sirve: se borra para que el diálogo
                 # vuelva a pedirlo en el siguiente intento.
                 wx.CallAfter(self._borrar_token_guardado)
-                wx.CallAfter(self.chat_controller.notificar_error, _("El token del bot de Discord no es válido o fue revocado. Pega de nuevo el enlace del canal para introducir un token nuevo."))
+                wx.CallAfter(
+                    self.chat_controller.notificar_error,
+                    _(
+                        "El token del bot de Discord no es válido o fue revocado. Pega de nuevo el enlace del canal para introducir un token nuevo."
+                    ),
+                )
                 self.detener()
         except discord.PrivilegedIntentsRequired:
             if self.is_running:
-                wx.CallAfter(self.chat_controller.notificar_error, _("Al bot le falta activar «Message Content Intent» en el portal de desarrolladores de Discord. Actívalo y vuelve a intentarlo."))
+                wx.CallAfter(
+                    self.chat_controller.notificar_error,
+                    _(
+                        "Al bot le falta activar «Message Content Intent» en el portal de desarrolladores de Discord. Actívalo y vuelve a intentarlo."
+                    ),
+                )
                 self.detener()
         except Exception as e:
             if self.is_running:
@@ -99,7 +118,8 @@ class ServicioDiscord:
 
     def _borrar_token_guardado(self):
         from utils import fajustes
-        data_store.config['discord_token'] = ""
+
+        data_store.config["discord_token"] = ""
         fajustes.guardarConfiguracion(data_store.config)
 
     def _add_listeners(self):
@@ -108,7 +128,7 @@ class ServicioDiscord:
 
     async def on_ready(self):
         wx.CallAfter(reader.leer_aviso, _("Ingresando al chat"))
-        if data_store.config['sonidos'] and data_store.config['listasonidos'][6]:
+        if data_store.config["sonidos"] and data_store.config["listasonidos"][6]:
             wx.CallAfter(player.play, rutasonidos[6])
         try:
             channel = self.client.get_channel(self.channel_id)
@@ -116,10 +136,19 @@ class ServicioDiscord:
                 channel = await self.client.fetch_channel(self.channel_id)
             title = f"#{channel.name} ({channel.guild.name})"
             wx.CallAfter(self.chat_controller.agregar_titulo, title)
-            wx.CallAfter(self.chat_controller.chat_dialog.update_chat_page_title, self.chat_controller, title)
+            wx.CallAfter(
+                self.chat_controller.chat_dialog.update_chat_page_title,
+                self.chat_controller,
+                title,
+            )
         except Exception:
             logger.exception("Error al acceder al canal de Discord")
-            wx.CallAfter(reader.leer_aviso, _("No se encontró el canal de Discord. Comprueba que el bot está invitado al servidor y que el enlace del canal es correcto."))
+            wx.CallAfter(
+                reader.leer_aviso,
+                _(
+                    "No se encontró el canal de Discord. Comprueba que el bot está invitado al servidor y que el enlace del canal es correcto."
+                ),
+            )
             self.detener()
 
     async def on_message(self, message):
@@ -130,8 +159,11 @@ class ServicioDiscord:
         cadena = message.content
         if not cadena:
             return
-        wx.CallAfter(self.estadisticas_manager.agregar_mensaje, message.author.display_name)
-        if data_store.dst and self.translator: cadena = self.translator.translate(text=cadena, target=data_store.dst)
+        wx.CallAfter(
+            self.estadisticas_manager.agregar_mensaje, message.author.display_name
+        )
+        if data_store.dst and self.translator:
+            cadena = self.translator.translate(text=cadena, target=data_store.dst)
 
         full_message = f"{message.author.display_name}: {cadena}"
 
@@ -139,20 +171,34 @@ class ServicioDiscord:
         # (equivalente a los badges de moderador/propietario de Kick)
         es_moderador = False
         if message.guild:
-            permisos = getattr(message.author, 'guild_permissions', None)
-            es_moderador = message.guild.owner_id == message.author.id or (permisos is not None and (permisos.administrator or permisos.manage_messages))
+            permisos = getattr(message.author, "guild_permissions", None)
+            es_moderador = message.guild.owner_id == message.author.id or (
+                permisos is not None
+                and (permisos.administrator or permisos.manage_messages)
+            )
 
-        if es_moderador and data_store.config['eventos'][4] and data_store.config['categorias'][4] and hasattr(self.chat_controller.ui, 'list_box_moderadores'):
+        if (
+            es_moderador
+            and data_store.config["eventos"][4]
+            and data_store.config["categorias"][4]
+            and hasattr(self.chat_controller.ui, "list_box_moderadores")
+        ):
             wx.CallAfter(self.chat_controller.agregar_mensaje_moderador, full_message)
-            if data_store.config['sonidos'] and data_store.config['listasonidos'][4]: wx.CallAfter(player.play, rutasonidos[4])
-            if data_store.config['reader'] and data_store.config['unread'][4]: wx.CallAfter(reader.leer_mensaje, full_message)
+            if data_store.config["sonidos"] and data_store.config["listasonidos"][4]:
+                wx.CallAfter(player.play, rutasonidos[4])
+            if data_store.config["reader"] and data_store.config["unread"][4]:
+                wx.CallAfter(reader.leer_mensaje, full_message)
             return
 
         # Fallback: General
-        if data_store.config['eventos'][0] and hasattr(self.chat_controller.ui, 'list_box_general'):
+        if data_store.config["eventos"][0] and hasattr(
+            self.chat_controller.ui, "list_box_general"
+        ):
             wx.CallAfter(self.chat_controller.agregar_mensaje_general, full_message)
-            if data_store.config['sonidos'] and data_store.config['listasonidos'][0]: wx.CallAfter(player.play, rutasonidos[0])
-            if data_store.config['reader'] and data_store.config['unread'][0]: wx.CallAfter(reader.leer_mensaje, full_message)
+            if data_store.config["sonidos"] and data_store.config["listasonidos"][0]:
+                wx.CallAfter(player.play, rutasonidos[0])
+            if data_store.config["reader"] and data_store.config["unread"][0]:
+                wx.CallAfter(reader.leer_mensaje, full_message)
 
     def detener(self):
         if not self.is_running:

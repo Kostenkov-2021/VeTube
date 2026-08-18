@@ -1,13 +1,23 @@
+import wx
+
 from globals.mensajes import mensaje_teclas
 from utils.key_utilitys import editor
-import wx
+
 
 class EditorCombinaciones:
     def __init__(self, parent=None):
-        self.dlg_teclado = wx.Dialog(parent, wx.ID_ANY, _("Editor de combinaciones de teclado para Vetube"))
+        self.dlg_teclado = wx.Dialog(
+            parent, wx.ID_ANY, _("Editor de combinaciones de teclado para Vetube")
+        )
         sizer = wx.BoxSizer(wx.VERTICAL)
-        label_editor = wx.StaticText(self.dlg_teclado, wx.ID_ANY, _("&Selecciona la combinación de teclado a editar"))
-        self.combinaciones = wx.ListCtrl(self.dlg_teclado, wx.ID_ANY, style=wx.LC_REPORT | wx.LC_SINGLE_SEL)
+        label_editor = wx.StaticText(
+            self.dlg_teclado,
+            wx.ID_ANY,
+            _("&Selecciona la combinación de teclado a editar"),
+        )
+        self.combinaciones = wx.ListCtrl(
+            self.dlg_teclado, wx.ID_ANY, style=wx.LC_REPORT | wx.LC_SINGLE_SEL
+        )
         self.combinaciones.InsertColumn(0, _("acción: "), width=200)
         self.combinaciones.InsertColumn(1, _("combinación de teclas: "), width=200)
         for i in range(len(mensaje_teclas)):
@@ -16,12 +26,13 @@ class EditorCombinaciones:
         for valor in editor.teclas:
             self.combinaciones.SetItem(c, 1, valor)
             c += 1
-        
 
-        self.editar = wx.Button(self.dlg_teclado, -1, _(u"&Editar"))
+        self.editar = wx.Button(self.dlg_teclado, -1, _("&Editar"))
         self.editar.SetDefault()
-        self.restaurar = wx.Button(self.dlg_teclado, -1, _(u"&restaurar combinaciones por defecto"))
-        self.close = wx.Button(self.dlg_teclado, wx.ID_CANCEL, _(u"&Cerrar"))
+        self.restaurar = wx.Button(
+            self.dlg_teclado, -1, _("&restaurar combinaciones por defecto")
+        )
+        self.close = wx.Button(self.dlg_teclado, wx.ID_CANCEL, _("&Cerrar"))
 
         sizer.Add(label_editor, 0, wx.ALL, 5)
         sizer.Add(self.combinaciones, 1, wx.EXPAND | wx.ALL, 5)

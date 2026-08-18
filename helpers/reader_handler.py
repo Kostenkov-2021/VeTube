@@ -1,9 +1,10 @@
-import os
+from prism import BackendId, Context
+
 from globals.data_store import config, motor_de_interfaz
-from prism import Context, BackendId
 
 # Instancia única del contexto de Prism para compartir recursos
 _prism_context = None
+
 
 def get_prism_context():
     global _prism_context
@@ -32,7 +33,7 @@ class PrismBackendWrapper:
     def silence(self):
         try:
             self.backend.stop()
-        except Exception as e:
+        except Exception:
             pass
 
     def list_voices(self):
@@ -41,7 +42,7 @@ class PrismBackendWrapper:
             count = self.backend.voices_count
             for i in range(count):
                 voices.append(self.backend.get_voice_name(i))
-        except Exception as e:
+        except Exception:
             pass
         return voices
 
@@ -59,14 +60,14 @@ class PrismBackendWrapper:
         try:
             # Mapear de 0-100 a 0.0-1.0
             self.backend.volume = float(value) / 100.0
-        except Exception as e:
+        except Exception:
             pass
 
     def set_rate(self, value):
         try:
             # Mapear de -10 a 10 al rango 0.0-1.0 (donde 0 es 0.5 de Prism)
             self.backend.rate = (float(value) + 10.0) / 20.0
-        except Exception as e:
+        except Exception:
             pass
 
     def set_pitch(self, value):
@@ -80,7 +81,7 @@ class PrismBackendWrapper:
             else:
                 # SAPI: mapeamos [-10, 10] a [0.0, 1.0] (0.5 = neutro)
                 self.backend.pitch = (float(value) + 10.0) / 20.0
-        except Exception as e:
+        except Exception:
             pass
 
 
@@ -94,6 +95,7 @@ class ReaderHandler:
         # De paso, un motor nuevo (como edge) ya no hay que apuntarlo también
         # en esta lista: basta con añadirlo en configurar_tts.
         from TTS.lector import configurar_tts
+
         self._lector = configurar_tts(sistema)
 
         # Intentar inicializar SAPI5 para alertas y anuncios secundarios del sistema.
@@ -102,29 +104,33 @@ class ReaderHandler:
         try:
             self._leer = PrismBackendWrapper(BackendId.SAPI)
         except Exception as e:
-            print(f"Advertencia: No se pudo inicializar SAPI5 para anuncios del sistema ({e}). Intentando OneCore...")
+            print(
+                f"Advertencia: No se pudo inicializar SAPI5 para anuncios del sistema ({e}). Intentando OneCore..."
+            )
             try:
                 self._leer = PrismBackendWrapper(BackendId.ONE_CORE)
             except Exception as ex:
-                print(f"Advertencia: No se pudo inicializar OneCore para anuncios del sistema ({ex}). Usando el mejor disponible...")
+                print(
+                    f"Advertencia: No se pudo inicializar OneCore para anuncios del sistema ({ex}). Usando el mejor disponible..."
+                )
                 self._leer = PrismBackendWrapper(is_best=True)
-
 
     def set_tts(self, nuevo_tts):
         # Igual que en __init__: pasar por configurar_tts siempre, para que al
         # dejar piper o kokoro se cierre su servidor en vez de quedarse en
         # memoria con el modelo cargado (Kokoro son unos 350 MB).
         from TTS.lector import configurar_tts
+
         self._lector = configurar_tts(nuevo_tts)
 
     def set_sapi(self, sapi):
-        config['sapi'] = sapi
+        config["sapi"] = sapi
 
     def _voz_del_chat(self):
         """La voz que dice el chat: la voz SAPI 5 secundaria con la casilla
         «Usar voz sapi» marcada, y el motor elegido cuando no lo está.
         """
-        return self._leer if config['sapi'] else self._lector
+        return self._leer if config["sapi"] else self._lector
 
     def leer_mensaje(self, mensaje):
         """El chat: los mensajes y los eventos del directo.
@@ -179,5 +185,5 @@ class ReaderHandler:
         self._leer.silence()
 
     def close(self):
-        if hasattr(self._lector, 'close'):
+        if hasattr(self._lector, "close"):
             self._lector.close()

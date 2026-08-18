@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Configuración central de logs de VeTube.
 
 Escribe un archivo rotativo en la carpeta ``logs`` junto al programa y captura
@@ -6,6 +5,7 @@ las excepciones no controladas (hilo principal e hilos secundarios). Está pensa
 para no romper nunca el arranque: si algo falla al configurar los logs, la app
 sigue funcionando sin registro.
 """
+
 import logging
 import logging.handlers
 import os
@@ -15,8 +15,14 @@ import threading
 # Bibliotecas de terceros muy verbosas (peticiones HTTP, latidos de websocket...):
 # las bajamos a WARNING para que el archivo de log siga siendo legible.
 _LIBRERIAS_RUIDOSAS = (
-    "httpx", "httpcore", "urllib3", "asyncio", "PIL",
-    "comtypes", "websocket", "websockets",
+    "httpx",
+    "httpcore",
+    "urllib3",
+    "asyncio",
+    "PIL",
+    "comtypes",
+    "websocket",
+    "websockets",
 )
 
 # Nuestros propios módulos: los ponemos en DEBUG para tener diagnóstico fino
@@ -26,9 +32,19 @@ _LIBRERIAS_RUIDOSAS = (
 # submódulos (p. ej. "servicios" -> servicios.kick), de modo que los módulos que
 # se vayan migrando a getLogger(__name__) quedan en DEBUG sin tocar esta lista.
 _LOGGERS_VETUBE = (
-    "vetube", "update", "updater", "keyboard_handler",
-    "servicios", "utils", "players", "helpers", "TTS",
-    "exchange", "controller", "ui", "globals",
+    "vetube",
+    "update",
+    "updater",
+    "keyboard_handler",
+    "servicios",
+    "utils",
+    "players",
+    "helpers",
+    "TTS",
+    "exchange",
+    "controller",
+    "ui",
+    "globals",
 )
 
 _configurado = False
@@ -90,8 +106,9 @@ def configurar_logs(nivel=logging.INFO):
     _instalar_captura_excepciones()
 
     _configurado = True
-    _log.info("=== VeTube iniciado (%s, Python %s) ===",
-              sys.platform, sys.version.split()[0])
+    _log.info(
+        "=== VeTube iniciado (%s, Python %s) ===", sys.platform, sys.version.split()[0]
+    )
 
 
 def _instalar_captura_excepciones():

@@ -1,26 +1,34 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from TTS.lector import detect_onnx_models
-from TTS.list_voices import install_piper_voice, piper_list_voices, obtener_ruta_voz
-from setup import reader, player
-from ui.dialog_response import response
+import os
+import sys
+
+import wx
+
+from controller.piper_downloader_controller import PiperDownloaderController
 from globals.data_store import config
 from globals.resources import lista_voces_piper
-from controller.piper_downloader_controller import PiperDownloaderController
-import sys, os,wx
+from setup import player, reader
+from TTS.lector import detect_onnx_models
+from TTS.list_voices import obtener_ruta_voz, piper_list_voices
+from ui.dialog_response import response
+
 
 def restart_program():
-    """ Function that restarts the application if is executed."""
+    """Function that restarts the application if is executed."""
     args = sys.argv[:]
     if not hasattr(sys, "frozen"):
         args.insert(0, sys.executable)
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         args = ['"%s"' % arg for arg in args]
-    pidpath = os.path.join(os.getenv("temp"), "{}.pid".format('VeTube'))
+    pidpath = os.path.join(os.getenv("temp"), "{}.pid".format("VeTube"))
     if os.path.exists(pidpath):
         os.remove(pidpath)
     os.execv(sys.executable, args)
-def porcentaje_a_escala(porcentaje): return 1.25 + porcentaje * 0.125
+
+
+def porcentaje_a_escala(porcentaje):
+    return 1.25 + porcentaje * 0.125
+
+
 def fijar_dispositivo_lector():
     """Fija en el motor de voz activo (sonata o sherpa, según motor_de_interfaz(),
     que no es config['sistemaTTS'] cuando manda la casilla «Usar voz sapi»)
@@ -30,32 +38,51 @@ def fijar_dispositivo_lector():
     Los nombres que ya tiene el player valen de known_devices: así no hay que
     volver a abrir el subsistema de audio solo para enumerar los dispositivos."""
     nombres_dispositivos = player.devicenames
-    dispositivos_formateados = [{'name': n, 'id': i} for i, n in enumerate(nombres_dispositivos)]
-    nombre_actual = nombres_dispositivos[config["dispositivo"]-1]
-    reader._lector.set_device(reader._lector.find_device_id(nombre_actual, known_devices=dispositivos_formateados))
+    dispositivos_formateados = [
+        {"name": n, "id": i} for i, n in enumerate(nombres_dispositivos)
+    ]
+    nombre_actual = nombres_dispositivos[config["dispositivo"] - 1]
+    reader._lector.set_device(
+        reader._lector.find_device_id(
+            nombre_actual, known_devices=dispositivos_formateados
+        )
+    )
+
+
 def _cargar_voz_piper_actual():
     """Carga en el puente la voz de Piper que marca config['voz'], con el
     dispositivo de salida configurado."""
-    model_path = obtener_ruta_voz(lista_voces_piper[config['voz']])
+    model_path = obtener_ruta_voz(lista_voces_piper[config["voz"]])
     if not model_path:
         return
     reader._lector = reader._lector.piperSpeak(model_path)
     fijar_dispositivo_lector()
+
+
 def configurar_piper(parent, carpeta_voces):
     onnx_models = detect_onnx_models(carpeta_voces)
     if onnx_models is None:
-        if response(_('Necesitas al menos una voz para poder usar el sintetizador Piper. ¿Deseas abrir el descargador de voces ahora para buscar e instalar una?'), _("No hay voces instaladas"), wx.YES_NO | wx.ICON_ASTERISK) == wx.ID_YES:
+        if (
+            response(
+                _(
+                    "Necesitas al menos una voz para poder usar el sintetizador Piper. ¿Deseas abrir el descargador de voces ahora para buscar e instalar una?"
+                ),
+                _("No hay voces instaladas"),
+                wx.YES_NO | wx.ICON_ASTERISK,
+            )
+            == wx.ID_YES
+        ):
             downloader = PiperDownloaderController(parent)
             downloader.show()
             nuevas_voces = detect_onnx_models(carpeta_voces)
             if nuevas_voces is not None:
                 lista_voces_piper.clear()
                 lista_voces_piper.extend(piper_list_voices())
-                config['voz'] = 0
+                config["voz"] = 0
                 _cargar_voz_piper_actual()
                 reader.leer_motor(_("Lector Piper inicializado correctamente."))
     elif isinstance(onnx_models, str) or isinstance(onnx_models, list):
         # Solo se recoloca la voz si el índice guardado quedó fuera de rango:
         # resetearla siempre hacía perder la voz elegida en cada Aceptar.
-        if not (0 <= config['voz'] < len(lista_voces_piper)):
-            config['voz'] = 0
+        if not (0 <= config["voz"] < len(lista_voces_piper)):
+            config["voz"] = 0

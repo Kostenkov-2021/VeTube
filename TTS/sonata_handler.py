@@ -1,15 +1,17 @@
-import os
-import sys
 import asyncio
-import subprocess
-import socket
-import threading
 import atexit
 import ctypes
+import os
+import socket
+import subprocess
+import sys
+import threading
 from pathlib import Path
-from sound_lib import stream
-from grpclib.client import Channel
+
 import grpclib.const
+from grpclib.client import Channel
+from sound_lib import stream
+
 from globals.paths import VOICES_DIR
 
 # Configuración de Job Objects para Windows
@@ -17,7 +19,7 @@ if sys.platform == "win32":
     CreateJobObject = ctypes.windll.kernel32.CreateJobObjectW
     SetInformationJobObject = ctypes.windll.kernel32.SetInformationJobObject
     AssignProcessToJobObject = ctypes.windll.kernel32.AssignProcessToJobObject
-    
+
     # Constantes necesarias
     JobObjectExtendedLimitInformation = 9
     JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x2000
@@ -38,6 +40,7 @@ if sys.platform == "win32":
             ("PeakJobMemoryLimit", ctypes.c_size_t),
         ]
 
+
 # Añadir protos al path de búsqueda
 PROTO_DIR = os.path.join(os.path.dirname(__file__), "sonata_protos")
 if PROTO_DIR not in sys.path:
@@ -49,6 +52,7 @@ from .sonata_protos import sonata_grpc_pb2
 _INSTANCIA_PIPER = None
 # El barrido de procesos huérfanos solo hace falta una vez por sesión.
 _ORFANOS_LIMPIADOS = False
+
 
 class piperSpeak:
     # Cerrojo del stream BASS. Va en la CLASE, no en la instancia: __init__ se
@@ -62,7 +66,7 @@ class piperSpeak:
     def __new__(cls, *args, **kwargs):
         global _INSTANCIA_PIPER
         if _INSTANCIA_PIPER is None:
-            _INSTANCIA_PIPER = super(piperSpeak, cls).__new__(cls)
+            _INSTANCIA_PIPER = super().__new__(cls)
             _INSTANCIA_PIPER._inicializado = False
         return _INSTANCIA_PIPER
 
@@ -71,27 +75,27 @@ class piperSpeak:
             if model_path:
                 self.load_model(model_path)
             return
-            
+
         self.process = None
         self.port = None
         self.channel = None
         self.voice_id = None
         self.current_voice_path = None
         self.job_handle = None
-        
+
         # Parámetros de audio
-        self.device = -1 # Dispositivo por defecto de BASS
-        self.sample_rate = 22050 
+        self.device = -1  # Dispositivo por defecto de BASS
+        self.sample_rate = 22050
         self.length_scale = 1.0
-        self.pitch = 50 # Tono normal
-        self.volume = 100 # Volumen máximo
-        
+        self.pitch = 50  # Tono normal
+        self.volume = 100  # Volumen máximo
+
         # Rutas dinámicas
         base_dir = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         self.bin_dir = base_dir / "64" / "sonata"
         self.exe = self.bin_dir / "sonata-grpc.exe"
         self.espeak_dir = self.bin_dir
-        
+
         self.bass_stream = None
         # Generación de habla: silence() la incrementa para invalidar síntesis en curso o pendientes.
         self._speak_generation = 0
@@ -107,7 +111,12 @@ class piperSpeak:
             self.job_handle = CreateJobObject(None, None)
             info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
             info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
-            SetInformationJobObject(self.job_handle, JobObjectExtendedLimitInformation, ctypes.pointer(info), ctypes.sizeof(info))
+            SetInformationJobObject(
+                self.job_handle,
+                JobObjectExtendedLimitInformation,
+                ctypes.pointer(info),
+                ctypes.sizeof(info),
+            )
 
         # Limpiar instancias huérfanas de NUESTRA carpeta antes de empezar.
         # Solo la primera vez de la sesión: sirve para barrer los restos de un
@@ -122,20 +131,20 @@ class piperSpeak:
         self.loop = asyncio.new_event_loop()
         self.thread = threading.Thread(target=self._run_loop, daemon=True)
         self.thread.start()
-        
+
         # Lanzar servidor
         asyncio.run_coroutine_threadsafe(self._start_server(), self.loop)
-        
+
         # Solo la primera vez: __init__ se vuelve a ejecutar en cada cambio de
         # motor (close() deja _inicializado en False) y se acumulaba un
         # atexit por cada ida y vuelta.
         if not getattr(self, "_atexit_puesto", False):
             atexit.register(self.close)
             self._atexit_puesto = True
-        
+
         if model_path:
             self.load_model(model_path)
-            
+
         self._inicializado = True
 
     def _run_loop(self):
@@ -160,7 +169,8 @@ class piperSpeak:
                     tarea.cancel()
                 if tareas:
                     loop.run_until_complete(
-                        asyncio.gather(*tareas, return_exceptions=True))
+                        asyncio.gather(*tareas, return_exceptions=True)
+                    )
             except Exception:
                 pass
             try:
@@ -180,16 +190,17 @@ class piperSpeak:
         puente desde el PR #100."""
         try:
             import psutil
+
             ruta_propia = os.path.normcase(os.path.abspath(str(self.exe)))
-            for proc in psutil.process_iter(['pid', 'name', 'exe']):
+            for proc in psutil.process_iter(["pid", "name", "exe"]):
                 try:
-                    nombre = (proc.info.get('name') or '').lower()
+                    nombre = (proc.info.get("name") or "").lower()
                     if nombre != "sonata-grpc.exe":
                         continue
-                    ruta = proc.info.get('exe')
+                    ruta = proc.info.get("exe")
                     if ruta and os.path.normcase(ruta) == ruta_propia:
                         proc.kill()
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                except psutil.NoSuchProcess, psutil.AccessDenied:
                     pass
         except:
             pass
@@ -227,7 +238,9 @@ class piperSpeak:
             env=env,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            creationflags=(subprocess.CREATE_NO_WINDOW | CREATE_BREAKAWAY_FROM_JOB) if sys.platform == "win32" else 0
+            creationflags=(subprocess.CREATE_NO_WINDOW | CREATE_BREAKAWAY_FROM_JOB)
+            if sys.platform == "win32"
+            else 0,
         )
 
         # Si el cierre llegó justo mientras arrancábamos, close() ya no tenía
@@ -256,17 +269,18 @@ class piperSpeak:
             if self._cerrado or self.loop is not mi_loop:
                 return
             try:
-                self.channel = Channel('127.0.0.1', self.port)
+                self.channel = Channel("127.0.0.1", self.port)
                 await asyncio.sleep(2)
                 break
             except:
                 await asyncio.sleep(1)
 
     def load_model(self, model_path=None):
-        if not model_path: 
+        if not model_path:
             model_path = self.current_voice_path
-        if not model_path: return
-        
+        if not model_path:
+            return
+
         # Si el archivo ONNX no existe en la ruta dada (debido a diferencias de
         # nombres de carpeta), lo buscamos dinámicamente dentro de voices/.
         # Solo en las carpetas «voice-*»: desde que existe Kokoro, en voices/
@@ -275,11 +289,14 @@ class piperSpeak:
         # puente.
         if not os.path.exists(model_path):
             import glob
+
             filename = os.path.basename(model_path)
-            coincidencias = glob.glob(os.path.join(str(VOICES_DIR), "voice-*", filename))
+            coincidencias = glob.glob(
+                os.path.join(str(VOICES_DIR), "voice-*", filename)
+            )
             if coincidencias:
                 model_path = coincidencias[0]
-        
+
         if model_path.endswith(".onnx"):
             json_path = model_path + ".json"
             if not os.path.exists(json_path):
@@ -290,8 +307,12 @@ class piperSpeak:
                 # el modelo pedido en vez de coger el primer .json que salga,
                 # que depende del orden del sistema de ficheros.
                 import glob
+
                 dir_name = os.path.dirname(model_path)
-                es_rt = os.path.basename(model_path).lower() in ("encoder.onnx", "decoder.onnx")
+                es_rt = os.path.basename(model_path).lower() in (
+                    "encoder.onnx",
+                    "decoder.onnx",
+                )
                 jsons = glob.glob(os.path.join(dir_name, "*.json"))
                 propios = [j for j in jsons if ("+RT" in os.path.basename(j)) == es_rt]
                 if propios:
@@ -302,7 +323,7 @@ class piperSpeak:
                     model_path = json_path
             else:
                 model_path = json_path
-        
+
         self.current_voice_path = model_path
         # Invalidar la voz anterior antes de pedir la nueva: mientras el puente
         # carga, un mensaje que llegue no debe salir con la voz de antes (es lo
@@ -316,8 +337,10 @@ class piperSpeak:
         # esperaba, su loop ya no es el del puente: hay que salir en vez de
         # hablarle a un servidor que ya no existe.
         mi_loop = asyncio.get_running_loop()
+
         def vigente():
             return not self._cerrado and self.loop is mi_loop
+
         while self.channel is None:
             if not vigente():
                 return
@@ -328,7 +351,7 @@ class piperSpeak:
         req = sonata_grpc_pb2.VoicePath(config_path=os.path.abspath(model_path))
         try:
             async with self.channel.request(
-                '/sonata_grpc.sonata_grpc/LoadVoice',
+                "/sonata_grpc.sonata_grpc/LoadVoice",
                 grpclib.const.Cardinality.UNARY_UNARY,
                 sonata_grpc_pb2.VoicePath,
                 sonata_grpc_pb2.VoiceInfo,
@@ -337,7 +360,7 @@ class piperSpeak:
                 voice_info = await s.recv_message()
                 if voice_info:
                     self.voice_id = voice_info.voice_id
-                    if hasattr(voice_info, 'audio') and voice_info.audio.sample_rate:
+                    if hasattr(voice_info, "audio") and voice_info.audio.sample_rate:
                         self.sample_rate = voice_info.audio.sample_rate
         except Exception as e:
             print(f"Error al cargar voz en Sonata: {e}")
@@ -345,8 +368,11 @@ class piperSpeak:
     def get_devices(self):
         try:
             from sound_lib.output import Output
+
             o = Output()
-            return [{'name': name, 'id': i} for i, name in enumerate(o.get_device_names())]
+            return [
+                {"name": name, "id": i} for i, name in enumerate(o.get_device_names())
+            ]
         except:
             return []
 
@@ -354,8 +380,8 @@ class piperSpeak:
         try:
             devices = known_devices if known_devices is not None else self.get_devices()
             for device in devices:
-                if device['name'] == term:
-                    return device['id']
+                if device["name"] == term:
+                    return device["id"]
         except:
             pass
         return -1
@@ -366,13 +392,13 @@ class piperSpeak:
     def set_pitch(self, value):
         # Mapeamos el valor (usualmente -10 a 10) a 0-100 para Piper
         self.pitch = int(50 + (value * 2.5))
-        if self.pitch < 0: self.pitch = 0
-        if self.pitch > 100: self.pitch = 100
+        self.pitch = max(self.pitch, 0)
+        self.pitch = min(self.pitch, 100)
 
     def set_volume(self, value):
         self.volume = int(value)
-        if self.volume < 0: self.volume = 0
-        if self.volume > 100: self.volume = 100
+        self.volume = max(self.volume, 0)
+        self.volume = min(self.volume, 100)
 
     def set_device(self, device):
         self.device = device
@@ -392,20 +418,25 @@ class piperSpeak:
         self.voice_id = None
 
     def speak(self, text):
-        if not text: return
+        if not text:
+            return
         # Puente cerrado porque se pasó al otro motor: nada que sintetizar.
         # Se mira _cerrado y no _inicializado porque close() levanta el primero
         # nada más empezar y solo baja el segundo al final: entre medias detiene
         # el loop, y programar ahí una síntesis reventaría con «Event loop is
         # closed» en el hilo de la interfaz.
-        if self._cerrado: return
+        if self._cerrado:
+            return
         # Sin voz pedida no hay nada que esperar: _speak_task_inner aguanta 12
         # segundos a que termine de cargar, y eso solo tiene sentido si hay
         # alguna voz en camino.
-        if not self.current_voice_path: return
+        if not self.current_voice_path:
+            return
         self.silence()
         self._sintetizando = True
-        asyncio.run_coroutine_threadsafe(self._speak_task(text, self._speak_generation), self.loop)
+        asyncio.run_coroutine_threadsafe(
+            self._speak_task(text, self._speak_generation), self.loop
+        )
 
     def silence(self):
         # Invalida cualquier síntesis en curso o pendiente y corta el audio actual.
@@ -419,7 +450,8 @@ class piperSpeak:
                 try:
                     self.bass_stream.stop()
                     self.bass_stream.free()
-                except: pass
+                except:
+                    pass
                 self.bass_stream = None
 
     def is_playing(self):
@@ -475,32 +507,34 @@ class piperSpeak:
         # centro cae en length_scale 1,0 —la velocidad que trae el modelo— y el
         # tope del cursor en 0,5, el doble de rápido, igual que en sherpa.
         rate_val = int(round(self.length_scale * 12))
-        if rate_val < 1: rate_val = 1
-        if rate_val > 200: rate_val = 200
+        rate_val = max(rate_val, 1)
+        rate_val = min(rate_val, 200)
 
         utterance = sonata_grpc_pb2.Utterance(
             voice_id=self.voice_id,
             text=text,
             speech_args=sonata_grpc_pb2.SpeechArgs(
-                rate=rate_val,
-                volume=self.volume,
-                pitch=self.pitch
-            )
+                rate=rate_val, volume=self.volume, pitch=self.pitch
+            ),
         )
 
         try:
             local_stream = stream.PushStream(freq=self.sample_rate, chans=1)
             local_stream.volume = self.volume / 100.0
             if self.device != -1:
-                try: local_stream.set_device(self.device)
-                except: pass
+                try:
+                    local_stream.set_device(self.device)
+                except:
+                    pass
             # Comprobar y publicar en el mismo cerrojo: si se comprueba fuera,
             # un silence() que entre justo aquí deja este stream sin dueño (ya
             # no es self.bass_stream) y nadie lo libera nunca.
             with self._bass_lock:
                 if gen != self._speak_generation:
-                    try: local_stream.free()
-                    except: pass
+                    try:
+                        local_stream.free()
+                    except:
+                        pass
                     return
                 self.bass_stream = local_stream
 
@@ -511,7 +545,7 @@ class piperSpeak:
             primero = True
 
             async with self.channel.request(
-                '/sonata_grpc.sonata_grpc/SynthesizeUtterance',
+                "/sonata_grpc.sonata_grpc/SynthesizeUtterance",
                 grpclib.const.Cardinality.UNARY_STREAM,
                 sonata_grpc_pb2.Utterance,
                 sonata_grpc_pb2.SynthesisResult,
@@ -564,13 +598,13 @@ class piperSpeak:
 
         if self.process:
             try:
-                if self.process.poll() is None: # Si aún está corriendo
+                if self.process.poll() is None:  # Si aún está corriendo
                     self.process.kill()
                     self.process.wait(timeout=1)
             except:
                 pass
             self.process = None
-        
+
         # Cerrar el handle del Job Object (esto matará a los procesos si el flag está activo)
         if self.job_handle:
             try:
@@ -595,5 +629,7 @@ def detener_puente():
     basta con uno a la vez. Si nunca se usó Piper no crea nada, y si ya estaba
     cerrado no hace nada (close() deja _inicializado en False).
     """
-    if _INSTANCIA_PIPER is not None and getattr(_INSTANCIA_PIPER, "_inicializado", False):
+    if _INSTANCIA_PIPER is not None and getattr(
+        _INSTANCIA_PIPER, "_inicializado", False
+    ):
         _INSTANCIA_PIPER.close()

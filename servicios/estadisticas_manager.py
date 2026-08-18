@@ -3,6 +3,7 @@ from logging import getLogger
 
 logger = getLogger(__name__)
 
+
 class EstadisticasManager:
     def __init__(self):
         self.usuarios = []
@@ -57,7 +58,7 @@ class EstadisticasManager:
             "unidos": self.unidos,
             "seguidores": self.seguidores,
             "megusta": self.megusta,
-            "compartidas": self.compartidas
+            "compartidas": self.compartidas,
         }
 
     def obtener_estadisticas_ordenadas(self, descendente=True):
@@ -77,21 +78,22 @@ class EstadisticasManager:
         """
         if ordenar:
             stats_ordenadas = self.obtener_estadisticas_ordenadas()
-            stats_a_guardar = {"usuarios": {usuario: mensajes for usuario, mensajes in stats_ordenadas}}
+            stats_a_guardar = {
+                "usuarios": {usuario: mensajes for usuario, mensajes in stats_ordenadas}
+            }
         else:
             stats_a_guardar = {"usuarios": self.obtener_estadisticas()}
 
-        if plataforma and plataforma.lower() == 'tiktok':
+        if plataforma and plataforma.lower() == "tiktok":
             tiktok_stats = self.obtener_estadisticas_tiktok()
             # Filtramos las estadísticas de TikTok para no guardar las que son 0
             tiktok_stats_filtradas = {k: v for k, v in tiktok_stats.items() if v > 0}
             if tiktok_stats_filtradas:
-                stats_a_guardar['tiktok'] = tiktok_stats_filtradas
+                stats_a_guardar["tiktok"] = tiktok_stats_filtradas
 
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(stats_a_guardar, f, ensure_ascii=False, indent=4)
         logger.info("Estadísticas guardadas en %s", file_path)
-
 
     def total_mensajes(self):
         """Devuelve el número total de mensajes."""

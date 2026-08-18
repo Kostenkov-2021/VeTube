@@ -1,15 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Test script for release notes dialog."""
 
 import wx
+
 from update.release_notes_dialog import show_release_notes_dialog
 
 
 def main():
     """Test the release notes dialog."""
     app = wx.App()
-    
+
     # Sample release notes in markdown format
     sample_notes = """## What's New in Version 3.95-rc5
 
@@ -44,15 +44,15 @@ def main():
 
 For more information, visit our [GitHub repository](https://github.com/metalalchemist/VeTube).
 """
-    
+
     # Show the dialog
     result = show_release_notes_dialog(None, "3.95-rc5", sample_notes)
-    
+
     if result:
         print("User clicked 'Update Now'")
     else:
         print("User clicked 'Later' or closed the dialog")
-    
+
     app.MainLoop()
 
 

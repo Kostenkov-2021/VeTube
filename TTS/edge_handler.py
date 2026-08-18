@@ -7,15 +7,16 @@
 # se aplican sobre el stream BASS; la velocidad se manda nativa a edge-tts
 # (rate='+/-N%').
 import asyncio
-import threading
 import atexit
 import ctypes
+import threading
+
 from edge_tts import Communicate, VoicesManager
 from sound_lib import stream
 
-_VOCES = []                # lista caché de voces (dicts de VoicesManager)
+_VOCES = []  # lista caché de voces (dicts de VoicesManager)
 _CARGA_EN_CURSO = False
-_AL_TERMINAR_CARGA = []    # callbacks a avisar cuando la lista esté lista
+_AL_TERMINAR_CARGA = []  # callbacks a avisar cuando la lista esté lista
 _LOOP = None
 _THREAD = None
 _INSTANCIA = None
@@ -103,8 +104,11 @@ def edge_voces_de_idioma(codigo=None):
     """[(índice, ShortName)] de las voces de un idioma, o de todas si no se
     pasa ninguno. El índice es el global de _VOCES, el que se guarda en
     config['voz']: una lista filtrada NO puede indexarse sola."""
-    return [(i, v["ShortName"]) for i, v in enumerate(_VOCES)
-            if codigo is None or (v.get("Language") or "") == codigo]
+    return [
+        (i, v["ShortName"])
+        for i, v in enumerate(_VOCES)
+        if codigo is None or (v.get("Language") or "") == codigo
+    ]
 
 
 def edge_idioma_de_voz(index):
@@ -132,7 +136,7 @@ class edgeSpeak:
     def __new__(cls, *args, **kwargs):
         global _INSTANCIA
         if _INSTANCIA is None:
-            _INSTANCIA = super(edgeSpeak, cls).__new__(cls)
+            _INSTANCIA = super().__new__(cls)
             _INSTANCIA._inicializado = False
         return _INSTANCIA
 
@@ -148,7 +152,7 @@ class edgeSpeak:
         self.pitch_ratio = 1.0
         # Velocidad nativa de edge-tts: porcentaje relativo a la normal.
         self.rate_pct = 0
-        self.current_voice = None   # ShortName de la voz elegida
+        self.current_voice = None  # ShortName de la voz elegida
         self.bass_stream = None
         self._mp3_buffer = None
         # silence() incrementa la generación para invalidar síntesis en curso.
@@ -165,8 +169,11 @@ class edgeSpeak:
     def get_devices(self):
         try:
             from sound_lib.output import Output
+
             o = Output()
-            return [{'name': name, 'id': i} for i, name in enumerate(o.get_device_names())]
+            return [
+                {"name": name, "id": i} for i, name in enumerate(o.get_device_names())
+            ]
         except Exception:
             return []
 
@@ -174,8 +181,8 @@ class edgeSpeak:
         try:
             devices = known_devices if known_devices is not None else self.get_devices()
             for device in devices:
-                if device['name'] == term:
-                    return device['id']
+                if device["name"] == term:
+                    return device["id"]
         except Exception:
             pass
         return -1
@@ -183,25 +190,19 @@ class edgeSpeak:
     def set_rate(self, value):
         # value = velocidad del slider (-10 a 10). edge-tts espera '+/-N%'.
         self.rate_pct = int(round(value * 5))
-        if self.rate_pct < -100:
-            self.rate_pct = -100
-        if self.rate_pct > 100:
-            self.rate_pct = 100
+        self.rate_pct = max(self.rate_pct, -100)
+        self.rate_pct = min(self.rate_pct, 100)
 
     def set_pitch(self, value):
         ratio = 1.0 + (value * 0.05)
-        if ratio < 0.5:
-            ratio = 0.5
-        if ratio > 2.0:
-            ratio = 2.0
+        ratio = max(ratio, 0.5)
+        ratio = min(ratio, 2.0)
         self.pitch_ratio = ratio
 
     def set_volume(self, value):
         self.volume = int(value)
-        if self.volume < 0:
-            self.volume = 0
-        if self.volume > 100:
-            self.volume = 100
+        self.volume = max(self.volume, 0)
+        self.volume = min(self.volume, 100)
 
     def set_device(self, device):
         self.device = device
@@ -225,7 +226,8 @@ class edgeSpeak:
         self.silence()
         self._sintetizando = True
         asyncio.run_coroutine_threadsafe(
-            self._speak_task(text, self._speak_generation), _LOOP)
+            self._speak_task(text, self._speak_generation), _LOOP
+        )
 
     def silence(self):
         # Invalida cualquier síntesis en curso y corta el audio actual.
@@ -282,13 +284,19 @@ class edgeSpeak:
         datos = bytes(mp3)
         # BASS no copia el buffer de memoria: hay que mantener vivo el ctypes.
         cdata = ctypes.create_string_buffer(datos, len(datos))
-        local_stream = stream.FileStream(mem=True, file=ctypes.addressof(cdata),
-                                         offset=0, length=len(datos), autofree=False)
+        local_stream = stream.FileStream(
+            mem=True,
+            file=ctypes.addressof(cdata),
+            offset=0,
+            length=len(datos),
+            autofree=False,
+        )
         local_stream.volume = self.volume / 100.0
         if self.pitch_ratio != 1.0:
             try:
                 local_stream.set_frequency(
-                    int(local_stream.get_frequency() * self.pitch_ratio))
+                    int(local_stream.get_frequency() * self.pitch_ratio)
+                )
             except Exception:
                 pass
         if self.device != -1:

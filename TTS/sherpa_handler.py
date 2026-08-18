@@ -1,15 +1,17 @@
-import os
-import sys
 import asyncio
-import subprocess
-import socket
-import threading
 import atexit
 import ctypes
+import os
+import socket
+import subprocess
+import sys
+import threading
 from pathlib import Path
-from sound_lib import stream
-from grpclib.client import Channel
+
 import grpclib.const
+from grpclib.client import Channel
+from sound_lib import stream
+
 from globals.paths import VOICES_DIR
 
 # Servidor TTS nativo: ejecutable Rust + sherpa-onnx (C-API oficial), proceso
@@ -28,10 +30,12 @@ NOMBRE_EXE_PUENTE = "vetube-sherpa-grpc.exe"
 # el descargador propio (servicios/kokoro_manager.py, release tts-models de k2-fsa).
 KOKORO_MODEL_DIR = str(VOICES_DIR / "kokoro-multi-lang-v1_0")
 
+
 def kokoro_model_instalado():
     """True si el modelo está instalado y completo (el descargador solo mueve la
     carpeta a voices/ tras verificarla, así que basta con el fichero principal)."""
     return os.path.isfile(os.path.join(KOKORO_MODEL_DIR, "model.onnx"))
+
 
 # Voces del modelo: (etiqueta para la UI, sid, idioma espeak para la fonemización).
 # Mapeo de sid = tabla oficial del modelo kokoro-multi-lang-v1_0 en la doc de
@@ -95,8 +99,10 @@ VOCES_KOKORO = [
 # fonemiza mal el japonés (14,6 s para una frase corta) y el modelo no lo
 # soporta oficialmente vía sherpa. Rehabilitarlas pasaría por el servidor.
 
+
 def kokoro_list_voices():
     return [voz[0] for voz in VOCES_KOKORO]
+
 
 def kokoro_idiomas_disponibles():
     """Códigos de idioma que trae el modelo, sin repetir y en el orden de la
@@ -107,18 +113,24 @@ def kokoro_idiomas_disponibles():
             codigos.append(lang)
     return codigos
 
+
 def kokoro_voces_de_idioma(codigo=None):
     """Devuelve [(índice, etiqueta)] de las voces de un idioma, o de todas si
     no se pasa ninguno. El índice es el global de VOCES_KOKORO, que es el que
     se guarda en config['voz']: una lista filtrada NO puede indexarse sola."""
-    return [(i, voz[0]) for i, voz in enumerate(VOCES_KOKORO)
-            if codigo is None or voz[2] == codigo]
+    return [
+        (i, voz[0])
+        for i, voz in enumerate(VOCES_KOKORO)
+        if codigo is None or voz[2] == codigo
+    ]
+
 
 def kokoro_idioma_de_voz(index):
     """Código de idioma de la voz que ocupa ese índice global, o None."""
     if 0 <= index < len(VOCES_KOKORO):
         return VOCES_KOKORO[index][2]
     return None
+
 
 def kokoro_voice_config(index):
     """Devuelve el config_path «carpeta?sid=N&lang=xx» que entiende el puente,
@@ -131,6 +143,7 @@ def kokoro_voice_config(index):
     # Ruta absoluta: el puente corre con su propio directorio de trabajo,
     # una ruta relativa a VeTube no resolvería allí.
     return f"{os.path.abspath(KOKORO_MODEL_DIR)}?sid={sid}&lang={lang}"
+
 
 # Configuración de Job Objects para Windows
 if sys.platform == "win32":
@@ -157,6 +170,7 @@ if sys.platform == "win32":
             ("PeakJobMemoryLimit", ctypes.c_size_t),
         ]
 
+
 # Reutilizamos el proto de sonata: el puente habla el mismo protocolo.
 PROTO_DIR = os.path.join(os.path.dirname(__file__), "sonata_protos")
 if PROTO_DIR not in sys.path:
@@ -171,6 +185,7 @@ _INSTANCIA_SHERPA = None
 # El barrido de procesos huérfanos solo hace falta una vez por sesión.
 _ORFANOS_LIMPIADOS = False
 
+
 class sherpaSpeak:
     # Cerrojo del stream BASS. Va en la CLASE, no en la instancia: __init__ se
     # vuelve a ejecutar cada vez que el puente se reinicia, y un cerrojo nuevo
@@ -183,7 +198,7 @@ class sherpaSpeak:
     def __new__(cls, *args, **kwargs):
         global _INSTANCIA_SHERPA
         if _INSTANCIA_SHERPA is None:
-            _INSTANCIA_SHERPA = super(sherpaSpeak, cls).__new__(cls)
+            _INSTANCIA_SHERPA = super().__new__(cls)
             _INSTANCIA_SHERPA._inicializado = False
         return _INSTANCIA_SHERPA
 
@@ -201,14 +216,14 @@ class sherpaSpeak:
         self.job_handle = None
 
         # Parámetros de audio
-        self.device = -1 # Dispositivo por defecto de BASS
+        self.device = -1  # Dispositivo por defecto de BASS
         self.sample_rate = 24000
         self.length_scale = 1.0
         # El tono ya no viaja al servidor: se aplica en VeTube re-muestreando
         # el stream BASS (misma técnica que el DSP del servidor sonata, paridad
         # validada de oído el 2026-08-02). ratio = 1 + 0.05 * slider.
         self.pitch_ratio = 1.0
-        self.volume = 100 # Volumen máximo
+        self.volume = 100  # Volumen máximo
 
         self.bass_stream = None
         # Generación de habla: silence() la incrementa para invalidar síntesis en curso o pendientes.
@@ -229,7 +244,12 @@ class sherpaSpeak:
             self.job_handle = CreateJobObject(None, None)
             info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
             info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
-            SetInformationJobObject(self.job_handle, JobObjectExtendedLimitInformation, ctypes.pointer(info), ctypes.sizeof(info))
+            SetInformationJobObject(
+                self.job_handle,
+                JobObjectExtendedLimitInformation,
+                ctypes.pointer(info),
+                ctypes.sizeof(info),
+            )
 
         # Limpiar instancias huérfanas de NUESTRO puente antes de empezar.
         # Solo la primera vez de la sesión: sirve para barrer los restos de un
@@ -282,7 +302,8 @@ class sherpaSpeak:
                     tarea.cancel()
                 if tareas:
                     loop.run_until_complete(
-                        asyncio.gather(*tareas, return_exceptions=True))
+                        asyncio.gather(*tareas, return_exceptions=True)
+                    )
             except Exception:
                 pass
             try:
@@ -298,16 +319,17 @@ class sherpaSpeak:
         quedaba muda sin volver a levantarlo."""
         try:
             import psutil
+
             ruta_propia = os.path.normcase(os.path.abspath(EXE_PUENTE))
-            for proc in psutil.process_iter(['pid', 'name', 'exe']):
+            for proc in psutil.process_iter(["pid", "name", "exe"]):
                 try:
-                    nombre = (proc.info.get('name') or '').lower()
+                    nombre = (proc.info.get("name") or "").lower()
                     if nombre != NOMBRE_EXE_PUENTE:
                         continue
-                    ruta = proc.info.get('exe')
+                    ruta = proc.info.get("exe")
                     if ruta and os.path.normcase(ruta) == ruta_propia:
                         proc.kill()
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                except psutil.NoSuchProcess, psutil.AccessDenied:
                     pass
         except:
             pass
@@ -343,7 +365,9 @@ class sherpaSpeak:
             env=env,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            creationflags=(subprocess.CREATE_NO_WINDOW | CREATE_BREAKAWAY_FROM_JOB) if sys.platform == "win32" else 0
+            creationflags=(subprocess.CREATE_NO_WINDOW | CREATE_BREAKAWAY_FROM_JOB)
+            if sys.platform == "win32"
+            else 0,
         )
 
         # Si el cierre llegó justo mientras arrancábamos, close() ya no tenía
@@ -372,7 +396,7 @@ class sherpaSpeak:
             if self._cerrado or self.loop is not mi_loop:
                 return
             try:
-                self.channel = Channel('127.0.0.1', self.port)
+                self.channel = Channel("127.0.0.1", self.port)
                 await asyncio.sleep(2)
                 break
             except:
@@ -381,7 +405,8 @@ class sherpaSpeak:
     def load_model(self, model_path=None):
         if not model_path:
             model_path = self.current_voice_path
-        if not model_path: return
+        if not model_path:
+            return
 
         # Aquí solo llegan rutas de Kokoro («carpeta?sid=..&lang=..»), que no
         # son ficheros y pasan tal cual: desde que Piper habla por sonata, no
@@ -394,17 +419,27 @@ class sherpaSpeak:
         # sepa cambiar de idioma en caliente, se reinicia: cuesta ~2 s y solo
         # ocurre al cambiar de idioma de voz, no al cambiar de voz.
         idioma_nuevo = self._idioma_de_ruta(model_path)
-        if (idioma_nuevo and self._idioma_cargado
-                and idioma_nuevo != self._idioma_cargado):
+        if (
+            idioma_nuevo
+            and self._idioma_cargado
+            and idioma_nuevo != self._idioma_cargado
+        ):
             # __init__() devuelve los parámetros de audio a sus valores por
             # defecto (dispositivo -1, volumen 100, velocidad y tono a 1), pero
             # esos son del usuario y no tienen por qué cambiar porque el puente
             # se reinicie: el volumen y la velocidad volvían al centro cada vez
             # que se cambiaba de idioma de voz.
-            ajustes_audio = (self.device, self.volume, self.length_scale, self.pitch_ratio)
+            ajustes_audio = (
+                self.device,
+                self.volume,
+                self.length_scale,
+                self.pitch_ratio,
+            )
             self.close()
             self.__init__()
-            (self.device, self.volume, self.length_scale, self.pitch_ratio) = ajustes_audio
+            (self.device, self.volume, self.length_scale, self.pitch_ratio) = (
+                ajustes_audio
+            )
         self._idioma_cargado = idioma_nuevo or self._idioma_cargado
 
         self.current_voice_path = model_path
@@ -421,6 +456,7 @@ class sherpaSpeak:
         if "?" not in model_path:
             return None
         from urllib.parse import parse_qs
+
         valores = parse_qs(model_path.split("?", 1)[1]).get("lang")
         return valores[0] if valores else None
 
@@ -430,8 +466,10 @@ class sherpaSpeak:
         # hablarle a un servidor que ya no existe, que era lo que llenaba el
         # registro de «Connection closed» al recorrer la lista de voces.
         mi_loop = asyncio.get_running_loop()
+
         def vigente():
             return not self._cerrado and self.loop is mi_loop
+
         while self.channel is None:
             if not vigente():
                 return
@@ -439,10 +477,12 @@ class sherpaSpeak:
         if not vigente():
             return
 
-        req = sonata_grpc_pb2.VoicePath(config_path=model_path if "?" in model_path else os.path.abspath(model_path))
+        req = sonata_grpc_pb2.VoicePath(
+            config_path=model_path if "?" in model_path else os.path.abspath(model_path)
+        )
         try:
             async with self.channel.request(
-                '/sonata_grpc.sonata_grpc/LoadVoice',
+                "/sonata_grpc.sonata_grpc/LoadVoice",
                 grpclib.const.Cardinality.UNARY_UNARY,
                 sonata_grpc_pb2.VoicePath,
                 sonata_grpc_pb2.VoiceInfo,
@@ -451,7 +491,7 @@ class sherpaSpeak:
                 voice_info = await s.recv_message()
                 if voice_info:
                     self.voice_id = voice_info.voice_id
-                    if hasattr(voice_info, 'audio') and voice_info.audio.sample_rate:
+                    if hasattr(voice_info, "audio") and voice_info.audio.sample_rate:
                         self.sample_rate = voice_info.audio.sample_rate
         except Exception as e:
             print(f"Error al cargar voz en el puente sherpa: {e}")
@@ -459,8 +499,11 @@ class sherpaSpeak:
     def get_devices(self):
         try:
             from sound_lib.output import Output
+
             o = Output()
-            return [{'name': name, 'id': i} for i, name in enumerate(o.get_device_names())]
+            return [
+                {"name": name, "id": i} for i, name in enumerate(o.get_device_names())
+            ]
         except:
             return []
 
@@ -468,8 +511,8 @@ class sherpaSpeak:
         try:
             devices = known_devices if known_devices is not None else self.get_devices()
             for device in devices:
-                if device['name'] == term:
-                    return device['id']
+                if device["name"] == term:
+                    return device["id"]
         except:
             pass
         return -1
@@ -480,14 +523,14 @@ class sherpaSpeak:
     def set_pitch(self, value):
         # Mapeamos el slider (-10 a 10) al ratio de re-muestreo (0.5x a 2x aprox)
         ratio = 1.0 + (value * 0.05)
-        if ratio < 0.5: ratio = 0.5
-        if ratio > 2.0: ratio = 2.0
+        ratio = max(ratio, 0.5)
+        ratio = min(ratio, 2.0)
         self.pitch_ratio = ratio
 
     def set_volume(self, value):
         self.volume = int(value)
-        if self.volume < 0: self.volume = 0
-        if self.volume > 100: self.volume = 100
+        self.volume = max(self.volume, 0)
+        self.volume = min(self.volume, 100)
 
     def set_device(self, device):
         self.device = device
@@ -503,20 +546,25 @@ class sherpaSpeak:
         self.voice_id = None
 
     def speak(self, text):
-        if not text: return
+        if not text:
+            return
         # Puente cerrado porque se pasó al otro motor: nada que sintetizar.
         # Se mira _cerrado y no _inicializado porque close() levanta el primero
         # nada más empezar y solo baja el segundo al final: entre medias detiene
         # el loop, y programar ahí una síntesis reventaría con «Event loop is
         # closed» en el hilo de la interfaz.
-        if self._cerrado: return
+        if self._cerrado:
+            return
         # Sin voz pedida no hay nada que esperar: _speak_task_inner aguanta 12
         # segundos a que termine de cargar, y eso solo tiene sentido si hay
         # alguna voz en camino.
-        if not self.current_voice_path: return
+        if not self.current_voice_path:
+            return
         self.silence()
         self._sintetizando = True
-        asyncio.run_coroutine_threadsafe(self._speak_task(text, self._speak_generation), self.loop)
+        asyncio.run_coroutine_threadsafe(
+            self._speak_task(text, self._speak_generation), self.loop
+        )
 
     def silence(self):
         # Invalida cualquier síntesis en curso o pendiente y corta el audio actual.
@@ -530,7 +578,8 @@ class sherpaSpeak:
                 try:
                     self.bass_stream.stop()
                     self.bass_stream.free()
-                except: pass
+                except:
+                    pass
                 self.bass_stream = None
 
     def is_playing(self):
@@ -573,17 +622,15 @@ class sherpaSpeak:
             return  # silenciado antes de empezar
 
         rate_val = int(self.length_scale * 40)
-        if rate_val < 5: rate_val = 5
-        if rate_val > 200: rate_val = 200
+        rate_val = max(rate_val, 5)
+        rate_val = min(rate_val, 200)
 
         # Solo viaja la velocidad: el volumen y el tono se aplican aquí, sobre
         # el stream BASS, para que nada influya en la síntesis (pedido de César).
         utterance = sonata_grpc_pb2.Utterance(
             voice_id=self.voice_id,
             text=text,
-            speech_args=sonata_grpc_pb2.SpeechArgs(
-                rate=rate_val
-            )
+            speech_args=sonata_grpc_pb2.SpeechArgs(rate=rate_val),
         )
 
         try:
@@ -593,15 +640,19 @@ class sherpaSpeak:
                 # Tono por re-muestreo: mismo resultado audible que el DSP de sonata.
                 local_stream.frequency = self.sample_rate * self.pitch_ratio
             if self.device != -1:
-                try: local_stream.set_device(self.device)
-                except: pass
+                try:
+                    local_stream.set_device(self.device)
+                except:
+                    pass
             # Comprobar y publicar en el mismo cerrojo: si se comprueba fuera,
             # un silence() que entre justo aquí deja este stream sin dueño (ya
             # no es self.bass_stream) y nadie lo libera nunca.
             with self._bass_lock:
                 if gen != self._speak_generation:
-                    try: local_stream.free()
-                    except: pass
+                    try:
+                        local_stream.free()
+                    except:
+                        pass
                     return
                 self.bass_stream = local_stream
 
@@ -610,7 +661,7 @@ class sherpaSpeak:
             primero = True
 
             async with self.channel.request(
-                '/sonata_grpc.sonata_grpc/SynthesizeUtterance',
+                "/sonata_grpc.sonata_grpc/SynthesizeUtterance",
                 grpclib.const.Cardinality.UNARY_STREAM,
                 sonata_grpc_pb2.Utterance,
                 sonata_grpc_pb2.SynthesisResult,
@@ -661,7 +712,7 @@ class sherpaSpeak:
 
         if self.process:
             try:
-                if self.process.poll() is None: # Si aún está corriendo
+                if self.process.poll() is None:  # Si aún está corriendo
                     self.process.kill()
                     self.process.wait(timeout=1)
             except:
@@ -692,5 +743,7 @@ def detener_puente():
     basta con uno a la vez. Si nunca se usó Kokoro no crea nada, y si ya
     estaba cerrado no hace nada (close() deja _inicializado en False).
     """
-    if _INSTANCIA_SHERPA is not None and getattr(_INSTANCIA_SHERPA, "_inicializado", False):
+    if _INSTANCIA_SHERPA is not None and getattr(
+        _INSTANCIA_SHERPA, "_inicializado", False
+    ):
         _INSTANCIA_SHERPA.close()

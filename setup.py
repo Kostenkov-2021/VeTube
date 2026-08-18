@@ -1,24 +1,26 @@
-from utils import languageHandler
 from globals.data_store import config, motor_de_interfaz
-from players.sound_helper import SoundPlayer
 from helpers.reader_handler import ReaderHandler
-languageHandler.setLanguage(config['idioma'])
-player=SoundPlayer()
+from players.sound_helper import SoundPlayer
+from utils import languageHandler
+
+languageHandler.setLanguage(config["idioma"])
+player = SoundPlayer()
 # Si el dispositivo guardado ya no existe (por ejemplo, auriculares USB/Bluetooth desconectados),
 # volvemos al primero: los índices fuera de rango rompen el arranque con Piper al indexar devicenames.
-if not (1 <= config['dispositivo'] <= len(player.devicenames)):
-    config['dispositivo'] = 1
+if not (1 <= config["dispositivo"] <= len(player.devicenames)):
+    config["dispositivo"] = 1
 reader = ReaderHandler()
-reader._leer.set_rate(config['speed'])
-reader._leer.set_pitch(config['tono'])
-reader._leer.set_volume(config['volume'])
+reader._leer.set_rate(config["speed"])
+reader._leer.set_pitch(config["tono"])
+reader._leer.set_volume(config["volume"])
 voices_leer = reader._leer.list_voices()
 if voices_leer:
     # La voz SAPI tiene su propia clave: config['voz'] es la posición dentro de
     # la lista del motor elegido, y aplicarla aquí cargaba una voz SAPI
     # cualquiera (o la primera, al salirse de rango).
-    idx = config.get('voz_sapi', 0)
-    if idx >= len(voices_leer): idx = 0
+    idx = config.get("voz_sapi", 0)
+    if idx >= len(voices_leer):
+        idx = 0
     reader._leer.set_voice(voices_leer[idx])
 
 # Configurar el lector principal según el motor que lee el programa (con la
@@ -30,25 +32,25 @@ if motor in ("piper", "kokoro"):
     # parámetros y los aplican en cada speak; la voz se carga en
     # run_main_window. Misma escala que app_utilitys.porcentaje_a_escala (no se
     # importa para no crear un import circular).
-    reader._lector.set_rate(1.25 + config['speed'] * 0.125)
-    reader._lector.set_pitch(config['tono'])
-    reader._lector.set_volume(config['volume'])
+    reader._lector.set_rate(1.25 + config["speed"] * 0.125)
+    reader._lector.set_pitch(config["tono"])
+    reader._lector.set_volume(config["volume"])
 elif motor == "edge":
     # Edge guarda los parámetros y los aplica en cada speak; la voz se carga
     # en run_main_window. La velocidad va nativa (-10 a 10) a edge-tts.
-    reader._lector.set_rate(config['speed'])
-    reader._lector.set_pitch(config['tono'])
-    reader._lector.set_volume(config['volume'])
+    reader._lector.set_rate(config["speed"])
+    reader._lector.set_pitch(config["tono"])
+    reader._lector.set_volume(config["volume"])
 else:
-    reader._lector.set_rate(config['speed'])
+    reader._lector.set_rate(config["speed"])
     if motor == "onecore":
-        reader._lector.set_pitch(config.get('tono_onecore', 0.6))
+        reader._lector.set_pitch(config.get("tono_onecore", 0.6))
     else:
-        reader._lector.set_pitch(config['tono'])
-    reader._lector.set_volume(config['volume'])
+        reader._lector.set_pitch(config["tono"])
+    reader._lector.set_volume(config["volume"])
     voices_lector = reader._lector.list_voices()
     if voices_lector:
-        idx = config['voz']
-        if idx >= len(voices_lector): idx = 0
+        idx = config["voz"]
+        if idx >= len(voices_lector):
+            idx = 0
         reader._lector.set_voice(voices_lector[idx])
-from utils.network import network_manager as network

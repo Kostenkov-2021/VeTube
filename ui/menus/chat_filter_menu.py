@@ -1,17 +1,17 @@
 import wx
-from utils.menu_accesible import Accesible
+
 
 class ChatFilterMenu:
     def __init__(self, parent):
         self.parent = parent
         self.menu = wx.Menu()
-        
+
         self.todos = self.menu.Append(wx.ID_ANY, _("Todos"))
         self.unidos = self.menu.Append(wx.ID_ANY, _("Unidos"))
         self.gustados = self.menu.Append(wx.ID_ANY, _("Gustados"))
         self.compartidas = self.menu.Append(wx.ID_ANY, _("Compartidas"))
         self.seguidores = self.menu.Append(wx.ID_ANY, _("Seguidores"))
-        
+
         self.parent.Bind(wx.EVT_MENU, self.on_todos, self.todos)
         self.parent.Bind(wx.EVT_MENU, self.on_unidos, self.unidos)
         self.parent.Bind(wx.EVT_MENU, self.on_gustados, self.gustados)

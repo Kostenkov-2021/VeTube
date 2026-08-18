@@ -1,7 +1,8 @@
-from setup import reader, player
-from players.sound_helper import SoundPlayer
-from globals import data_store
 import threading
+
+from players.sound_helper import SoundPlayer
+from setup import reader
+
 
 class MediaHandler:
     def __init__(self, url=None, state_callback=None):
@@ -23,46 +24,50 @@ class MediaHandler:
         if self.cargando:
             reader.leer_aviso("ya está cargando un reproductor")
             return
-        if self.sonando and self.player and self.player.is_playing(): # Already playing
-            self._notify_state_change('playing') # Re-confirm playing state
+        if self.sonando and self.player and self.player.is_playing():  # Already playing
+            self._notify_state_change("playing")  # Re-confirm playing state
             return
 
         self.cargando = True
         reader.leer_aviso("Cargando el reproductor")
-        self._notify_state_change('loading')
+        self._notify_state_change("loading")
 
         def playback_task():
             try:
-                new_player_type = 'sound' if "mp4" in self.url else 'vlc'
+                new_player_type = "sound" if "mp4" in self.url else "vlc"
                 if self.player_type != new_player_type:
                     if self.player:
                         self.player.release()
 
-                    if new_player_type == 'sound':
+                    if new_player_type == "sound":
                         self.player = SoundPlayer()
                     else:
                         from players.vlc_helper import MinimalVlcPlayer
+
                         def vlc_playing_callback(event):
                             self.cargando = False
                             if self.player and self.player.is_playing():
                                 self.sonando = True
-                                self._notify_state_change('playing')
+                                self._notify_state_change("playing")
                             else:
                                 self.sonando = False
-                                self._notify_state_change('stopped')
-                        self.player = MinimalVlcPlayer(playing_callback=vlc_playing_callback)
+                                self._notify_state_change("stopped")
+
+                        self.player = MinimalVlcPlayer(
+                            playing_callback=vlc_playing_callback
+                        )
 
                     self.player_type = new_player_type
 
                 self.sonando = True
                 self.player.play(self.url)
                 self.cargando = False
-                self._notify_state_change('playing')
+                self._notify_state_change("playing")
             except Exception as e:
                 print(f"Error in playback_task: {e}")
                 self.cargando = False
                 self.sonando = False
-                self._notify_state_change('stopped')
+                self._notify_state_change("stopped")
 
         thread = threading.Thread(target=playback_task, daemon=True)
         thread.start()
@@ -72,7 +77,7 @@ class MediaHandler:
         if self.sonando and self.player and self.player.is_playing():
             self.player.toggle_player()
             self.sonando = False
-            self._notify_state_change('paused')
+            self._notify_state_change("paused")
 
     def stop(self):
         """Detiene la reproducción y libera los recursos del reproductor."""
@@ -81,14 +86,14 @@ class MediaHandler:
             self.player = None
             self.player_type = None
         self.sonando = False
-        self._notify_state_change('stopped')
+        self._notify_state_change("stopped")
 
     def toggle_pause(self):
         """Alterna el estado de reproducción/pausa del medio."""
         if self.sonando and self.player:
             self.player.toggle_player()
             self.sonando = self.player.is_playing()
-            self._notify_state_change('playing' if self.sonando else 'paused')
+            self._notify_state_change("playing" if self.sonando else "paused")
         else:
             self.play()
 
@@ -104,8 +109,8 @@ class MediaHandler:
 
     def volume_up(self, step=10):
         """Sube el volumen del reproductor."""
-        if self.sonando and self.player and hasattr(self.player, 'volume_up'):
-            if self.player_type == 'sound':
+        if self.sonando and self.player and hasattr(self.player, "volume_up"):
+            if self.player_type == "sound":
                 # Convert step from 0-100 scale to 0.0-1.0 scale
                 sound_step = step / 100.0
                 self.player.volume_up(sound_step)
@@ -114,8 +119,8 @@ class MediaHandler:
 
     def volume_down(self, step=10):
         """Baja el volumen del reproductor."""
-        if self.sonando and self.player and hasattr(self.player, 'volume_down'):
-            if self.player_type == 'sound':
+        if self.sonando and self.player and hasattr(self.player, "volume_down"):
+            if self.player_type == "sound":
                 # Convert step from 0-100 scale to 0.0-1.0 scale
                 sound_step = step / 100.0
                 self.player.volume_down(sound_step)
@@ -124,8 +129,8 @@ class MediaHandler:
 
     def set_volume(self, volume):
         """Establece el volumen del reproductor."""
-        if self.player and hasattr(self.player, 'set_volume'):
-            if self.player_type == 'sound':
+        if self.player and hasattr(self.player, "set_volume"):
+            if self.player_type == "sound":
                 # Convert volume from 0-100 scale to 0.0-1.0 scale
                 sound_volume = volume / 100.0
                 self.player.set_volume(sound_volume)
@@ -139,7 +144,7 @@ class MediaHandler:
             self.player = None
             self.player_type = None
         self.sonando = False
-        self._notify_state_change('stopped')
+        self._notify_state_change("stopped")
 
     def is_playing(self):
         return self.sonando and self.player and self.player.is_playing()

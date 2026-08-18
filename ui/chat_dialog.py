@@ -1,11 +1,20 @@
 import wx
 
+
 class ChatDialog(wx.Dialog):
-    def __init__(self, parent, id=wx.ID_ANY, title=_("Sesiones de chat"), pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER):
+    def __init__(
+        self,
+        parent,
+        id=wx.ID_ANY,
+        title=_("Sesiones de chat"),
+        pos=wx.DefaultPosition,
+        size=wx.DefaultSize,
+        style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+    ):
         super().__init__(parent, id=id, title=title, pos=pos, size=size, style=style)
 
         self.notebook = wx.Treebook(self, wx.ID_ANY, style=wx.NB_LEFT)
-        
+
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.notebook, 1, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(sizer)

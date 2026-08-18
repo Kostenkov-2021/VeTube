@@ -1,5 +1,5 @@
-from utils import fajustes, funciones
 from globals.paths import DATA_FILE, FAVORITOS_FILE, MENSAJES_DESTACADOS_FILE
+from utils import fajustes, funciones
 
 # Inicialización global de configuración
 if DATA_FILE.exists():
@@ -11,8 +11,9 @@ else:
 # Inicialización global de favoritos y mensajes destacados
 favorite = funciones.leerJsonLista(FAVORITOS_FILE)
 mensajes_destacados = funciones.leerJsonLista(MENSAJES_DESTACADOS_FILE)
-favs = funciones.convertirLista(favorite, 'titulo', 'url')
-msjs = funciones.convertirLista(mensajes_destacados, 'mensaje', 'titulo')
+favs = funciones.convertirLista(favorite, "titulo", "url")
+msjs = funciones.convertirLista(mensajes_destacados, "mensaje", "titulo")
+
 
 def motor_de_interfaz(ajustes=None):
     """El motor que lee el programa, que no siempre es config['sistemaTTS'].
@@ -33,9 +34,9 @@ def motor_de_interfaz(ajustes=None):
     """
     if ajustes is None:
         ajustes = config
-    return "auto" if ajustes.get('sapi') else ajustes['sistemaTTS']
+    return "auto" if ajustes.get("sapi") else ajustes["sistemaTTS"]
 
 
-divisa="Por defecto"
+divisa = "Por defecto"
 # La traducción de mensajes no es persistente: arranca desactivada en cada sesión (se ajusta desde el diálogo)
 dst = ""

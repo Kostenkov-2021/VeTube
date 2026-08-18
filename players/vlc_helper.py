@@ -1,15 +1,18 @@
-import os,platform
+import os
+import platform
+
 # Configurar las variables de entorno para que python-vlc encuentre las DLLs
 dir_current_script = os.path.dirname(os.path.abspath(__file__))
-arch="64" if platform.architecture()[0][:2] == "64" else "32"
+arch = "64" if platform.architecture()[0][:2] == "64" else "32"
 # Subir un nivel para llegar a la raíz del proyecto y luego entrar a la carpeta 64
-path_to_vlc_dir = os.path.abspath(os.path.join(dir_current_script, '..', arch))
+path_to_vlc_dir = os.path.abspath(os.path.join(dir_current_script, "..", arch))
 # La ruta a la carpeta que contiene libvlccore.dll y la carpeta de plugins
-os.environ['PYTHON_VLC_MODULE_PATH'] = path_to_vlc_dir
+os.environ["PYTHON_VLC_MODULE_PATH"] = path_to_vlc_dir
 # La ruta al archivo libvlc.dll
-os.environ['PYTHON_VLC_LIB_PATH'] = os.path.join(path_to_vlc_dir, 'libvlc.dll')
+os.environ["PYTHON_VLC_LIB_PATH"] = os.path.join(path_to_vlc_dir, "libvlc.dll")
 # Importar vlc DESPUÉS de configurar las variables de entorno
 import vlc
+
 
 class MinimalVlcPlayer:
     def __init__(self, playing_callback=None):
@@ -22,7 +25,9 @@ class MinimalVlcPlayer:
         self.playing_callback = playing_callback
         if self.playing_callback:
             self.event_manager = self.player.event_manager()
-            self.event_manager.event_attach(vlc.EventType.MediaPlayerPlaying, self.playing_callback)
+            self.event_manager.event_attach(
+                vlc.EventType.MediaPlayerPlaying, self.playing_callback
+            )
         else:
             self.event_manager = None
 
@@ -40,7 +45,9 @@ class MinimalVlcPlayer:
             self.player.video_set_key_input(False)
             if self.playing_callback:
                 self.event_manager = self.player.event_manager()
-                self.event_manager.event_attach(vlc.EventType.MediaPlayerPlaying, self.playing_callback)
+                self.event_manager.event_attach(
+                    vlc.EventType.MediaPlayerPlaying, self.playing_callback
+                )
             self._load_and_play(url)
         elif self.player and self.player.get_state() == vlc.State.Paused:
             self.player.play()
@@ -50,7 +57,9 @@ class MinimalVlcPlayer:
             self.player.video_set_key_input(False)
             if self.playing_callback:
                 self.event_manager = self.player.event_manager()
-                self.event_manager.event_attach(vlc.EventType.MediaPlayerPlaying, self.playing_callback)
+                self.event_manager.event_attach(
+                    vlc.EventType.MediaPlayerPlaying, self.playing_callback
+                )
             self._load_and_play(url)
 
     def pause(self):
@@ -62,7 +71,10 @@ class MinimalVlcPlayer:
             if self.event_manager and self.playing_callback:
                 self.event_manager.event_detach(vlc.EventType.MediaPlayerPlaying)
             # Stop playback if currently playing or paused
-            if self.player.get_state() == vlc.State.Playing or self.player.get_state() == vlc.State.Paused:
+            if (
+                self.player.get_state() == vlc.State.Playing
+                or self.player.get_state() == vlc.State.Paused
+            ):
                 self.player.stop()
             self.player.release()
             self.player = None
@@ -71,26 +83,31 @@ class MinimalVlcPlayer:
         return self.player and self.player.is_playing()
 
     def toggle_player(self):
-        if self.player.is_playing(): self.player.pause()
-        else: self.player.play()
+        if self.player.is_playing():
+            self.player.pause()
+        else:
+            self.player.play()
 
-    def tiempotranscurrido(self): return self.player.get_time()
+    def tiempotranscurrido(self):
+        return self.player.get_time()
 
     def adelantar(self, segundos):
         if self.player.is_seekable():
             current_time = self.tiempotranscurrido()
             new_time = current_time + (segundos * 1000)
             self.player.set_time(new_time)
-        else: print("No se puede avanzar en este medio.")
+        else:
+            print("No se puede avanzar en este medio.")
 
     def atrasar(self, segundos):
         if self.player.is_seekable():
             current_time = self.tiempotranscurrido()
             new_time = current_time - (segundos * 1000)
             # Asegurarse de no ir a tiempo negativo
-            if new_time < 0: new_time = 0
+            new_time = max(new_time, 0)
             self.player.set_time(new_time)
-        else: print("No se puede retroceder en este medio.")
+        else:
+            print("No se puede retroceder en este medio.")
 
     def get_volume(self):
         """Devuelve el volumen actual del reproductor (0 a 100)."""

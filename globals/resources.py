@@ -1,10 +1,12 @@
 from googletrans import LANGUAGES
-from utils.languageHandler import getAvailableLanguages
+
 from exchange.codes import CODES
-from TTS.list_voices import piper_list_voices
-from setup import reader
 from globals.data_store import config
 from globals.paths import SOUNDS_DIR, VOICES_DIR
+from setup import reader
+from TTS.list_voices import piper_list_voices
+from utils.languageHandler import getAvailableLanguages
+
 nombres_sonidos = [
     "chat.mp3",
     "chatmiembro.mp3",
@@ -18,35 +20,47 @@ nombres_sonidos = [
     "like.mp3",
     "seguirte.mp3",
     "share.mp3",
-    "chest.mp3"
+    "chest.mp3",
 ]
 # msj.mp3, orilla.mp3 y cambiardispositivo.mp3 no están en la lista: se reproducen directamente
-sonidos_requeridos = nombres_sonidos + ["msj.mp3", "orilla.mp3", "cambiardispositivo.mp3"]
+sonidos_requeridos = nombres_sonidos + [
+    "msj.mp3",
+    "orilla.mp3",
+    "cambiardispositivo.mp3",
+]
 rutasonidos = []
+
 
 def listar_temas_sonidos():
     if not SOUNDS_DIR.is_dir():
         return []
     return sorted(
-        d.name for d in SOUNDS_DIR.iterdir()
+        d.name
+        for d in SOUNDS_DIR.iterdir()
         if d.is_dir() and all((d / nombre).is_file() for nombre in sonidos_requeridos)
     )
 
+
 def recargar_rutasonidos():
     # Mutación in place: los módulos que importaron rutasonidos ven el cambio sin reiniciar
-    rutasonidos[:] = [str(SOUNDS_DIR / config['directorio'] / nombre) for nombre in nombres_sonidos]
+    rutasonidos[:] = [
+        str(SOUNDS_DIR / config["directorio"] / nombre) for nombre in nombres_sonidos
+    ]
+
 
 recargar_rutasonidos()
 idiomas = getAvailableLanguages()
 langs = [i[1] for i in idiomas][::-1]
 codes = [i[0] for i in idiomas][::-1]
 idiomas_disponibles = [""] + [v for v in LANGUAGES.values()]
-codigos_traduccion = [""] + [k for k in LANGUAGES.keys()]  # mismo orden que idiomas_disponibles: los índices deben coincidir
-monedas = [_('Por defecto')] + [f'{CODES[k]}, ({k})' for k in CODES]
+codigos_traduccion = [""] + [
+    k for k in LANGUAGES.keys()
+]  # mismo orden que idiomas_disponibles: los índices deben coincidir
+monedas = [_("Por defecto")] + [f"{CODES[k]}, ({k})" for k in CODES]
 voces_p = piper_list_voices()
 if not voces_p:
-	lista_voces_piper = [_("No hay voces instaladas")]
+    lista_voces_piper = [_("No hay voces instaladas")]
 else:
-	lista_voces_piper = voces_p
-lista_voces=reader._leer.list_voices()
+    lista_voces_piper = voces_p
+lista_voces = reader._leer.list_voices()
 carpeta_voces = str(VOICES_DIR)

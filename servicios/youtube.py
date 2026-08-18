@@ -1,17 +1,20 @@
-import json, threading, time, wx
-from exchange import exchange
+import threading
+import time
 from logging import getLogger
+
+import wx
+
 from chat_downloader import ChatDownloader
+from controller.media_controller import MediaController
+from exchange import exchange
 from globals import data_store
 from globals.resources import rutasonidos
+from setup import player, reader
 from utils import translator
 from utils.play_mp4 import extract_stream_url
-from setup import player,reader
-from controller.chat_controller import ChatController
-from controller.media_controller import MediaController
-from servicios.estadisticas_manager import EstadisticasManager
 
 logger = getLogger(__name__)
+
 
 class ServicioYouTube:
     def __init__(self, main_controller, url, frame, plataforma, chat_controller):
@@ -39,153 +42,312 @@ class ServicioYouTube:
         # Primero, liberar el reproductor de medios
         if self.media_controller:
             self.media_controller.release()
-            self.media_controller = None # Importante para evitar referencias a objetos liberados
+            self.media_controller = (
+                None  # Importante para evitar referencias a objetos liberados
+            )
 
         # Ya no esperamos al hilo de recepción de chat aquí para evitar bloquear la interfaz.
         # Confiamos en que el flag _detener y el break del bucle sean suficientes.
 
         # Finalmente, limpiar el objeto chat si es necesario
-        self.chat = None # Eliminar la referencia al objeto ChatDownloader
+        self.chat = None  # Eliminar la referencia al objeto ChatDownloader
 
     def do_switch(self, title):
         from servicios.YouTubeRealDataTime import YouTubeRealTimeService
-        realtime_service = YouTubeRealTimeService(self.url, self.frame, 'youtube_realtime', title=title, chat_controller=self.chat_controller)
+
+        realtime_service = YouTubeRealTimeService(
+            self.url,
+            self.frame,
+            "youtube_realtime",
+            title=title,
+            chat_controller=self.chat_controller,
+        )
         realtime_service.iniciar_chat_reutilizando_ui()
 
     def prepare_player(self, status):
         try:
-            format_pref = 'mp4' if status == "past" else 'best'
+            format_pref = "mp4" if status == "past" else "best"
             video_url = extract_stream_url(self.url, format_preference=format_pref)
             if video_url:
-                self.media_controller = MediaController(url=video_url, state_callback=self.chat_controller.chat_dialog.on_media_player_state_change)
+                self.media_controller = MediaController(
+                    url=video_url,
+                    state_callback=self.chat_controller.chat_dialog.on_media_player_state_change,
+                )
                 self.chat_controller.set_media_controller(self.media_controller)
         except Exception:
             logger.exception("Error al iniciar la reproducción de video en YouTube")
 
     def recibir(self):
         try:
-            if data_store.dst: self.translator=translator.TranslatorWrapper()
+            if data_store.dst:
+                self.translator = translator.TranslatorWrapper()
             # chat_downloader entrega timestamps en microsegundos; 10 s de tolerancia por si el reloj local va adelantado
             momento_conexion = (time.time() - 10) * 1_000_000
-            self.chat = ChatDownloader().get_chat(self.url, message_groups=["messages", "superchat"], interruptible_retry=False)
-            if self.chat.status == 'past':
+            self.chat = ChatDownloader().get_chat(
+                self.url,
+                message_groups=["messages", "superchat"],
+                interruptible_retry=False,
+            )
+            if self.chat.status == "past":
                 # El diálogo debe mostrarse en el hilo principal; esperamos la respuesta desde este hilo.
                 respuesta = []
                 respondido = threading.Event()
+
                 def preguntar_cambio():
-                    dialog = wx.MessageDialog(self.chat_controller.ui, _("Se ha detectado una transmisión pasada. ¿Deseas conectarte con el servicio en tiempo real del chat?"), _("Transmisión pasada"), wx.YES_NO | wx.ICON_QUESTION)
+                    dialog = wx.MessageDialog(
+                        self.chat_controller.ui,
+                        _(
+                            "Se ha detectado una transmisión pasada. ¿Deseas conectarte con el servicio en tiempo real del chat?"
+                        ),
+                        _("Transmisión pasada"),
+                        wx.YES_NO | wx.ICON_QUESTION,
+                    )
                     respuesta.append(dialog.ShowModal())
                     dialog.Destroy()
                     respondido.set()
+
                 wx.CallAfter(preguntar_cambio)
                 respondido.wait()
                 if respuesta and respuesta[0] == wx.ID_YES:
                     self.detener()
                     wx.CallAfter(self.do_switch, self.chat.title)
                     return
-            threading.Thread(target=self.prepare_player, args=(self.chat.status,), daemon=True).start()
-            wx.CallAfter(self.chat_controller.chat_dialog.update_chat_page_title, self.chat_controller, self.chat.title)
-            if self.chat.status != 'past':
+            threading.Thread(
+                target=self.prepare_player, args=(self.chat.status,), daemon=True
+            ).start()
+            wx.CallAfter(
+                self.chat_controller.chat_dialog.update_chat_page_title,
+                self.chat_controller,
+                self.chat.title,
+            )
+            if self.chat.status != "past":
                 self.iniciar_refresco_espectadores()
             # En una transmisión pasada el usuario quiere justamente el historial, así que nunca se filtra ahí
-            filtrar_anteriores = not data_store.config.get('leer_historial', True) and self.chat.status != 'past'
+            filtrar_anteriores = (
+                not data_store.config.get("leer_historial", True)
+                and self.chat.status != "past"
+            )
             for message in self.chat:
-                if self._detener: break
-                if not message: continue
+                if self._detener:
+                    break
+                if not message:
+                    continue
                 if filtrar_anteriores:
-                    marca_tiempo = message.get('timestamp')
-                    if marca_tiempo and marca_tiempo < momento_conexion: continue
-                if message['message'] is None: message['message'] = ''
-                if data_store.dst and self.translator: message['message'] = self.translator.translate(text=message['message'], target=data_store.dst)
+                    marca_tiempo = message.get("timestamp")
+                    if marca_tiempo and marca_tiempo < momento_conexion:
+                        continue
+                if message["message"] is None:
+                    message["message"] = ""
+                if data_store.dst and self.translator:
+                    message["message"] = self.translator.translate(
+                        text=message["message"], target=data_store.dst
+                    )
 
-                author_name = message['author']['display_name']
+                author_name = message["author"]["display_name"]
                 wx.CallAfter(self.estadisticas_manager.agregar_mensaje, author_name)
-                msg = message['message']
+                msg = message["message"]
 
                 # Default message type
-                message_type = 'general'
+                message_type = "general"
 
-                if 'badges' in message['author']:
-                    for badge in message['author']['badges']:
-                        title = badge.get('title', '')
-                        if 'Owner' in title:
-                            message_type = 'propietario'
+                if "badges" in message["author"]:
+                    for badge in message["author"]["badges"]:
+                        title = badge.get("title", "")
+                        if "Owner" in title:
+                            message_type = "propietario"
                             break
-                        if 'Moderator' in title:
-                            message_type = 'moderador'
+                        if "Moderator" in title:
+                            message_type = "moderador"
                             break
-                        if 'member' in title.lower():
-                            message_type = 'miembro'
+                        if "member" in title.lower():
+                            message_type = "miembro"
                             break
-                        if 'Verified' in title:
-                            message_type = 'verificado'
+                        if "Verified" in title:
+                            message_type = "verificado"
                             break
 
-                if message['message_type'] == 'paid_message' or message['message_type'] == 'paid_sticker': message_type = 'donacion'
-                if 'header_secondary_text' in message:
-                    if data_store.config['eventos'][2] and data_store.config['categorias'][1] and hasattr(self.chat_controller.ui, 'list_box_eventos'):
-                        for t in message['author']['badges']:
-                            mensajito=author_name+ _(' se a conectado al chat. ')+t['title']
+                if (
+                    message["message_type"] == "paid_message"
+                    or message["message_type"] == "paid_sticker"
+                ):
+                    message_type = "donacion"
+                if "header_secondary_text" in message:
+                    if (
+                        data_store.config["eventos"][2]
+                        and data_store.config["categorias"][1]
+                        and hasattr(self.chat_controller.ui, "list_box_eventos")
+                    ):
+                        for t in message["author"]["badges"]:
+                            mensajito = (
+                                author_name
+                                + _(" se a conectado al chat. ")
+                                + t["title"]
+                            )
                             break
-                        wx.CallAfter(self.chat_controller.agregar_mensaje_evento, mensajito)
-                        if data_store.config['sonidos'] and self.chat.status != "past" and data_store.config['listasonidos'][2]: wx.CallAfter(player.play, rutasonidos[2])
-                        if data_store.config['reader'] and data_store.config['unread'][2]: wx.CallAfter(reader.leer_mensaje, mensajito)
+                        wx.CallAfter(
+                            self.chat_controller.agregar_mensaje_evento, mensajito
+                        )
+                        if (
+                            data_store.config["sonidos"]
+                            and self.chat.status != "past"
+                            and data_store.config["listasonidos"][2]
+                        ):
+                            wx.CallAfter(player.play, rutasonidos[2])
+                        if (
+                            data_store.config["reader"]
+                            and data_store.config["unread"][2]
+                        ):
+                            wx.CallAfter(reader.leer_mensaje, mensajito)
                     continue
                 # Construct the message string
-                if message_type == 'donacion':
-                    if data_store.config['eventos'][3] and data_store.config['categorias'][3] and hasattr(self.chat_controller.ui, 'list_box_donaciones'):
-                        if data_store.divisa != "Por defecto" and data_store.divisa != message['money']['currency']:
-                            message['money']['amount'] = exchange.convert(message['money']['amount'], message['money']['currency'])
-                            message['money']['currency'] = data_store.divisa
+                if message_type == "donacion":
+                    if (
+                        data_store.config["eventos"][3]
+                        and data_store.config["categorias"][3]
+                        and hasattr(self.chat_controller.ui, "list_box_donaciones")
+                    ):
+                        if (
+                            data_store.divisa != "Por defecto"
+                            and data_store.divisa != message["money"]["currency"]
+                        ):
+                            message["money"]["amount"] = exchange.convert(
+                                message["money"]["amount"], message["money"]["currency"]
+                            )
+                            message["money"]["currency"] = data_store.divisa
                         full_message = f"{message['money']['amount']} {message['money']['currency']}, {author_name}: {msg}"
-                        if data_store.config['sonidos'] and self.chat.status != "past" and data_store.config['listasonidos'][3]: wx.CallAfter(player.play, rutasonidos[3])
-                        wx.CallAfter(self.chat_controller.agregar_mensaje_donacion, full_message)
-                        if data_store.config['reader'] and data_store.config['unread'][3]: wx.CallAfter(reader.leer_mensaje, full_message)
+                        if (
+                            data_store.config["sonidos"]
+                            and self.chat.status != "past"
+                            and data_store.config["listasonidos"][3]
+                        ):
+                            wx.CallAfter(player.play, rutasonidos[3])
+                        wx.CallAfter(
+                            self.chat_controller.agregar_mensaje_donacion, full_message
+                        )
+                        if (
+                            data_store.config["reader"]
+                            and data_store.config["unread"][3]
+                        ):
+                            wx.CallAfter(reader.leer_mensaje, full_message)
                     continue
 
                 full_message = f"{author_name}: {msg}"
 
-                if message_type == 'general':
-                    if data_store.config['eventos'][0] and data_store.config['categorias'][0] and hasattr(self.chat_controller.ui, 'list_box_general'):
-                        if data_store.config['sonidos'] and self.chat.status != "past" and data_store.config['listasonidos'][0]: wx.CallAfter(player.play, rutasonidos[0])
-                        wx.CallAfter(self.chat_controller.agregar_mensaje_general, full_message)
-                        if data_store.config['reader'] and data_store.config['unread'][0]: wx.CallAfter(reader.leer_mensaje, full_message)
-                elif message_type == 'miembro':
-                    if data_store.config['eventos'][1] and data_store.config['categorias'][2] and hasattr(self.chat_controller.ui, 'list_box_miembros'):
-                        if data_store.config['sonidos'] and self.chat.status != "past" and data_store.config['listasonidos'][1]: wx.CallAfter(player.play, rutasonidos[1])
-                        wx.CallAfter(self.chat_controller.agregar_mensaje_miembro, full_message)
-                        if data_store.config['reader'] and data_store.config['unread'][1]: wx.CallAfter(reader.leer_mensaje, full_message)
-                elif message_type == 'moderador' or message_type=='propietario':
-                    if data_store.config['eventos'][4] and data_store.config['categorias'][4] and hasattr(self.chat_controller.ui, 'list_box_moderadores'):
-                        if data_store.config['sonidos'] and self.chat.status != "past" and data_store.config['listasonidos'][4]:
-                            if message_type=='moderador': wx.CallAfter(player.play, rutasonidos[4])
-                            if message_type=='propietario': wx.CallAfter(player.play, rutasonidos[7])
-                        wx.CallAfter(self.chat_controller.agregar_mensaje_moderador, full_message)
-                        if data_store.config['reader'] and data_store.config['unread'][4]: wx.CallAfter(reader.leer_mensaje, full_message)
-                elif message_type == 'verificado':
-                    if data_store.config['eventos'][5] and data_store.config['categorias'][5] and hasattr(self.chat_controller.ui, 'list_box_verificados'):
-                        if data_store.config['sonidos'] and self.chat.status != "past" and data_store.config['listasonidos'][5]: wx.CallAfter(player.play, rutasonidos[5])
-                        wx.CallAfter(self.chat_controller.agregar_mensaje_verificado, f"{author_name}: {msg}")
-                        if data_store.config['reader'] and data_store.config['unread'][5]: wx.CallAfter(reader.leer_mensaje, f'{author_name}: {msg}')
+                if message_type == "general":
+                    if (
+                        data_store.config["eventos"][0]
+                        and data_store.config["categorias"][0]
+                        and hasattr(self.chat_controller.ui, "list_box_general")
+                    ):
+                        if (
+                            data_store.config["sonidos"]
+                            and self.chat.status != "past"
+                            and data_store.config["listasonidos"][0]
+                        ):
+                            wx.CallAfter(player.play, rutasonidos[0])
+                        wx.CallAfter(
+                            self.chat_controller.agregar_mensaje_general, full_message
+                        )
+                        if (
+                            data_store.config["reader"]
+                            and data_store.config["unread"][0]
+                        ):
+                            wx.CallAfter(reader.leer_mensaje, full_message)
+                elif message_type == "miembro":
+                    if (
+                        data_store.config["eventos"][1]
+                        and data_store.config["categorias"][2]
+                        and hasattr(self.chat_controller.ui, "list_box_miembros")
+                    ):
+                        if (
+                            data_store.config["sonidos"]
+                            and self.chat.status != "past"
+                            and data_store.config["listasonidos"][1]
+                        ):
+                            wx.CallAfter(player.play, rutasonidos[1])
+                        wx.CallAfter(
+                            self.chat_controller.agregar_mensaje_miembro, full_message
+                        )
+                        if (
+                            data_store.config["reader"]
+                            and data_store.config["unread"][1]
+                        ):
+                            wx.CallAfter(reader.leer_mensaje, full_message)
+                elif message_type == "moderador" or message_type == "propietario":
+                    if (
+                        data_store.config["eventos"][4]
+                        and data_store.config["categorias"][4]
+                        and hasattr(self.chat_controller.ui, "list_box_moderadores")
+                    ):
+                        if (
+                            data_store.config["sonidos"]
+                            and self.chat.status != "past"
+                            and data_store.config["listasonidos"][4]
+                        ):
+                            if message_type == "moderador":
+                                wx.CallAfter(player.play, rutasonidos[4])
+                            if message_type == "propietario":
+                                wx.CallAfter(player.play, rutasonidos[7])
+                        wx.CallAfter(
+                            self.chat_controller.agregar_mensaje_moderador, full_message
+                        )
+                        if (
+                            data_store.config["reader"]
+                            and data_store.config["unread"][4]
+                        ):
+                            wx.CallAfter(reader.leer_mensaje, full_message)
+                elif message_type == "verificado":
+                    if (
+                        data_store.config["eventos"][5]
+                        and data_store.config["categorias"][5]
+                        and hasattr(self.chat_controller.ui, "list_box_verificados")
+                    ):
+                        if (
+                            data_store.config["sonidos"]
+                            and self.chat.status != "past"
+                            and data_store.config["listasonidos"][5]
+                        ):
+                            wx.CallAfter(player.play, rutasonidos[5])
+                        wx.CallAfter(
+                            self.chat_controller.agregar_mensaje_verificado,
+                            f"{author_name}: {msg}",
+                        )
+                        if (
+                            data_store.config["reader"]
+                            and data_store.config["unread"][5]
+                        ):
+                            wx.CallAfter(reader.leer_mensaje, f"{author_name}: {msg}")
         except Exception as e:
             logger.exception("Error fatal en la recepción del chat de YouTube")
             wx.CallAfter(self.chat_controller.notificar_error, str(e))
 
     def iniciar_refresco_espectadores(self):
         self._event_refresco.clear()
-        self._hilo_refresco = threading.Thread(target=self._refrescar_espectadores_loop, daemon=True)
+        self._hilo_refresco = threading.Thread(
+            target=self._refrescar_espectadores_loop, daemon=True
+        )
         self._hilo_refresco.start()
 
     def _refrescar_espectadores_loop(self):
         from utils.play_mp4 import extract_live_viewers
+
         while not self._detener:
             espectadores = extract_live_viewers(self.url)
             if espectadores is None:
                 break
             if not self._detener:
-                title = self.chat.title + _(" en vivo, actualmente ") + str(espectadores) + _(" viendo ahora")
+                title = (
+                    self.chat.title
+                    + _(" en vivo, actualmente ")
+                    + str(espectadores)
+                    + _(" viendo ahora")
+                )
                 wx.CallAfter(self.chat_controller.agregar_titulo, title)
-                wx.CallAfter(self.chat_controller.chat_dialog.update_chat_page_title, self.chat_controller, title)
+                wx.CallAfter(
+                    self.chat_controller.chat_dialog.update_chat_page_title,
+                    self.chat_controller,
+                    title,
+                )
             # Esperar 10 segundos, saliendo al instante si _event_refresco se activa
             if self._event_refresco.wait(timeout=10):
                 break

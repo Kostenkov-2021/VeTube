@@ -1,43 +1,53 @@
-import platform
 import time
 
-class KeyboardHandlerError (Exception): pass
 
-class KeyboardHandler(object):
+class KeyboardHandlerError(Exception):
+    pass
 
+
+class KeyboardHandler:
     def __init__(self, repeat_rate=0.0, *args, **kwargs):
-        self.repeat_rate = repeat_rate #How long between accepting the same keystroke?
+        self.repeat_rate = repeat_rate  # How long between accepting the same keystroke?
         self._last_key = None
         self._last_keypress_time = 0
-        super(KeyboardHandler, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.active_keys = {}
-        if not hasattr(self, 'replacement_mods'):
+        if not hasattr(self, "replacement_mods"):
             self.replacement_mods = {}
-        if not hasattr(self, 'replacement_keys'):
+        if not hasattr(self, "replacement_keys"):
             self.replacement_keys = {}
 
-    def register_key (self, key, function):
+    def register_key(self, key, function):
         if key in self.active_keys:
-            raise KeyboardHandlerError("Key %s is already registered to a function" % key)
+            raise KeyboardHandlerError(
+                "Key %s is already registered to a function" % key
+            )
         if not callable(function):
             raise TypeError("Must provide a callable to be invoked upon keypress")
         if not self.registry:
             raise ValueError("it's an existent keystroke")
         self.active_keys[key] = function
-    def unregister_key (self, key, function):
+
+    def unregister_key(self, key, function):
         try:
             if self.active_keys[key] != function:
-                raise KeyboardHandlerError("key %s is not registered to that function" % key)
+                raise KeyboardHandlerError(
+                    "key %s is not registered to that function" % key
+                )
         except KeyError:
             raise KeyboardHandlerError("Key %s not currently registered" % key)
-        del(self.active_keys[key])
+        del self.active_keys[key]
 
     def unregister_all_keys(self):
         for key in list(self.active_keys):
             self.unregister_key(key, self.active_keys[key])
 
-    def handle_key (self, key):
-        if self.repeat_rate and key == self._last_key and time.time() - self._last_keypress_time < self.repeat_rate:
+    def handle_key(self, key):
+        if (
+            self.repeat_rate
+            and key == self._last_key
+            and time.time() - self._last_keypress_time < self.repeat_rate
+        ):
             return
         try:
             function = self.active_keys[key]
@@ -59,7 +69,7 @@ class KeyboardHandler(object):
 
     def standardize_key(self, key):
         """Takes a keystroke and places it in a standard case and order in a list."""
-        working = key.split('+')
+        working = key.split("+")
         working = [i.lower() for i in working]
         answer = []
         if "control" in working:
@@ -80,8 +90,8 @@ class KeyboardHandler(object):
         for i in keymap:
             answer = ""
             new = self.standardize_key(keymap[i])
-            for (c, j) in enumerate(new):
-                if c < len(new)-1:
+            for c, j in enumerate(new):
+                if c < len(new) - 1:
                     answer = "%s%s+" % (answer, j)
                 else:
                     answer = "%s%s" % (answer, j)

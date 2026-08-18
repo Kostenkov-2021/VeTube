@@ -1,13 +1,12 @@
 import win32api
 import win32con
-
 from main import KeyboardHandler
 
-class WindowsKeyboardHandler(KeyboardHandler):
 
-    def __init__ (self, *args, **kwargs):
-        super(WindowsKeyboardHandler, self).__init__(*args, **kwargs)
-        #Setup the replacement dictionaries.
+class WindowsKeyboardHandler(KeyboardHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Setup the replacement dictionaries.
         for i in dir(win32con):
             if i.startswith("VK_"):
                 key = i[3:].lower()
@@ -15,14 +14,16 @@ class WindowsKeyboardHandler(KeyboardHandler):
             elif i.startswith("MOD_"):
                 key = i[4:].lower()
                 self.replacement_mods[key] = getattr(win32con, i)
-        self.replacement_keys .update(dict(pageup=win32con.VK_PRIOR, pagedown=win32con.VK_NEXT))
+        self.replacement_keys.update(
+            dict(pageup=win32con.VK_PRIOR, pagedown=win32con.VK_NEXT)
+        )
 
-    def parse_key (self, keystroke, separator="+"):
-        keystroke = str(keystroke) #We don't want unicode
+    def parse_key(self, keystroke, separator="+"):
+        keystroke = str(keystroke)  # We don't want unicode
         keystroke = [self.keycode_from_key(i) for i in keystroke.split(separator)]
         mods = 0
         for i in keystroke[:-1]:
-            mods = mods | i #or everything together
+            mods = mods | i  # or everything together
         return (mods, keystroke[-1])
 
     def keycode_from_key(self, key):
@@ -37,4 +38,3 @@ class WindowsKeyboardHandler(KeyboardHandler):
         """Returns if the given key was pressed.  Requires an active message loop or will simply give if the key was pressed recently."""
         key = self.keycode_from_key(key)
         return win32api.GetAsyncKeyState(key)
-

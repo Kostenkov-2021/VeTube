@@ -1,6 +1,7 @@
 import threading
 import time
 
+
 class Timer(threading.Thread):
     def __init__(self, interval, target):
         self._timer_runs = threading.Event()
@@ -16,4 +17,3 @@ class Timer(threading.Thread):
 
     def stop(self):
         self._timer_runs.clear()
-        

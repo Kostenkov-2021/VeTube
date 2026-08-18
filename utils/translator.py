@@ -1,4 +1,5 @@
-from googletrans import Translator, LANGUAGES
+from googletrans import LANGUAGES, Translator
+
 
 class TranslatorWrapper:
     def __init__(self):

@@ -1,12 +1,13 @@
 # lector:
-from . import sonata_handler
-from . import sherpa_handler
-from . import edge_handler
 import glob
 import os
 from logging import getLogger
-from helpers.reader_handler import PrismBackendWrapper
+
 from prism import BackendId
+
+from helpers.reader_handler import PrismBackendWrapper
+
+from . import edge_handler, sherpa_handler, sonata_handler
 
 logger = getLogger(__name__)
 
@@ -28,32 +29,36 @@ red y solo mantiene un hilo, así que elegirlo cierra los otros dos y ya está.
 # Basta añadir una línea aquí para un motor nuevo; la regla «solo uno vivo»
 # se cumple sola en vez de tener que acordarse de cerrar los otros uno por uno.
 PUENTES = {
-	"piper": sonata_handler,
-	"kokoro": sherpa_handler,
+    "piper": sonata_handler,
+    "kokoro": sherpa_handler,
 }
 
+
 def configurar_tts(lector):
-	for nombre, puente in PUENTES.items():
-		if nombre != lector:
-			puente.detener_puente()
-	if lector == "auto":
-		return PrismBackendWrapper(is_best=True)
-	elif lector == "sapi5":
-		return PrismBackendWrapper(BackendId.SAPI)
-	elif lector == "onecore":
-		return PrismBackendWrapper(BackendId.ONE_CORE)
-	elif lector == "piper":
-		return sonata_handler.piperSpeak()
-	elif lector == "kokoro":
-		return sherpa_handler.sherpaSpeak()
-	elif lector == "edge":
-		return edge_handler.edgeSpeak()
-	else:
-		# Un sistemaTTS que no reconocemos (config de una versión anterior,
-		# data.json editado a mano) no debe impedir arrancar: se cae en el
-		# mejor lector disponible, que es lo que hacía quien nos llama.
-		logger.warning("Sistema TTS no soportado (%s): se usa el mejor lector disponible.", lector)
-		return PrismBackendWrapper(is_best=True)
+    for nombre, puente in PUENTES.items():
+        if nombre != lector:
+            puente.detener_puente()
+    if lector == "auto":
+        return PrismBackendWrapper(is_best=True)
+    elif lector == "sapi5":
+        return PrismBackendWrapper(BackendId.SAPI)
+    elif lector == "onecore":
+        return PrismBackendWrapper(BackendId.ONE_CORE)
+    elif lector == "piper":
+        return sonata_handler.piperSpeak()
+    elif lector == "kokoro":
+        return sherpa_handler.sherpaSpeak()
+    elif lector == "edge":
+        return edge_handler.edgeSpeak()
+    else:
+        # Un sistemaTTS que no reconocemos (config de una versión anterior,
+        # data.json editado a mano) no debe impedir arrancar: se cae en el
+        # mejor lector disponible, que es lo que hacía quien nos llama.
+        logger.warning(
+            "Sistema TTS no soportado (%s): se usa el mejor lector disponible.", lector
+        )
+        return PrismBackendWrapper(is_best=True)
+
 
 def detect_onnx_models(path):
     # Solo las carpetas «voice-*», que son las de Piper: en voices/ vive también
@@ -61,11 +66,13 @@ def detect_onnx_models(path):
     # como voz de Piper dejaba mudo a quien tuviera Kokoro y ninguna voz de
     # Piper — el arranque creía que ya había una y no ofrecía descargarla.
     # Mismo criterio que piper_list_voices().
-    onnx_models = glob.glob(path + '/voice-*/*.onnx')
+    onnx_models = glob.glob(path + "/voice-*/*.onnx")
     if onnx_models:
         # Filtrar encoder.onnx para no duplicar las voces RT: sus dos ficheros
         # viven en la misma carpeta y el que carga sonata es decoder.onnx.
-        onnx_models = [m for m in onnx_models if os.path.basename(m).lower() != "encoder.onnx"]
+        onnx_models = [
+            m for m in onnx_models if os.path.basename(m).lower() != "encoder.onnx"
+        ]
         if len(onnx_models) > 1:
             return onnx_models
         elif len(onnx_models) == 1:
