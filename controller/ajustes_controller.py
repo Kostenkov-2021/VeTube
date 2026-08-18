@@ -1,34 +1,56 @@
 from logging import getLogger
-from globals.data_store import config, motor_de_interfaz
-from globals.resources import rutasonidos,lista_voces,lista_voces_piper,recargar_rutasonidos
-from setup import player,reader
-from utils import app_utilitys, languageHandler
-from TTS.list_voices import piper_list_voices , install_piper_voice
-from TTS.sherpa_handler import (kokoro_list_voices, kokoro_voice_config,
-                                kokoro_idiomas_disponibles, kokoro_voces_de_idioma,
-                                kokoro_idioma_de_voz)
-from TTS.edge_handler import (edge_list_voices, edge_idiomas_disponibles,
-                              edge_voces_de_idioma, edge_idioma_de_voz,
-                              edge_voz_shortname, edge_iniciar_carga,
-                              edge_voces_listas)
-from controller.piper_downloader_controller import PiperDownloaderController
-from controller.kokoro_downloader_controller import KokoroDownloaderController
-from utils.menu_accesible import Accesible
-from ui.dialog_response import response
+
 import wx
 
+from controller.kokoro_downloader_controller import KokoroDownloaderController
+from controller.piper_downloader_controller import PiperDownloaderController
+from globals.data_store import config, motor_de_interfaz
+from globals.resources import (
+    lista_voces,
+    lista_voces_piper,
+    recargar_rutasonidos,
+    rutasonidos,
+)
+from setup import player, reader
+from TTS.edge_handler import (
+    edge_idioma_de_voz,
+    edge_idiomas_disponibles,
+    edge_iniciar_carga,
+    edge_list_voices,
+    edge_voces_de_idioma,
+    edge_voces_listas,
+    edge_voz_shortname,
+)
+from TTS.list_voices import install_piper_voice, piper_list_voices
+from TTS.sherpa_handler import (
+    kokoro_idioma_de_voz,
+    kokoro_idiomas_disponibles,
+    kokoro_list_voices,
+    kokoro_voces_de_idioma,
+    kokoro_voice_config,
+)
+from ui.dialog_response import response
+from utils import app_utilitys, languageHandler
+from utils.menu_accesible import Accesible
+
 logger = getLogger(__name__)
+
 
 def _sin_diacriticos(texto):
     """Texto sin tildes ni diacríticos, para ordenar listas alfabéticamente sin
     depender del locale del sistema."""
     import unicodedata
-    return unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode().lower()
+
+    return (
+        unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode().lower()
+    )
+
 
 class AccesibleInstalador(Accesible):
     """El botón de instalar abre un menú con Piper pero un diálogo con Kokoro:
     el rol que anuncia el lector de pantalla debe decir la verdad en ambos
     casos, así que se decide en el momento en que se consulta."""
+
     def GetRole(self, childId):
         if motor_de_interfaz() == "kokoro":
             return (wx.ACC_OK, wx.ROLE_SYSTEM_PUSHBUTTON)
@@ -40,20 +62,43 @@ class AccesibleInstalador(Accesible):
             return (wx.ACC_NOT_IMPLEMENTED, "")
         return super().GetDefaultAction(childId)
 
+
 class AjustesController:
     # Claves que los controles del diálogo escriben en config apenas cambian (en caliente),
     # sin esperar a Aceptar. Ver revertir_cambios_en_caliente(): con Cancelar/Escape, todas
     # vuelven al valor que tenían al abrir el diálogo.
     CLAVES_EN_CALIENTE = [
-        'sapi', 'reader', 'traducir', 'interface', 'updates', 'salir', 'donations',
-        'sonidos', 'directorio', 'sistemaTTS', 'dispositivo', 'voz', 'volume',
-        'tono', 'tono_onecore', 'speed', 'reproducir', 'tiempo', 'volumen', 'cambiovolumen',
-        'voz_piper', 'voz_kokoro', 'voz_edge', 'voz_sapi',
+        "sapi",
+        "reader",
+        "traducir",
+        "interface",
+        "updates",
+        "salir",
+        "donations",
+        "sonidos",
+        "directorio",
+        "sistemaTTS",
+        "dispositivo",
+        "voz",
+        "volume",
+        "tono",
+        "tono_onecore",
+        "speed",
+        "reproducir",
+        "tiempo",
+        "volumen",
+        "cambiovolumen",
+        "voz_piper",
+        "voz_kokoro",
+        "voz_edge",
+        "voz_sapi",
     ]
 
     def __init__(self, dialog):
         self.dialog = dialog
-        self.config_al_abrir = {clave: config.get(clave) for clave in self.CLAVES_EN_CALIENTE}
+        self.config_al_abrir = {
+            clave: config.get(clave) for clave in self.CLAVES_EN_CALIENTE
+        }
         # Traducción entre lo que se ve en la lista de voces y lo que se guarda
         # en config['voz'] (ver _mostrar_voces), y códigos del filtro de idioma.
         self.indices_voces = []
@@ -61,13 +106,15 @@ class AjustesController:
         # Última voz usada en cada idioma: cruzar idiomas con las flechas no
         # debe hacer perder la voz elegida (ver cambiar_idioma_voz).
         self.ultima_voz_por_idioma = {}
-        self.dialog.instala_voces.SetAccessible(AccesibleInstalador(self.dialog.instala_voces))
-        
+        self.dialog.instala_voces.SetAccessible(
+            AccesibleInstalador(self.dialog.instala_voces)
+        )
+
         self.play_timer = wx.Timer(self.dialog)
         self.dialog.Bind(wx.EVT_TIMER, self.on_check_play_status, self.play_timer)
         self.reproduciendo_prueba = False
         self.dialog.Bind(wx.EVT_WINDOW_DESTROY, self.on_destroy)
-        
+
         self._bind_events()
         self.actualizar_visibilidad_instalador()
         self.actualizar_filtro_idioma()
@@ -82,33 +129,46 @@ class AjustesController:
         # lee el programa es el lector de pantalla: no hay motor que ajustar.
         motor = motor_de_interfaz()
         if motor in ("piper", "kokoro"):
-            reader._lector.set_volume(config['volume'])
-            reader._lector.set_pitch(config['tono'])
+            reader._lector.set_volume(config["volume"])
+            reader._lector.set_pitch(config["tono"])
             # Aplicamos la velocidad inicial usando la escala correcta
-            reader._lector.set_rate(app_utilitys.porcentaje_a_escala(config['speed']))
+            reader._lector.set_rate(app_utilitys.porcentaje_a_escala(config["speed"]))
         elif motor == "edge":
-            reader._lector.set_volume(config['volume'])
-            reader._lector.set_pitch(config['tono'])
+            reader._lector.set_volume(config["volume"])
+            reader._lector.set_pitch(config["tono"])
             # Edge usa la velocidad nativa (-10 a 10) sin reescalar
-            reader._lector.set_rate(config['speed'])
+            reader._lector.set_rate(config["speed"])
         elif motor == "onecore":
-            reader._lector.set_volume(config['volume'])
-            reader._lector.set_rate(config['speed'])
+            reader._lector.set_volume(config["volume"])
+            reader._lector.set_rate(config["speed"])
             # Aplicar el tono guardado para OneCore (posición 0-4, por defecto 0.6 = 0.6)
-            reader._lector.set_pitch(config.get('tono_onecore', 0.6))
+            reader._lector.set_pitch(config.get("tono_onecore", 0.6))
+
     def _bind_events(self):
         self.dialog.check_1.Bind(wx.EVT_CHECKBOX, lambda event: self.checar_sapi(event))
-        self.dialog.chk1.Bind(wx.EVT_CHECKBOX, lambda event: self.checar(event, 'reader'))
-        self.dialog.check_traduccion.Bind(wx.EVT_CHECKBOX, lambda event: self.checar(event, 'traducir'))
+        self.dialog.chk1.Bind(
+            wx.EVT_CHECKBOX, lambda event: self.checar(event, "reader")
+        )
+        self.dialog.check_traduccion.Bind(
+            wx.EVT_CHECKBOX, lambda event: self.checar(event, "traducir")
+        )
         self.dialog.check_interface.Bind(wx.EVT_CHECKBOX, self.on_check_interface)
-        self.dialog.check_actualizaciones.Bind(wx.EVT_CHECKBOX, lambda event: self.checar(event, 'updates'))
-        self.dialog.check_salir.Bind(wx.EVT_CHECKBOX, lambda event: self.checar(event, 'salir'))
-        self.dialog.check_donaciones.Bind(wx.EVT_CHECKBOX, lambda event: self.checar(event, 'donations'))
+        self.dialog.check_actualizaciones.Bind(
+            wx.EVT_CHECKBOX, lambda event: self.checar(event, "updates")
+        )
+        self.dialog.check_salir.Bind(
+            wx.EVT_CHECKBOX, lambda event: self.checar(event, "salir")
+        )
+        self.dialog.check_donaciones.Bind(
+            wx.EVT_CHECKBOX, lambda event: self.checar(event, "donations")
+        )
         self.dialog.check_2.Bind(wx.EVT_CHECKBOX, self.mostrarSonidos)
         self.dialog.lista_temas.Bind(wx.EVT_CHOICE, self.cambiar_tema_sonidos)
         self.dialog.reproducir.Bind(wx.EVT_BUTTON, self.reproducir_sonido)
         self.dialog.seleccionar_TTS.Bind(wx.EVT_CHOICE, self.cambiar_sintetizador)
-        self.dialog.establecer_dispositivo.Bind(wx.EVT_BUTTON, self.establecer_dispositivo)
+        self.dialog.establecer_dispositivo.Bind(
+            wx.EVT_BUTTON, self.establecer_dispositivo
+        )
         self.dialog.boton_prueva.Bind(wx.EVT_BUTTON, self.reproducirPrueva)
         self.dialog.choice_idioma_voz.Bind(wx.EVT_CHOICE, self.cambiar_idioma_voz)
         self.dialog.choice_2.Bind(wx.EVT_CHOICE, self.cambiarVoz)
@@ -118,38 +178,43 @@ class AjustesController:
         self.dialog.instala_voces.Bind(wx.EVT_BUTTON, self.instalar_paquete_voz)
         self.dialog.check_reproducir.Bind(wx.EVT_CHECKBOX, self.on_check_reproducir)
         self.dialog.spin_tiempo.Bind(wx.EVT_SPINCTRL, self.on_spin_tiempo)
-        self.dialog.slider_volumen_reproductor.Bind(wx.EVT_SLIDER, self.on_slider_volumen_reproductor)
-        self.dialog.slider_cambiovolumen.Bind(wx.EVT_SLIDER, self.on_slider_cambiovolumen)
+        self.dialog.slider_volumen_reproductor.Bind(
+            wx.EVT_SLIDER, self.on_slider_volumen_reproductor
+        )
+        self.dialog.slider_cambiovolumen.Bind(
+            wx.EVT_SLIDER, self.on_slider_cambiovolumen
+        )
 
     def on_slider_cambiovolumen(self, event):
-        config['cambiovolumen'] = event.GetEventObject().GetValue()
+        config["cambiovolumen"] = event.GetEventObject().GetValue()
 
     def on_check_interface(self, event):
-        config['interface'] = event.IsChecked()
+        config["interface"] = event.IsChecked()
 
     def on_check_reproducir(self, event):
-        config['reproducir'] = event.IsChecked()
+        config["reproducir"] = event.IsChecked()
 
     def on_spin_tiempo(self, event):
-        config['tiempo'] = event.GetEventObject().GetValue()
+        config["tiempo"] = event.GetEventObject().GetValue()
 
     def on_slider_volumen_reproductor(self, event):
-        config['volumen'] = event.GetEventObject().GetValue()
+        config["volumen"] = event.GetEventObject().GetValue()
 
     def mostrarSonidos(self, event):
         if event.IsChecked():
-            config['sonidos'] = True
+            config["sonidos"] = True
             self.dialog.soniditos.Enable()
             self.dialog.reproducir.Enable()
         else:
-            config['sonidos'] = False
+            config["sonidos"] = False
             self.dialog.soniditos.Disable()
             self.dialog.reproducir.Disable()
 
     def cambiar_tema_sonidos(self, event):
-        config['directorio'] = self.dialog.lista_temas.GetStringSelection()
+        config["directorio"] = self.dialog.lista_temas.GetStringSelection()
         recargar_rutasonidos()
-        if config['sonidos']: player.play(rutasonidos[0])
+        if config["sonidos"]:
+            player.play(rutasonidos[0])
 
     def reproducir_sonido(self, event):
         idx = self.dialog.soniditos.GetFocusedItem()
@@ -160,7 +225,7 @@ class AjustesController:
         config[key] = True if event.IsChecked() else False
 
     def checar_sapi(self, event):
-        config['sapi'] = event.IsChecked()
+        config["sapi"] = event.IsChecked()
         self._recargar_panel_de_voz()
 
     def _recargar_panel_de_voz(self):
@@ -178,16 +243,20 @@ class AjustesController:
         # configurar_tts, que de paso cierra el puente del motor que se aparta
         # en vez de dejarlo en memoria con su modelo cargado (Kokoro, 350 MB).
         reader.set_tts(motor_de_interfaz())
-        self.dialog.seleccionar_TTS.Enable(not config['sapi'])
+        self.dialog.seleccionar_TTS.Enable(not config["sapi"])
         self.actualizar_visibilidad_instalador()
         # actualizar_filtro_idioma recoloca el filtro en el idioma del programa.
         # Al desmarcar con kokoro o edge eso dejaba fuera de la lista una voz de
         # otro idioma, y _seleccionar_voz_activa caía en la primera: un simple
         # ida y vuelta por la casilla le cambiaba la voz al motor sin decirlo.
-        idioma_voz = None if config['sapi'] else self._idioma_de_voz(config.get('voz', 0))
+        idioma_voz = (
+            None if config["sapi"] else self._idioma_de_voz(config.get("voz", 0))
+        )
         self.actualizar_filtro_idioma()
         if idioma_voz and idioma_voz in self.codigos_idioma:
-            self.dialog.choice_idioma_voz.SetSelection(self.codigos_idioma.index(idioma_voz))
+            self.dialog.choice_idioma_voz.SetSelection(
+                self.codigos_idioma.index(idioma_voz)
+            )
         self._cargar_lista_de_voces()
         self.actualizar_habilitacion_controles()
         self._seleccionar_voz_activa()
@@ -202,10 +271,10 @@ class AjustesController:
         siendo la posición dentro de la lista del motor incluso con la casilla
         marcada, porque es la que carga el motor al arrancar VeTube.
         """
-        return config.get('voz_sapi', 0) if config['sapi'] else config.get('voz', 0)
+        return config.get("voz_sapi", 0) if config["sapi"] else config.get("voz", 0)
 
     def _fijar_voz_editada(self, indice):
-        config['voz_sapi' if config['sapi'] else 'voz'] = indice
+        config["voz_sapi" if config["sapi"] else "voz"] = indice
 
     @staticmethod
     def _clave_voz(motor):
@@ -221,7 +290,7 @@ class AjustesController:
     def _recordar_voz(self, motor):
         clave = self._clave_voz(motor)
         if clave:
-            config[clave] = config.get('voz', 0)
+            config[clave] = config.get("voz", 0)
 
     def _recuperar_voz(self, motor):
         clave = self._clave_voz(motor)
@@ -229,7 +298,7 @@ class AjustesController:
             # Sin nada guardado todavía se empieza por la primera voz, que en
             # Kokoro es la francesa: heredar la posición del otro motor era
             # justo lo que hacía hablar en español sin haberlo pedido.
-            config['voz'] = config.get(clave, 0)
+            config["voz"] = config.get(clave, 0)
 
     def cambiar_sintetizador(self, event):
         if self.play_timer.IsRunning():
@@ -238,17 +307,17 @@ class AjustesController:
         self.dialog.boton_prueva.SetLabel(_("&Reproducir prueba."))
         self.reproduciendo_prueba = False
 
-        motor_anterior = config['sistemaTTS']
-        config['sistemaTTS'] = self.dialog.seleccionar_TTS.GetStringSelection()
-        if motor_anterior != config['sistemaTTS']:
+        motor_anterior = config["sistemaTTS"]
+        config["sistemaTTS"] = self.dialog.seleccionar_TTS.GetStringSelection()
+        if motor_anterior != config["sistemaTTS"]:
             # config['voz'] es UNA sola posición para listas de voces que ya no
             # tienen nada que ver: la 3ª voz de Piper es una voz española en
             # Kokoro. Al cambiar de motor se guarda la voz del que sale y se
             # recupera la del que entra, así cada uno vuelve donde lo dejaste.
             self._recordar_voz(motor_anterior)
-            self._recuperar_voz(config['sistemaTTS'])
+            self._recuperar_voz(config["sistemaTTS"])
         reader.set_tts(motor_de_interfaz())
-        if config['sistemaTTS'] in ("piper", "kokoro", "edge"):
+        if config["sistemaTTS"] in ("piper", "kokoro", "edge"):
             # Cada motor arranca de cero, con la salida de audio por defecto.
             # Antes Piper y Kokoro compartían un único puente que ya la tenía
             # puesta, así que nadie la volvía a fijar aquí: sin esta línea,
@@ -258,13 +327,16 @@ class AjustesController:
             # y las otras tres ramas de edge de este fichero ya lo fijan.
             app_utilitys.fijar_dispositivo_lector()
         self.actualizar_filtro_idioma()
-        if config['sistemaTTS'] == "piper":
-            if lista_voces_piper and lista_voces_piper[0] != _("No hay voces instaladas"):
-                voz_index = config.get('voz', 0)
+        if config["sistemaTTS"] == "piper":
+            if lista_voces_piper and lista_voces_piper[0] != _(
+                "No hay voces instaladas"
+            ):
+                voz_index = config.get("voz", 0)
                 if voz_index >= len(lista_voces_piper):
                     voz_index = 0
-                    config['voz'] = 0
+                    config["voz"] = 0
                 from TTS.list_voices import obtener_ruta_voz
+
                 model_path = obtener_ruta_voz(lista_voces_piper[voz_index])
                 reader._lector.load_model(model_path)
             else:
@@ -278,15 +350,15 @@ class AjustesController:
                     reader._leer.speak(_("No hay voces instaladas"))
             self._mostrar_voces(lista_voces_piper)
             # Sincronizar volumen, tono y velocidad de Piper
-            reader._lector.set_volume(config['volume'])
-            reader._lector.set_pitch(config['tono'])
-            reader._lector.set_rate(app_utilitys.porcentaje_a_escala(config['speed']))
-        elif config['sistemaTTS'] == "kokoro":
+            reader._lector.set_volume(config["volume"])
+            reader._lector.set_pitch(config["tono"])
+            reader._lector.set_rate(app_utilitys.porcentaje_a_escala(config["speed"]))
+        elif config["sistemaTTS"] == "kokoro":
             voces_kokoro = kokoro_list_voices()
-            voz_index = config.get('voz', 0)
+            voz_index = config.get("voz", 0)
             if voz_index >= len(voces_kokoro):
                 voz_index = 0
-                config['voz'] = 0
+                config["voz"] = 0
             config_kokoro = kokoro_voice_config(voz_index)
             if config_kokoro is not None:
                 reader._lector.load_model(config_kokoro)
@@ -300,14 +372,14 @@ class AjustesController:
                     reader._leer.speak(_("No hay voces instaladas"))
             self.rellenar_voces_kokoro()
             # Sincronizar volumen, tono y velocidad (misma escala que Piper)
-            reader._lector.set_volume(config['volume'])
-            reader._lector.set_pitch(config['tono'])
-            reader._lector.set_rate(app_utilitys.porcentaje_a_escala(config['speed']))
-        elif config['sistemaTTS'] == "edge":
+            reader._lector.set_volume(config["volume"])
+            reader._lector.set_pitch(config["tono"])
+            reader._lector.set_rate(app_utilitys.porcentaje_a_escala(config["speed"]))
+        elif config["sistemaTTS"] == "edge":
             # Edge no tiene nada local que cargar: solo apuntar el lector a la
             # voz elegida (ShortName) y descargar la lista de voces en segundo
             # plano si aún no está (la necesita el filtro de idioma y la lista).
-            voz_index = config.get('voz', 0)
+            voz_index = config.get("voz", 0)
             # Mismo guardián de rango que Piper y Kokoro, pero solo con el
             # catálogo ya descargado: la lista de Edge llega en segundo plano y
             # comprobarla vacía borraría la voz elegida cada vez que se abren
@@ -317,11 +389,11 @@ class AjustesController:
             # no hace nada y el chat se quedaba mudo enseñando una voz.
             if edge_voces_listas() and not (0 <= voz_index < len(edge_list_voices())):
                 voz_index = 0
-                config['voz'] = 0
+                config["voz"] = 0
             reader._lector.load_model(edge_voz_shortname(voz_index))
-            reader._lector.set_volume(config['volume'])
-            reader._lector.set_pitch(config['tono'])
-            reader._lector.set_rate(config['speed'])
+            reader._lector.set_volume(config["volume"])
+            reader._lector.set_pitch(config["tono"])
+            reader._lector.set_rate(config["speed"])
             self.actualizar_filtro_idioma()
             if edge_voces_listas():
                 self.rellenar_voces()
@@ -335,18 +407,18 @@ class AjustesController:
             self._mostrar_voces(voces)
 
             # Sincronizar volumen, tono y velocidad para SAPI/OneCore
-            reader._lector.set_volume(config['volume'])
-            reader._lector.set_pitch(config['tono'])
-            reader._lector.set_rate(config['speed'])
-            
+            reader._lector.set_volume(config["volume"])
+            reader._lector.set_pitch(config["tono"])
+            reader._lector.set_rate(config["speed"])
+
             # Sincronizar voz para SAPI/OneCore
             if voces and voces[0] != _("Controlado por el lector de pantalla"):
-                voz_index = config.get('voz', 0)
+                voz_index = config.get("voz", 0)
                 if voz_index >= len(voces):
                     voz_index = 0
-                    config['voz'] = 0
+                    config["voz"] = 0
                 reader._lector.set_voice(voces[voz_index])
-                
+
         self.actualizar_visibilidad_instalador()
         self.actualizar_habilitacion_controles()
         self._seleccionar_voz_activa()
@@ -354,7 +426,7 @@ class AjustesController:
     def actualizar_visibilidad_instalador(self):
         # El mismo botón instala voces de Piper o el paquete de Kokoro,
         # según el sistema TTS elegido.
-        show = not config['sapi'] and config['sistemaTTS'] in ("piper", "kokoro")
+        show = not config["sapi"] and config["sistemaTTS"] in ("piper", "kokoro")
         self.dialog.instala_voces.Show(show)
         # Aseguramos que los controles de tono y volumen estén habilitados siempre
         self.dialog.slider_1.Enable()
@@ -380,6 +452,7 @@ class AjustesController:
         if codigo in traducciones:
             return traducciones[codigo]
         from googletrans import LANGUAGES
+
         nombre = LANGUAGES.get(codigo)
         if nombre:
             return nombre.capitalize()
@@ -387,17 +460,17 @@ class AjustesController:
 
     def _idiomas_disponibles(self):
         """Códigos de idioma que ofrece el motor elegido, o [] si ninguno."""
-        if config['sistemaTTS'] == "kokoro":
+        if config["sistemaTTS"] == "kokoro":
             return kokoro_idiomas_disponibles()
-        if config['sistemaTTS'] == "edge":
+        if config["sistemaTTS"] == "edge":
             return edge_idiomas_disponibles()
         return []
 
     def _idioma_de_voz(self, index):
         """Código de idioma de la voz que ocupa ese índice global, o None."""
-        if config['sistemaTTS'] == "kokoro":
+        if config["sistemaTTS"] == "kokoro":
             return kokoro_idioma_de_voz(index)
-        if config['sistemaTTS'] == "edge":
+        if config["sistemaTTS"] == "edge":
             return edge_idioma_de_voz(index)
         return None
 
@@ -410,25 +483,31 @@ class AjustesController:
         # Con la casilla «Usar voz sapi» marcada la lista enseña las voces SAPI,
         # que son las del sistema y no se filtran por idioma: dejar el filtro a
         # la vista invitaba a recargar encima la lista del motor.
-        es_multi = not config['sapi'] and config['sistemaTTS'] in ("kokoro", "edge")
+        es_multi = not config["sapi"] and config["sistemaTTS"] in ("kokoro", "edge")
         self.dialog.label_idioma_voz.Show(es_multi)
         self.dialog.choice_idioma_voz.Show(es_multi)
         if es_multi:
             # Orden alfabético por el nombre traducido: en una lista desplegable
             # se salta a un idioma tecleando su inicial. Se ordena sin tildes ni
             # diacríticos, si no «Španělština» acabaría después de la Z en checo.
-            codigos = sorted(self._idiomas_disponibles(),
-                             key=lambda codigo: _sin_diacriticos(self._nombre_idioma(codigo)))
+            codigos = sorted(
+                self._idiomas_disponibles(),
+                key=lambda codigo: _sin_diacriticos(self._nombre_idioma(codigo)),
+            )
             # La primera entrada no filtra nada, de ahí el None.
             self.codigos_idioma = [None] + codigos
             self.dialog.choice_idioma_voz.Clear()
             self.dialog.choice_idioma_voz.AppendItems(
-                [_("Todos los idiomas")] + [self._nombre_idioma(c) for c in codigos])
+                [_("Todos los idiomas")] + [self._nombre_idioma(c) for c in codigos]
+            )
             # Idioma del programa (languageHandler.curLang) como punto de
             # partida del filtro para todos los motores multilingües.
             codigo_usuario = (languageHandler.curLang or "es")[:2].lower()
-            seleccion = self.codigos_idioma.index(
-                codigo_usuario) if codigo_usuario in self.codigos_idioma else 0
+            seleccion = (
+                self.codigos_idioma.index(codigo_usuario)
+                if codigo_usuario in self.codigos_idioma
+                else 0
+            )
             self.dialog.choice_idioma_voz.SetSelection(seleccion)
         else:
             self.codigos_idioma = []
@@ -449,16 +528,16 @@ class AjustesController:
         está deshabilitado. Sin esto el panel enseñaba y regulaba la voz de un
         motor que no se oía, y no había forma de elegir la que sí hablaba.
         """
-        if config['sapi']:
+        if config["sapi"]:
             # Red de seguridad por si el sistema no diera ninguna voz SAPI: una lista
             # vacía deja al lector de pantalla anunciando un desplegable sin
             # valor, sin decir por qué.
             self._mostrar_voces(lista_voces or [_("No hay voces instaladas")])
-        elif config['sistemaTTS'] == "piper":
+        elif config["sistemaTTS"] == "piper":
             self._mostrar_voces(lista_voces_piper)
-        elif config['sistemaTTS'] == "kokoro":
+        elif config["sistemaTTS"] == "kokoro":
             self.rellenar_voces()
-        elif config['sistemaTTS'] == "edge":
+        elif config["sistemaTTS"] == "edge":
             # Las voces de Edge viven en el CDN: se descargan en segundo plano
             # y se rellenan cuando llegan (ver _poblar_voces_edge).
             if edge_voces_listas():
@@ -475,7 +554,9 @@ class AjustesController:
         """Llena la lista de voces. indices traduce cada posición mostrada al
         número que se guarda en config['voz']: con Kokoro filtrado por idioma no
         coinciden, y guardar la posición de la lista cambiaría de voz sola."""
-        self.indices_voces = list(indices) if indices is not None else list(range(len(etiquetas)))
+        self.indices_voces = (
+            list(indices) if indices is not None else list(range(len(etiquetas)))
+        )
         self.dialog.choice_2.Clear()
         self.dialog.choice_2.AppendItems(etiquetas)
 
@@ -505,14 +586,16 @@ class AjustesController:
     def rellenar_voces(self):
         """Llena la lista con las voces del idioma elegido en el filtro, para
         Kokoro o Edge según el motor activo."""
-        if config['sistemaTTS'] == "kokoro":
+        if config["sistemaTTS"] == "kokoro":
             voces = kokoro_voces_de_idioma(self._idioma_filtrado())
-        elif config['sistemaTTS'] == "edge":
+        elif config["sistemaTTS"] == "edge":
             voces = edge_voces_de_idioma(self._idioma_filtrado())
         else:
             voces = []
-        self._mostrar_voces([etiqueta for indice, etiqueta in voces],
-                            [indice for indice, etiqueta in voces])
+        self._mostrar_voces(
+            [etiqueta for indice, etiqueta in voces],
+            [indice for indice, etiqueta in voces],
+        )
 
     def _voces_edge_listas(self):
         """Se llama desde el hilo del loop de edge-tts cuando termina la
@@ -524,7 +607,7 @@ class AjustesController:
         # puede llegar mientras tanto (se pide al abrir el diálogo) y la
         # reescribiría entera bajo los dedos del usuario, colocando además la
         # voz del chat en la posición que tocara.
-        if config['sapi'] or config['sistemaTTS'] != "edge":
+        if config["sapi"] or config["sistemaTTS"] != "edge":
             return
         try:
             # El diálogo pudo cerrarse antes de que terminara la descarga: no
@@ -543,47 +626,49 @@ class AjustesController:
         # Para llegar a un idioma se pasa por los de en medio con las flechas, y
         # cada uno cambia de voz: guardamos la voz de cada idioma para
         # devolverla si el usuario vuelve, en vez de dejarlo con la primera.
-        voz_anterior = config['voz']
+        voz_anterior = config["voz"]
         idioma_anterior = self._idioma_de_voz(voz_anterior)
         if idioma_anterior:
             self.ultima_voz_por_idioma[idioma_anterior] = voz_anterior
         self.rellenar_voces()
         recordada = self.ultima_voz_por_idioma.get(self._idioma_filtrado())
         if voz_anterior not in self.indices_voces and recordada in self.indices_voces:
-            config['voz'] = recordada
-        if not self._seleccionar_voz_activa() or config['voz'] != voz_anterior:
+            config["voz"] = recordada
+        if not self._seleccionar_voz_activa() or config["voz"] != voz_anterior:
             # La voz cambia con el idioma: cargarla igual que si el usuario la
             # hubiera elegido en la lista.
             self.cambiarVoz(None)
 
     def actualizar_habilitacion_controles(self):
-        if config['sapi']:
+        if config["sapi"]:
             # SAPI 5 sabe cambiar de voz, tono, volumen y velocidad, así que los
             # cuatro mandos van vivos. Hay que decirlo aparte: el motor elegido
             # puede ser el lector de pantalla, que no sabe hacer casi nada y
             # dejaba los mandos apagados aunque quien hablase fuera SAPI.
             if self.dialog.slider_1.GetMax() == 4:
                 self.dialog.slider_1.SetRange(0, 20)
-                self.dialog.slider_1.SetValue(config['tono'] + 10)
+                self.dialog.slider_1.SetValue(config["tono"] + 10)
             self.dialog.slider_1.Enable(True)
             self.dialog.slider_2.Enable(True)
             self.dialog.slider_3.Enable(True)
             self.dialog.choice_2.Enable(True)
-        elif config['sistemaTTS'] in ("piper", "kokoro", "edge"):
+        elif config["sistemaTTS"] in ("piper", "kokoro", "edge"):
             # Restaurar slider de tono al rango normal si venía de OneCore
             if self.dialog.slider_1.GetMax() == 4:
                 self.dialog.slider_1.SetRange(0, 20)
-                self.dialog.slider_1.SetValue(config['tono'] + 10)
+                self.dialog.slider_1.SetValue(config["tono"] + 10)
             self.dialog.slider_1.Enable(True)
             self.dialog.slider_2.Enable(True)
             self.dialog.slider_3.Enable(True)
             self.dialog.choice_2.Enable(True)
-        elif config['sistemaTTS'] == "onecore":
+        elif config["sistemaTTS"] == "onecore":
             # OneCore: pitch limitado a 5 valores discretos: 0.6, 0.7, 0.8, 0.9, 1.0
             # Slider rango 0-4 donde cada paso = 0.1 en la escala real de OneCore
             self.dialog.slider_1.SetRange(0, 4)
             # Por defecto posición 0.6 = 0.6, el tono más natural en OneCore
-            pos_onecore = config.get('tono_onecore', 0.6)  # 0.6 = 0.6 (tono más natural)
+            pos_onecore = config.get(
+                "tono_onecore", 0.6
+            )  # 0.6 = 0.6 (tono más natural)
             self.dialog.slider_1.SetValue(pos_onecore)
             # Aplicar el pitch inmediatamente al lector
             reader._lector.set_pitch(pos_onecore)
@@ -595,8 +680,8 @@ class AjustesController:
             # Restaurar slider de tono al rango normal si venía de OneCore
             if self.dialog.slider_1.GetMax() == 4:
                 self.dialog.slider_1.SetRange(0, 20)
-                self.dialog.slider_1.SetValue(config['tono'] + 10)
-            has_backend = hasattr(reader._lector, 'backend')
+                self.dialog.slider_1.SetValue(config["tono"] + 10)
+            has_backend = hasattr(reader._lector, "backend")
             features = reader._lector.backend.features if has_backend else None
             if features:
                 self.dialog.slider_1.Enable(features.supports_set_pitch)
@@ -614,13 +699,15 @@ class AjustesController:
             self.dialog.lista_dispositivos.SetFocus()
             return
         valor = self.dialog.lista_dispositivos.GetSelection() + 1
-        config['dispositivo'] = valor
+        config["dispositivo"] = valor
         player.setdevice(config["dispositivo"])
         player.play(f"sounds/{config['directorio']}/cambiardispositivo.mp3")
         motor = motor_de_interfaz()
         if motor in ("piper", "kokoro"):
             hay_voz = motor == "kokoro" or (
-                lista_voces_piper and lista_voces_piper[0] != _("No hay voces instaladas"))
+                lista_voces_piper
+                and lista_voces_piper[0] != _("No hay voces instaladas")
+            )
             if hay_voz:
                 # La lista del diálogo se construye con player.devicenames, así que
                 # el nombre elegido y el que saca config['dispositivo'] son el mismo.
@@ -640,40 +727,58 @@ class AjustesController:
             self.reproduciendo_prueba = False
             return
 
-        if config['sapi']:
+        if config["sapi"]:
             # La prueba tiene que sonar con la voz que de verdad va a leer el
             # chat, que con la casilla marcada es la SAPI secundaria.
             reader._leer.silence()
-        elif config['sistemaTTS'] in ("piper", "kokoro"):
-            if config['sistemaTTS'] == "kokoro" and kokoro_voice_config(config['voz']) is None:
+        elif config["sistemaTTS"] in ("piper", "kokoro"):
+            if (
+                config["sistemaTTS"] == "kokoro"
+                and kokoro_voice_config(config["voz"]) is None
+            ):
                 # Sin el modelo instalado la síntesis no arranca nunca: avisar
                 # de lo que falta y ofrecer el descargador ahí mismo (pedido
                 # de César; mismo patrón que configurar_piper).
-                if response(_("Para probar las voces Kokoro hay que descargar antes el paquete de voces. ¿Quieres abrir el descargador ahora?"),
-                            _("No hay voces instaladas")) == wx.ID_YES:
+                if (
+                    response(
+                        _(
+                            "Para probar las voces Kokoro hay que descargar antes el paquete de voces. ¿Quieres abrir el descargador ahora?"
+                        ),
+                        _("No hay voces instaladas"),
+                    )
+                    == wx.ID_YES
+                ):
                     KokoroDownloaderController(self.dialog).show()
                 return
-            if config['sistemaTTS'] == "piper" and self.dialog.choice_2.GetStringSelection() == _("No hay voces instaladas"):
+            if config[
+                "sistemaTTS"
+            ] == "piper" and self.dialog.choice_2.GetStringSelection() == _(
+                "No hay voces instaladas"
+            ):
                 # Mismo aviso hablado que con Kokoro: un botón que no hace
                 # nada en silencio desorienta al lector de pantalla.
                 reader._leer.speak(_("No hay voces instaladas"))
                 return
-        elif config['sistemaTTS'] == "edge":
-            if not edge_voz_shortname(config['voz']):
+        elif config["sistemaTTS"] == "edge":
+            if not edge_voz_shortname(config["voz"]):
                 # Sin la lista de voces descargada no hay voz que apuntar: un
                 # botón que no hace nada en silencio desorienta. Si aún no ha
                 # llegado, se espera a que termine la descarga.
                 if not edge_voces_listas():
-                    reader._leer.speak(_("Cargando las voces de Edge TTS, espera un momento."))
+                    reader._leer.speak(
+                        _("Cargando las voces de Edge TTS, espera un momento.")
+                    )
                     edge_iniciar_carga(self._voces_edge_listas)
                 return
             # Apuntar el lector a la voz elegida por si la lista se cargó después
             # de abrir el diálogo (mismo efecto que cambiarVoz).
-            reader._lector.load_model(edge_voz_shortname(config['voz']))
+            reader._lector.load_model(edge_voz_shortname(config["voz"]))
         else:
             reader._lector.silence()
 
-        saludo = _("Hola, soy la voz que te acompañará de ahora en adelante a leer los mensajes de tus canales favoritos.")
+        saludo = _(
+            "Hola, soy la voz que te acompañará de ahora en adelante a leer los mensajes de tus canales favoritos."
+        )
         # La prueba tiene que sonar por la voz que va a leer el chat, que es lo
         # que la frase promete y lo que enseña la lista de voces de al lado:
         # con la casilla marcada, la voz SAPI 5.
@@ -686,7 +791,7 @@ class AjustesController:
         if self.play_timer.IsRunning():
             self.play_timer.Stop()
         reader._lector.silence()
-        if config['sapi']:
+        if config["sapi"]:
             # Con la casilla marcada la prueba suena por la voz SAPI: callar
             # solo al motor dejaba la frase anterior encima de la nueva.
             reader._leer.silence()
@@ -694,21 +799,24 @@ class AjustesController:
         self.reproduciendo_prueba = False
 
         self._fijar_voz_editada(self._indice_global_seleccionado())
-        if config['sapi']:
+        if config["sapi"]:
             # Quien lee el chat es la voz SAPI secundaria: es a ella a la que
             # hay que apuntar, no al motor elegido, que está deshabilitado. Y
             # config['voz'] no se toca: sigue siendo la voz del motor, que es
             # la que este carga al arrancar VeTube.
-            indice = config['voz_sapi']
+            indice = config["voz_sapi"]
             if lista_voces and indice < len(lista_voces):
                 reader._leer.set_voice(lista_voces[indice])
-        elif config['sistemaTTS'] == "piper":
+        elif config["sistemaTTS"] == "piper":
             from TTS.list_voices import obtener_ruta_voz
+
             # Simplemente cargamos el nuevo modelo en el lector existente
-            reader._lector.load_model(obtener_ruta_voz(lista_voces_piper[config['voz']]))
+            reader._lector.load_model(
+                obtener_ruta_voz(lista_voces_piper[config["voz"]])
+            )
             app_utilitys.fijar_dispositivo_lector()
-        elif config['sistemaTTS'] == "kokoro":
-            config_kokoro = kokoro_voice_config(config['voz'])
+        elif config["sistemaTTS"] == "kokoro":
+            config_kokoro = kokoro_voice_config(config["voz"])
             if config_kokoro is not None:
                 reader._lector.load_model(config_kokoro)
                 app_utilitys.fijar_dispositivo_lector()
@@ -717,70 +825,78 @@ class AjustesController:
                 # también se llama sola (filtro de idioma, Cancelar), y ahí el
                 # aviso se repetiría en cada flecha, encima de lo que lee NVDA.
                 reader._leer.speak(_("No hay voces instaladas"))
-        elif config['sistemaTTS'] == "edge":
-            shortname = edge_voz_shortname(config['voz'])
+        elif config["sistemaTTS"] == "edge":
+            shortname = edge_voz_shortname(config["voz"])
             if shortname:
                 reader._lector.load_model(shortname)
                 app_utilitys.fijar_dispositivo_lector()
         else:
             voces_lector = reader._lector.list_voices()
-            if voces_lector and config['voz'] < len(voces_lector):
-                reader._lector.set_voice(voces_lector[config['voz']])
+            if voces_lector and config["voz"] < len(voces_lector):
+                reader._lector.set_voice(voces_lector[config["voz"]])
+
     def cambiarVolumen(self, event):
         value = self.dialog.slider_2.GetValue()
         reader._leer.set_volume(value)
         reader._lector.set_volume(value)
-        config['volume'] = value
+        config["volume"] = value
+
     def cambiarTono(self, event):
-        if config['sapi']:
+        if config["sapi"]:
             # El tono es el de la voz SAPI que lee el chat. El motor no se toca:
             # puede ser onecore, cuyo tono va en otra escala (0-4), y escribirle
             # un valor de esta (-10 a 10) le estropeaba el suyo en silencio.
             value = self.dialog.slider_1.GetValue() - 10
             reader._leer.set_pitch(value)
-            config['tono'] = value
-        elif config['sistemaTTS'] == "onecore":
+            config["tono"] = value
+        elif config["sistemaTTS"] == "onecore":
             # OneCore: el slider va de 0 a 4, cada posición = 0.6, 0.7, 0.8, 0.9, 1.0
             pos = self.dialog.slider_1.GetValue()
-            config['tono_onecore'] = pos
-            reader._lector.set_pitch(pos)  # PrismBackendWrapper recibirá 0-4 para OneCore
+            config["tono_onecore"] = pos
+            reader._lector.set_pitch(
+                pos
+            )  # PrismBackendWrapper recibirá 0-4 para OneCore
         else:
             value = self.dialog.slider_1.GetValue() - 10
             reader._leer.set_pitch(value)
             reader._lector.set_pitch(value)
-            config['tono'] = value
+            config["tono"] = value
+
     def cambiarVelocidad(self, event):
         value = self.dialog.slider_3.GetValue() - 10
-        config['speed'] = value
+        config["speed"] = value
         reader._leer.set_rate(value)
-        if config['sapi']:
+        if config["sapi"]:
             # La velocidad es la de la voz SAPI que lee el chat; el motor está
             # apartado y el lector de pantalla lleva la suya. Además la rama de
             # piper indexa lista_voces_piper con la selección de la lista, que
             # ahora son las voces SAPI: entrar ahí cogería una voz cualquiera.
             return
-        if config['sistemaTTS'] == "piper":
+        if config["sistemaTTS"] == "piper":
             voz_actual = lista_voces_piper[self.dialog.choice_2.GetSelection()]
             if voz_actual != _("No hay voces instaladas"):
                 reader._lector.set_rate(app_utilitys.porcentaje_a_escala(value))
-        elif config['sistemaTTS'] == "kokoro":
+        elif config["sistemaTTS"] == "kokoro":
             reader._lector.set_rate(app_utilitys.porcentaje_a_escala(value))
-        elif config['sistemaTTS'] == "edge":
+        elif config["sistemaTTS"] == "edge":
             # Edge usa la velocidad nativa (-10 a 10) sin reescalar
             reader._lector.set_rate(value)
         else:
             reader._lector.set_rate(value)
+
     def instalar_paquete_voz(self, event):
-        if config['sistemaTTS'] == "kokoro":
+        if config["sistemaTTS"] == "kokoro":
             KokoroDownloaderController(self.dialog).show()
             return
         menu = wx.Menu()
         item_online = menu.Append(wx.ID_ANY, _("Descargar voces de internet..."))
-        item_local = menu.Append(wx.ID_ANY, _("Instalar desde archivo local (.tar.gz)..."))
-        
+        item_local = menu.Append(
+            wx.ID_ANY, _("Instalar desde archivo local (.tar.gz)...")
+        )
+
         self.dialog.Bind(wx.EVT_MENU, self.on_descargar_online, item_online)
         self.dialog.Bind(wx.EVT_MENU, self.on_instalar_local, item_local)
-        
+
         self.dialog.PopupMenu(menu)
         menu.Destroy()
 
@@ -801,17 +917,16 @@ class AjustesController:
             self._refrescar_voces_piper()
 
     def _refrescar_voces_piper(self):
-        from TTS.list_voices import piper_list_voices
-        import globals.resources as resources
-        
+        from globals import resources
+
         nuevas_voces = piper_list_voices()
         if nuevas_voces:
             # Actualizamos la lista global para que toda la app vea los cambios
             resources.lista_voces_piper.clear()
             resources.lista_voces_piper.extend(nuevas_voces)
-            
+
             # Actualizamos la UI si estamos en modo Piper
-            if config['sistemaTTS'] == "piper":
+            if config["sistemaTTS"] == "piper":
                 # Mantiene la selección si la voz sigue en la lista, o cae en la
                 # primera; _mostrar_voces deja además al día la equivalencia
                 # entre lo que se ve y lo que se guarda en config['voz'].
@@ -820,11 +935,11 @@ class AjustesController:
 
     def on_check_play_status(self, event):
         try:
-            if config['sapi']:
+            if config["sapi"]:
                 # La prueba salió por la voz SAPI: es a ella a quien hay que
                 # preguntar, si no el botón se queda en «Detener» para siempre.
                 sigue_hablando = reader._leer.backend.speaking
-            elif config['sistemaTTS'] in ("piper", "kokoro", "edge"):
+            elif config["sistemaTTS"] in ("piper", "kokoro", "edge"):
                 sigue_hablando = reader._lector.is_playing()
             else:
                 sigue_hablando = reader._lector.backend.speaking
@@ -836,7 +951,7 @@ class AjustesController:
             self.reproduciendo_prueba = False
 
     def on_destroy(self, event):
-        if hasattr(self, 'play_timer') and self.play_timer.IsRunning():
+        if hasattr(self, "play_timer") and self.play_timer.IsRunning():
             self.play_timer.Stop()
         try:
             # Las dos: la prueba puede haber salido por la voz SAPI (casilla
@@ -856,20 +971,24 @@ class AjustesController:
         disponible, un dispositivo desconectado...) no debe impedir que se reviertan los
         demás, y no debe fallar en silencio — se registra con logger.exception."""
         original = self.config_al_abrir
-        cambio_tts = config.get('sistemaTTS') != original['sistemaTTS']
+        cambio_tts = config.get("sistemaTTS") != original["sistemaTTS"]
         # Hay que anotarlo aquí, como los demás: el bucle de abajo devuelve
         # config a los valores de apertura, y después ya no habría diferencia
         # que detectar.
-        cambio_sapi = config.get('sapi') != original['sapi']
+        cambio_sapi = config.get("sapi") != original["sapi"]
         # Las dos voces: con la casilla marcada lo que se toca es voz_sapi, y
         # mirar solo 'voz' dejaba sin deshacer el cambio de voz del chat.
-        cambio_voz = (config.get('voz') != original['voz']
-                      or config.get('voz_sapi') != original['voz_sapi'])
-        cambio_volumen = config.get('volume') != original['volume']
-        cambio_tono = (config.get('tono') != original['tono']) or (config.get('tono_onecore') != original['tono_onecore'])
-        cambio_velocidad = config.get('speed') != original['speed']
-        cambio_dispositivo = config.get('dispositivo') != original['dispositivo']
-        cambio_tema = config.get('directorio') != original['directorio']
+        cambio_voz = (
+            config.get("voz") != original["voz"]
+            or config.get("voz_sapi") != original["voz_sapi"]
+        )
+        cambio_volumen = config.get("volume") != original["volume"]
+        cambio_tono = (config.get("tono") != original["tono"]) or (
+            config.get("tono_onecore") != original["tono_onecore"]
+        )
+        cambio_velocidad = config.get("speed") != original["speed"]
+        cambio_dispositivo = config.get("dispositivo") != original["dispositivo"]
+        cambio_tema = config.get("directorio") != original["directorio"]
 
         for clave in self.CLAVES_EN_CALIENTE:
             config[clave] = original[clave]
@@ -878,14 +997,20 @@ class AjustesController:
             try:
                 recargar_rutasonidos()
             except Exception:
-                logger.exception("No se pudo restaurar el tema de sonidos al cancelar Ajustes (directorio=%s)", config['directorio'])
+                logger.exception(
+                    "No se pudo restaurar el tema de sonidos al cancelar Ajustes (directorio=%s)",
+                    config["directorio"],
+                )
 
         if cambio_tts:
             try:
-                self.dialog.seleccionar_TTS.SetStringSelection(config['sistemaTTS'])
+                self.dialog.seleccionar_TTS.SetStringSelection(config["sistemaTTS"])
                 self.cambiar_sintetizador(None)
             except Exception:
-                logger.exception("No se pudo restaurar el sistema TTS al cancelar Ajustes (sistemaTTS=%s)", config['sistemaTTS'])
+                logger.exception(
+                    "No se pudo restaurar el sistema TTS al cancelar Ajustes (sistemaTTS=%s)",
+                    config["sistemaTTS"],
+                )
         elif cambio_voz and not cambio_sapi:
             # Si la casilla ha cambiado no se entra aquí: es su bloque, más
             # abajo, quien recarga la lista y vuelve a aplicar la voz — y sabe
@@ -893,19 +1018,22 @@ class AjustesController:
             # voz en la lista del motor y avisaba de un índice fuera de rango
             # que no significaba nada.
             try:
-                if config['sapi']:
+                if config["sapi"]:
                     lista_voces_actual = lista_voces
-                elif config['sistemaTTS'] == "piper":
+                elif config["sistemaTTS"] == "piper":
                     lista_voces_actual = lista_voces_piper
-                elif config['sistemaTTS'] == "kokoro":
+                elif config["sistemaTTS"] == "kokoro":
                     lista_voces_actual = kokoro_list_voices()
-                elif config['sistemaTTS'] == "edge":
+                elif config["sistemaTTS"] == "edge":
                     lista_voces_actual = edge_list_voices()
                 else:
                     lista_voces_actual = reader._lector.list_voices()
                 voz_a_restaurar = self._voz_editada()
                 if 0 <= voz_a_restaurar < len(lista_voces_actual):
-                    if not config['sapi'] and config['sistemaTTS'] in ("kokoro", "edge"):
+                    if not config["sapi"] and config["sistemaTTS"] in (
+                        "kokoro",
+                        "edge",
+                    ):
                         # La lista puede haber quedado filtrada por otro idioma:
                         # hay que devolverla al idioma de la voz original, si no
                         # esta no aparece y se recargaría cualquier otra.
@@ -919,10 +1047,14 @@ class AjustesController:
                     # para no terminar cargando una voz cualquiera (indexación negativa de Python).
                     logger.warning(
                         "No se pudo restaurar la voz al cancelar Ajustes: índice %s fuera de rango (%s voces disponibles)",
-                        voz_a_restaurar, len(lista_voces_actual),
+                        voz_a_restaurar,
+                        len(lista_voces_actual),
                     )
             except Exception:
-                logger.exception("No se pudo restaurar la voz al cancelar Ajustes (voz=%s)", config['voz'])
+                logger.exception(
+                    "No se pudo restaurar la voz al cancelar Ajustes (voz=%s)",
+                    config["voz"],
+                )
 
         if cambio_sapi:
             # La casilla se revierte sola con CLAVES_EN_CALIENTE, pero lo que
@@ -931,47 +1063,61 @@ class AjustesController:
             # Va después del bloque del motor porque manda sobre él: la lista
             # que hay que dejar puesta es la del que habla, no la del elegido.
             try:
-                self.dialog.check_1.SetValue(config['sapi'])
+                self.dialog.check_1.SetValue(config["sapi"])
                 self._recargar_panel_de_voz()
             except Exception:
-                logger.exception("No se pudo restaurar la casilla «Usar voz sapi» al cancelar Ajustes (sapi=%s)", config['sapi'])
+                logger.exception(
+                    "No se pudo restaurar la casilla «Usar voz sapi» al cancelar Ajustes (sapi=%s)",
+                    config["sapi"],
+                )
 
         if cambio_volumen:
             try:
-                self.dialog.slider_2.SetValue(config['volume'])
+                self.dialog.slider_2.SetValue(config["volume"])
                 self.cambiarVolumen(None)
             except Exception:
-                logger.exception("No se pudo restaurar el volumen al cancelar Ajustes (volume=%s)", config['volume'])
+                logger.exception(
+                    "No se pudo restaurar el volumen al cancelar Ajustes (volume=%s)",
+                    config["volume"],
+                )
 
         if cambio_tono:
             try:
-                if config['sistemaTTS'] == "onecore":
-                    self.dialog.slider_1.SetValue(config.get('tono_onecore', 0.6))
+                if config["sistemaTTS"] == "onecore":
+                    self.dialog.slider_1.SetValue(config.get("tono_onecore", 0.6))
                 else:
-                    self.dialog.slider_1.SetValue(config['tono'] + 10)
+                    self.dialog.slider_1.SetValue(config["tono"] + 10)
                 self.cambiarTono(None)
             except Exception:
                 logger.exception("No se pudo restaurar el tono al cancelar Ajustes")
 
         if cambio_velocidad:
             try:
-                self.dialog.slider_3.SetValue(config['speed'] + 10)
+                self.dialog.slider_3.SetValue(config["speed"] + 10)
                 self.cambiarVelocidad(None)
             except Exception:
-                logger.exception("No se pudo restaurar la velocidad al cancelar Ajustes (speed=%s)", config['speed'])
+                logger.exception(
+                    "No se pudo restaurar la velocidad al cancelar Ajustes (speed=%s)",
+                    config["speed"],
+                )
 
         if cambio_dispositivo:
             # Sin el sonido de confirmación ni el "Hablaré a través de este dispositivo" de
             # establecer_dispositivo(): un Cancelar silencioso no debe sonar como un cambio aplicado.
             try:
-                player.setdevice(config['dispositivo'])
-                hay_voz_local = (config['sistemaTTS'] in ("kokoro", "edge") or (
-                    config['sistemaTTS'] == "piper" and lista_voces_piper
-                    and lista_voces_piper[0] != _("No hay voces instaladas")))
+                player.setdevice(config["dispositivo"])
+                hay_voz_local = config["sistemaTTS"] in ("kokoro", "edge") or (
+                    config["sistemaTTS"] == "piper"
+                    and lista_voces_piper
+                    and lista_voces_piper[0] != _("No hay voces instaladas")
+                )
                 if hay_voz_local:
                     app_utilitys.fijar_dispositivo_lector()
             except Exception:
                 # Puede fallar si el dispositivo guardado desapareció mientras Ajustes estaba
                 # abierto (auriculares desconectados, etc. — mismo caso que setup.py al arrancar).
                 # No debe tumbar el revert ni impedir que se cierre el diálogo.
-                logger.exception("No se pudo restaurar el dispositivo de audio al cancelar Ajustes (dispositivo=%s)", config['dispositivo'])
+                logger.exception(
+                    "No se pudo restaurar el dispositivo de audio al cancelar Ajustes (dispositivo=%s)",
+                    config["dispositivo"],
+                )

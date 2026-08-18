@@ -1,19 +1,24 @@
-import wx,wx.adv, configparser
-from globals import data_store, resources
+import wx
+import wx.adv
 from pyperclip import copy
-from setup import reader, player
-from ui.chat_ui import ChatPanel
-from controller.menus.chat_menu_controller import ChatMenuController
+
 from controller.menus.chat_filter_controller import ChatFilterController
+from controller.menus.chat_item_controller import ChatItemController
+from controller.menus.chat_menu_controller import ChatMenuController
+from globals import data_store, resources
+from globals.paths import MENSAJES_DESTACADOS_FILE
 from servicios.estadisticas_manager import EstadisticasManager
+from setup import player, reader
+from ui.chat_ui import ChatPanel
 from ui.menus.chat_item_menu import ChatItemMenu
 from ui.show_comment import ShowCommentDialog
-from controller.menus.chat_item_controller import ChatItemController
 from utils.funciones import escribirJsonLista, extractUser
-from globals.paths import MENSAJES_DESTACADOS_FILE
+
 
 class ChatController:
-    def __init__(self, main_controller, frame, plataforma, servicio=None, chat_dialog=None):
+    def __init__(
+        self, main_controller, frame, plataforma, servicio=None, chat_dialog=None
+    ):
         self.main_controller = main_controller
         self.frame = frame
         self.servicio = servicio
@@ -28,8 +33,10 @@ class ChatController:
         self.ui = ChatPanel(parent, self.plataforma)
         self.ui.Layout()
         self.ui.actualizar_filtro_eventos = self.actualizar_filtro_eventos
-        self.menu_opciones_controller = ChatMenuController(self.ui, self.plataforma, self, self.estadisticas_manager)
-        if self.plataforma == 'TikTok':
+        self.menu_opciones_controller = ChatMenuController(
+            self.ui, self.plataforma, self, self.estadisticas_manager
+        )
+        if self.plataforma == "TikTok":
             self.menu_filter_controller = ChatFilterController(self)
         self._bind_events()
         self.actualizar_estado_boton_eliminar()
@@ -38,27 +45,40 @@ class ChatController:
         self.ui.button_mensaje_detener.Bind(wx.EVT_BUTTON, self.on_cerrar_chat)
         self.ui.boton_eliminar.Bind(wx.EVT_BUTTON, self.on_eliminar_pestaña)
         self.ui.boton_opciones.Bind(wx.EVT_BUTTON, self.on_opciones_btn)
-        if self.plataforma == 'TikTok' and hasattr(self.ui, 'boton_filtrar'):
+        if self.plataforma == "TikTok" and hasattr(self.ui, "boton_filtrar"):
             self.ui.boton_filtrar.Bind(wx.EVT_BUTTON, self.on_filter_btn)
 
         list_boxes = []
-        if self.plataforma == 'La sala de juegos':
-            if data_store.config['categorias'][0]: list_boxes.append(self.ui.list_box_general)
-            if data_store.config['categorias'][2]: list_boxes.append(self.ui.list_box_miembros)
-        elif self.plataforma == 'TikTok':
-            if data_store.config['categorias'][0]: list_boxes.append(self.ui.list_box_general)
-            if data_store.config['categorias'][1]: list_boxes.append(self.ui.list_box_eventos)
-            if data_store.config['categorias'][2]: list_boxes.append(self.ui.list_box_miembros)
-            if data_store.config['categorias'][3]: list_boxes.append(self.ui.list_box_donaciones)
+        if self.plataforma == "La sala de juegos":
+            if data_store.config["categorias"][0]:
+                list_boxes.append(self.ui.list_box_general)
+            if data_store.config["categorias"][2]:
+                list_boxes.append(self.ui.list_box_miembros)
+        elif self.plataforma == "TikTok":
+            if data_store.config["categorias"][0]:
+                list_boxes.append(self.ui.list_box_general)
+            if data_store.config["categorias"][1]:
+                list_boxes.append(self.ui.list_box_eventos)
+            if data_store.config["categorias"][2]:
+                list_boxes.append(self.ui.list_box_miembros)
+            if data_store.config["categorias"][3]:
+                list_boxes.append(self.ui.list_box_donaciones)
         else:
-            if data_store.config['categorias'][0]: list_boxes.append(self.ui.list_box_general)
-            if data_store.config['categorias'][1]: list_boxes.append(self.ui.list_box_eventos)
-            if data_store.config['categorias'][2]: list_boxes.append(self.ui.list_box_miembros)
-            if data_store.config['categorias'][3]: list_boxes.append(self.ui.list_box_donaciones)
-            if data_store.config['categorias'][4]: list_boxes.append(self.ui.list_box_moderadores)
-            if data_store.config['categorias'][5]: list_boxes.append(self.ui.list_box_verificados)
-        if hasattr(self.ui, 'list_box_favoritos'):
-            if data_store.config['categorias'][6]: list_boxes.append(self.ui.list_box_favoritos)
+            if data_store.config["categorias"][0]:
+                list_boxes.append(self.ui.list_box_general)
+            if data_store.config["categorias"][1]:
+                list_boxes.append(self.ui.list_box_eventos)
+            if data_store.config["categorias"][2]:
+                list_boxes.append(self.ui.list_box_miembros)
+            if data_store.config["categorias"][3]:
+                list_boxes.append(self.ui.list_box_donaciones)
+            if data_store.config["categorias"][4]:
+                list_boxes.append(self.ui.list_box_moderadores)
+            if data_store.config["categorias"][5]:
+                list_boxes.append(self.ui.list_box_verificados)
+        if hasattr(self.ui, "list_box_favoritos"):
+            if data_store.config["categorias"][6]:
+                list_boxes.append(self.ui.list_box_favoritos)
 
         for lb in list_boxes:
             lb.Bind(wx.EVT_CONTEXT_MENU, self.on_context_menu)
@@ -75,7 +95,8 @@ class ChatController:
 
     def on_eliminar_pestaña(self, event):
         page_index = self.ui.treebook.GetSelection()
-        if page_index == wx.NOT_FOUND: return
+        if page_index == wx.NOT_FOUND:
+            return
         self.ui.treebook.DeletePage(page_index)
         if self.ui.treebook.GetPageCount() == 0:
             self.chat_dialog.close_chat_session(self)
@@ -98,8 +119,9 @@ class ChatController:
 
     def on_context_menu(self, event):
         list_box = event.GetEventObject()
-        if list_box.GetSelection() == wx.NOT_FOUND: return
-        
+        if list_box.GetSelection() == wx.NOT_FOUND:
+            return
+
         menu = ChatItemMenu(self.ui)
         ChatItemController(menu, list_box, self)
         self.ui.PopupMenu(menu.menu)
@@ -120,42 +142,50 @@ class ChatController:
             reader.leer_interfaz(list_box.GetString(list_box.GetSelection()))
 
     def agregar_mensaje_general(self, mensaje):
-        if hasattr(self.ui, 'list_box_general'):
+        if hasattr(self.ui, "list_box_general"):
             self.ui.list_box_general.Append(mensaje)
 
     def agregar_mensaje_miembro(self, mensaje):
-        if hasattr(self.ui, 'list_box_miembros'):
+        if hasattr(self.ui, "list_box_miembros"):
             self.ui.list_box_miembros.Append(mensaje)
 
     def agregar_mensaje_donacion(self, mensaje):
-        if hasattr(self.ui, 'list_box_donaciones'):
+        if hasattr(self.ui, "list_box_donaciones"):
             self.ui.list_box_donaciones.Append(mensaje)
 
     def agregar_mensaje_moderador(self, mensaje):
-        if hasattr(self.ui, 'list_box_moderadores'):
+        if hasattr(self.ui, "list_box_moderadores"):
             self.ui.list_box_moderadores.Append(mensaje)
 
     def agregar_mensaje_verificado(self, mensaje):
-        if hasattr(self.ui, 'list_box_verificados'):
+        if hasattr(self.ui, "list_box_verificados"):
             self.ui.list_box_verificados.Append(mensaje)
 
     def agregar_mensaje_evento(self, mensaje, tipo=None):
-        if hasattr(self.ui, 'list_box_eventos'):
-            if self.plataforma=='TikTok':
+        if hasattr(self.ui, "list_box_eventos"):
+            if self.plataforma == "TikTok":
                 self.todos_los_eventos.append((mensaje, tipo))
-                if self.filtro_eventos == "todos" or self.filtro_eventos == tipo: self.ui.list_box_eventos.Append(mensaje)
-            else: self.ui.list_box_eventos.Append(f"{tipo}: {mensaje}")
+                if self.filtro_eventos == "todos" or self.filtro_eventos == tipo:
+                    self.ui.list_box_eventos.Append(mensaje)
+            else:
+                self.ui.list_box_eventos.Append(f"{tipo}: {mensaje}")
 
     def mostrar_dialogo(self):
         return self.ui
 
     def notificar_error(self, mensaje_error):
-        wx.MessageBox(_("Error al conectar con el chat: ") + str(mensaje_error), _("Error"), wx.OK | wx.ICON_ERROR)
+        wx.MessageBox(
+            _("Error al conectar con el chat: ") + str(mensaje_error),
+            _("Error"),
+            wx.OK | wx.ICON_ERROR,
+        )
         if self.chat_dialog:
             self.chat_dialog.close_chat_session(self)
 
     def buscar_mensajes(self):
-        dialogo = wx.TextEntryDialog(self.ui, _("Introduce el criterio de búsqueda"), _("Buscar mensajes"))
+        dialogo = wx.TextEntryDialog(
+            self.ui, _("Introduce el criterio de búsqueda"), _("Buscar mensajes")
+        )
         dialogo.Raise()
         if dialogo.ShowModal() == wx.ID_OK:
             criterio = dialogo.GetValue()
@@ -165,30 +195,51 @@ class ChatController:
 
             resultados = []
             list_boxes = []
-            if hasattr(self.ui, 'list_box_general'): list_boxes.append(self.ui.list_box_general)
-            if hasattr(self.ui, 'list_box_eventos'): list_boxes.append(self.ui.list_box_eventos)
-            if hasattr(self.ui, 'list_box_miembros'): list_boxes.append(self.ui.list_box_miembros)
-            if hasattr(self.ui, 'list_box_donaciones'): list_boxes.append(self.ui.list_box_donaciones)
-            if hasattr(self.ui, 'list_box_moderadores'): list_boxes.append(self.ui.list_box_moderadores)
-            if hasattr(self.ui, 'list_box_verificados'): list_boxes.append(self.ui.list_box_verificados)
+            if hasattr(self.ui, "list_box_general"):
+                list_boxes.append(self.ui.list_box_general)
+            if hasattr(self.ui, "list_box_eventos"):
+                list_boxes.append(self.ui.list_box_eventos)
+            if hasattr(self.ui, "list_box_miembros"):
+                list_boxes.append(self.ui.list_box_miembros)
+            if hasattr(self.ui, "list_box_donaciones"):
+                list_boxes.append(self.ui.list_box_donaciones)
+            if hasattr(self.ui, "list_box_moderadores"):
+                list_boxes.append(self.ui.list_box_moderadores)
+            if hasattr(self.ui, "list_box_verificados"):
+                list_boxes.append(self.ui.list_box_verificados)
 
             for lb in list_boxes:
                 for i in range(lb.GetCount()):
                     mensaje = lb.GetString(i)
-                    if criterio.lower() in mensaje.lower(): resultados.append(mensaje)
-            
+                    if criterio.lower() in mensaje.lower():
+                        resultados.append(mensaje)
+
             if resultados:
-                list_box, page_index= self.ui.create_page_with_listbox(self.ui.treebook, name=criterio)
+                list_box, page_index = self.ui.create_page_with_listbox(
+                    self.ui.treebook, name=criterio
+                )
                 list_box.Set(resultados)
                 self.ui.treebook.SetSelection(page_index)
                 self.actualizar_estado_boton_eliminar()
-                if data_store.config['sonidos'] and data_store.config['listasonidos'][8]: player.play(resources.rutasonidos[8])
-            else: wx.MessageBox(_("No se encontraron mensajes que coincidan con el criterio de búsqueda."), _("Búsqueda sin resultados"), wx.OK | wx.ICON_INFORMATION)
+                if (
+                    data_store.config["sonidos"]
+                    and data_store.config["listasonidos"][8]
+                ):
+                    player.play(resources.rutasonidos[8])
+            else:
+                wx.MessageBox(
+                    _(
+                        "No se encontraron mensajes que coincidan con el criterio de búsqueda."
+                    ),
+                    _("Búsqueda sin resultados"),
+                    wx.OK | wx.ICON_INFORMATION,
+                )
         dialogo.Destroy()
 
     @property
     def current_listbox(self):
-        if not self.ui: return None
+        if not self.ui:
+            return None
         page = self.ui.treebook.GetCurrentPage()
         if not page:
             return None
@@ -198,10 +249,12 @@ class ChatController:
         return None
 
     def avanzarCategorias(self):
-        if not self.ui: return
+        if not self.ui:
+            return
         current_selection = self.ui.treebook.GetSelection()
         page_count = self.ui.treebook.GetPageCount()
-        if page_count == 0: return
+        if page_count == 0:
+            return
         next_selection = current_selection + 1
         if next_selection >= page_count:
             next_selection = 0
@@ -209,10 +262,12 @@ class ChatController:
         reader.leer_interfaz(self.ui.treebook.GetPageText(next_selection))
 
     def retrocederCategorias(self):
-        if not self.ui: return
+        if not self.ui:
+            return
         current_selection = self.ui.treebook.GetSelection()
         page_count = self.ui.treebook.GetPageCount()
-        if page_count == 0: return
+        if page_count == 0:
+            return
         next_selection = current_selection - 1
         if next_selection < 0:
             next_selection = page_count - 1
@@ -221,7 +276,8 @@ class ChatController:
 
     def elementoAnterior(self):
         listbox = self.current_listbox
-        if not listbox or listbox.GetCount() == 0: return
+        if not listbox or listbox.GetCount() == 0:
+            return
         selection = listbox.GetSelection()
         if selection == wx.NOT_FOUND:
             selection = 0
@@ -233,7 +289,8 @@ class ChatController:
 
     def elementoSiguiente(self):
         listbox = self.current_listbox
-        if not listbox or listbox.GetCount() == 0: return
+        if not listbox or listbox.GetCount() == 0:
+            return
         selection = listbox.GetSelection()
         if selection == wx.NOT_FOUND:
             selection = 0
@@ -255,14 +312,16 @@ class ChatController:
 
     def elemento_inicial(self):
         listbox = self.current_listbox
-        if not listbox or listbox.GetCount() == 0: return
+        if not listbox or listbox.GetCount() == 0:
+            return
         listbox.SetSelection(0)
         self.reproducirMsg()
         reader.leer_interfaz(listbox.GetString(0))
 
     def elemento_final(self):
         listbox = self.current_listbox
-        if not listbox or listbox.GetCount() == 0: return
+        if not listbox or listbox.GetCount() == 0:
+            return
         last_index = listbox.GetCount() - 1
         listbox.SetSelection(last_index)
         self.reproducirMsg()
@@ -270,14 +329,16 @@ class ChatController:
 
     def copiarMensajeActual(self):
         listbox = self.current_listbox
-        if not listbox or listbox.GetSelection() == wx.NOT_FOUND: return
+        if not listbox or listbox.GetSelection() == wx.NOT_FOUND:
+            return
         selected_text = listbox.GetString(listbox.GetSelection())
         copy(selected_text)
         reader.leer_aviso(_("Mensaje copiado"))
 
     def mostrar_mensaje_actual(self):
         listbox = self.current_listbox
-        if not listbox or listbox.GetSelection() == wx.NOT_FOUND: return
+        if not listbox or listbox.GetSelection() == wx.NOT_FOUND:
+            return
         selected_text = listbox.GetString(listbox.GetSelection())
         dialog = ShowCommentDialog(self.ui, selected_text)
         dialog.ShowModal()
@@ -288,8 +349,10 @@ class ChatController:
         if not listbox or listbox.GetSelection() == wx.NOT_FOUND:
             return
         mensaje = listbox.GetString(listbox.GetSelection())
-        if not hasattr(self.ui, 'list_box_favoritos'):
-            self.ui.list_box_favoritos, self.ui.page_index_favoritos = self.ui.create_page_with_listbox(self.ui.treebook, _(u"Favoritos"))
+        if not hasattr(self.ui, "list_box_favoritos"):
+            self.ui.list_box_favoritos, self.ui.page_index_favoritos = (
+                self.ui.create_page_with_listbox(self.ui.treebook, _("Favoritos"))
+            )
             self.ui.list_box_favoritos.Bind(wx.EVT_CONTEXT_MENU, self.on_context_menu)
             self.ui.list_box_favoritos.Bind(wx.EVT_KEY_UP, self.on_listbox_keyup)
         if mensaje in self.ui.list_box_favoritos.GetStrings():
@@ -300,32 +363,42 @@ class ChatController:
 
     def archivar_mensaje(self):
         listbox = self.current_listbox
-        if not listbox or listbox.GetSelection() == wx.NOT_FOUND: return
-        
-        mensaje = listbox.GetString(listbox.GetSelection())
-        if not mensaje: return # Evitar archivar mensajes vacíos
+        if not listbox or listbox.GetSelection() == wx.NOT_FOUND:
+            return
 
-        main_frame = self.frame  # ventana principal; self.ui.GetParent() daría el notebook del ChatDialog
+        mensaje = listbox.GetString(listbox.GetSelection())
+        if not mensaje:
+            return  # Evitar archivar mensajes vacíos
+
+        main_frame = (
+            self.frame
+        )  # ventana principal; self.ui.GetParent() daría el notebook del ChatDialog
         list_mensajes = main_frame.list_mensajes
 
-        if list_mensajes.GetCount() > 0 and list_mensajes.GetStrings()[0] == _("Tus mensajes archivados aparecerán aquí"):
+        if list_mensajes.GetCount() > 0 and list_mensajes.GetStrings()[0] == _(
+            "Tus mensajes archivados aparecerán aquí"
+        ):
             list_mensajes.Delete(0)
-        
-        ya_archivado = any(mensaje == d.get('mensaje', '') for d in data_store.mensajes_destacados)
+
+        ya_archivado = any(
+            mensaje == d.get("mensaje", "") for d in data_store.mensajes_destacados
+        )
         if not ya_archivado:
             # Determinar el título
-            if self.plataforma == 'TikTok':
+            if self.plataforma == "TikTok":
                 titulo = extractUser(self.servicio.url) or self.servicio.url
             else:
                 titulo = self.ui.label_dialog.GetLabelText()
 
             # Añadir a la lista de la UI y al almacenamiento de datos
             list_mensajes.Append(f"{mensaje}: {titulo}")
-            data_store.mensajes_destacados.append({'mensaje': mensaje, 'titulo': titulo})
-            
+            data_store.mensajes_destacados.append(
+                {"mensaje": mensaje, "titulo": titulo}
+            )
+
             escribirJsonLista(MENSAJES_DESTACADOS_FILE, data_store.mensajes_destacados)
             reader.leer_aviso(_("El mensaje ha sido archivado correctamente."))
-        else: 
+        else:
             reader.leer_aviso(_("Este mensaje ya está en la lista de archivados."))
 
     def borrar_pagina_actual(self):
@@ -341,13 +414,24 @@ class ChatController:
         self.actualizar_estado_boton_eliminar()
 
     def toggle_lectura_automatica(self):
-        if data_store.config['reader']:
+        if data_store.config["reader"]:
             reader.silence()
-            data_store.config['reader'] = False
-        else: data_store.config['reader'] = True
-        reader.leer_aviso(_("Lectura automática activada.") if data_store.config['reader'] else _("Lectura automática desactivada."))
+            data_store.config["reader"] = False
+        else:
+            data_store.config["reader"] = True
+        reader.leer_aviso(
+            _("Lectura automática activada.")
+            if data_store.config["reader"]
+            else _("Lectura automática desactivada.")
+        )
 
     def toggle_sounds(self):
-        if data_store.config['sonidos']: data_store.config['sonidos'] = False
-        else: data_store.config['sonidos'] = True
-        reader.leer_aviso(_("sonidos activados.") if data_store.config['sonidos'] else _("sonidos desactivados."))
+        if data_store.config["sonidos"]:
+            data_store.config["sonidos"] = False
+        else:
+            data_store.config["sonidos"] = True
+        reader.leer_aviso(
+            _("sonidos activados.")
+            if data_store.config["sonidos"]
+            else _("sonidos desactivados.")
+        )

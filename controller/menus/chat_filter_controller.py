@@ -1,5 +1,5 @@
-import wx
 from ui.menus.chat_filter_menu import ChatFilterMenu
+
 
 class ChatFilterController:
     def __init__(self, parent_controller):
