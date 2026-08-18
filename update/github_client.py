@@ -133,7 +133,7 @@ def _parse_release(release: dict) -> ReleaseInfo | None:
     version = tag[1:] if tag[:1].lower() == "v" else tag
     try:
         Version(version)
-    except InvalidVersion, TypeError:
+    except (InvalidVersion, TypeError):
         logger.debug("Release '%s' has an invalid semantic version, skipping", tag)
         return None
 
@@ -262,7 +262,7 @@ def _select_highest_release(releases: list[dict]) -> ReleaseInfo | None:
             continue
         try:
             candidates.append((Version(info.version), info))
-        except InvalidVersion, TypeError:
+        except (InvalidVersion, TypeError):
             continue
     return (
         max(candidates, key=lambda candidate: candidate[0])[1] if candidates else None

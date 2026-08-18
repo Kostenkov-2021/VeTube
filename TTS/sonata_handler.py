@@ -200,7 +200,7 @@ class piperSpeak:
                     ruta = proc.info.get("exe")
                     if ruta and os.path.normcase(ruta) == ruta_propia:
                         proc.kill()
-                except psutil.NoSuchProcess, psutil.AccessDenied:
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
         except:
             pass

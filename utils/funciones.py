@@ -34,7 +34,7 @@ def leerJsonLista(arch):
         try:
             with open(arch) as file:
                 return json.load(file)
-        except json.JSONDecodeError, ValueError, OSError:
+        except (json.JSONDecodeError, ValueError, OSError):
             return []
     else:
         return []

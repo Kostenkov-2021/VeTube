@@ -29,7 +29,7 @@ def _is_process_running(name: str) -> bool:
             timeout=5,
         )
         return name.lower() in result.stdout.lower()
-    except subprocess.SubprocessError, OSError:
+    except (subprocess.SubprocessError, OSError):
         logger.debug("Failed to check process '%s'", name, exc_info=True)
         return False
 
