@@ -1,17 +1,17 @@
 """Tests for update.backup module."""
 
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from update.backup import (
-    create_backup,
-    restore_backup,
-    cleanup_backup,
-    check_disk_space,
     InsufficientSpaceError,
     _dir_size,
+    check_disk_space,
+    cleanup_backup,
+    create_backup,
+    restore_backup,
 )
 
 

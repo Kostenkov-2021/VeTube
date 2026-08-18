@@ -1,11 +1,13 @@
 __pycache__/
 *.pyc
+.coverage
 *.onnx
 *.onnx.json
 voices/*
 voices/*/*.onnx
 voices/*/*.onnx.json
 data.json
+languages.json
 venv/
 favoritos.json
 keys.txt
@@ -20,6 +22,7 @@ src/vetube.egg-info/
 # Local tool state
 .codegraph/
 .atl/
+.pi/
 
 # Scratch / temp files
 @AutomationLog.txt

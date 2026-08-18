@@ -1,23 +1,33 @@
-import os
 import asyncio
-import traceback
+import os
+import shutil
 import tarfile
 import tempfile
-import shutil
+import traceback
 from logging import getLogger
 from pathlib import Path
-from .base_downloader import BaseDownloader
-from setup import network
+
 from globals.paths import VOICES_DIR
+from utils.network import network_manager as network
+
+from .base_downloader import BaseDownloader
 
 logger = getLogger(__name__)
 
-PIPER_VOICE_LIST_URL = "https://huggingface.co/rhasspy/piper-voices/raw/v1.0.0/voices.json"
-PIPER_VOICE_DOWNLOAD_URL_PREFIX = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0"
+PIPER_VOICE_LIST_URL = (
+    "https://huggingface.co/rhasspy/piper-voices/raw/v1.0.0/voices.json"
+)
+PIPER_VOICE_DOWNLOAD_URL_PREFIX = (
+    "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0"
+)
 PIPER_SAMPLES_URL_PREFIX = "https://rhasspy.github.io/piper-samples/samples"
 # URLs para variantes rápidas (RT)
-RT_VOICE_LIST_URL = "https://huggingface.co/datasets/mush42/piper-rt/raw/main/voices.json"
-RT_VOICE_DOWNLOAD_URL_PREFIX = "https://huggingface.co/datasets/mush42/piper-rt/resolve/main"
+RT_VOICE_LIST_URL = (
+    "https://huggingface.co/datasets/mush42/piper-rt/raw/main/voices.json"
+)
+RT_VOICE_DOWNLOAD_URL_PREFIX = (
+    "https://huggingface.co/datasets/mush42/piper-rt/resolve/main"
+)
 
 # Ficheros propios de cada variante. Las dos se descargan en la MISMA carpeta
 # (voices/voice-<clave>), así que al instalar una hay que retirar la otra: si
@@ -47,7 +57,9 @@ def _limpiar_variante(dest_dir, quitar_rt):
                     # ha conseguido provocar (el puente sonata no retiene el
                     # fichero tras LoadVoice), pero un antivirus o un atributo
                     # de solo lectura bastarían. Al menos que quede registrado.
-                    logger.exception("No se ha podido borrar %s de %s", nombre, dest_dir)
+                    logger.exception(
+                        "No se ha podido borrar %s de %s", nombre, dest_dir
+                    )
     except OSError:
         # print_exc iba a una salida que la aplicación compilada no tiene.
         logger.exception("No se ha podido repasar la carpeta de voz %s", dest_dir)
@@ -78,15 +90,16 @@ def _extraer_plano(tar_path, destino):
             os.makedirs(destino, exist_ok=True)
     raise ultimo_error
 
+
 class PiperManager(BaseDownloader):
     def __init__(self):
         super().__init__()
         self.voices_data = {}
-        self.rt_mapping = {} # Mapeo de { "nombre_base": "clave_rt" }
+        self.rt_mapping = {}  # Mapeo de { "nombre_base": "clave_rt" }
         # False mientras no se haya podido leer el catálogo RT: la interfaz lo
         # dice, para que una columna vacía no se confunda con «no hay variante».
         self.rt_disponible = False
-        self.languages = {} # { "code": { "name_native": "...", "voices": [] } }
+        self.languages = {}  # { "code": { "name_native": "...", "voices": [] } }
 
     async def cargar_catalogo(self):
         """Descarga y procesa el catálogo de voces estándar y RT."""
@@ -94,7 +107,10 @@ class PiperManager(BaseDownloader):
             # Descargamos catálogo estándar
             res_std = await network.client.get(PIPER_VOICE_LIST_URL)
             if res_std.status_code != 200:
-                return {'success': False, 'data': f"Error HTTP {res_std.status_code} en catálogo estándar"}
+                return {
+                    "success": False,
+                    "data": f"Error HTTP {res_std.status_code} en catálogo estándar",
+                }
 
             self.voices_data = res_std.json()
 
@@ -109,54 +125,61 @@ class PiperManager(BaseDownloader):
                 if res_rt.status_code == 200:
                     rt_data = res_rt.json()
                     # Mapeamos el 'base' (ej: es_ES-carlota-medium) con la clave del JSON RT
-                    self.rt_mapping = {v['base']: rt_key for rt_key, v in rt_data.items() if 'base' in v}
+                    self.rt_mapping = {
+                        v["base"]: rt_key
+                        for rt_key, v in rt_data.items()
+                        if "base" in v
+                    }
                     self.rt_disponible = True
                 else:
-                    logger.warning("El catálogo de voces RT respondió HTTP %s", res_rt.status_code)
+                    logger.warning(
+                        "El catálogo de voces RT respondió HTTP %s", res_rt.status_code
+                    )
             except Exception:
                 logger.exception("No se pudo descargar el catálogo de voces RT")
 
             self._procesar_idiomas()
-            return {'success': True}
+            return {"success": True}
         except Exception as e:
             traceback.print_exc()
-            return {'success': False, 'data': str(e)}
+            return {"success": False, "data": str(e)}
 
     def _procesar_idiomas(self):
         """Organiza las voces por idioma para facilitar el filtrado en la UI."""
         self.languages = {}
         for key, data in self.voices_data.items():
-            lang_info = data.get('language', {})
-            lang_code = lang_info.get('code')
-            if not lang_code: continue
+            lang_info = data.get("language", {})
+            lang_code = lang_info.get("code")
+            if not lang_code:
+                continue
 
             if lang_code not in self.languages:
                 self.languages[lang_code] = {
-                    'name_native': lang_info.get('name_native', lang_code),
-                    'name_english': lang_info.get('name_english', ''),
-                    'country': lang_info.get('country_english', ''),
-                    'voices': []
+                    "name_native": lang_info.get("name_native", lang_code),
+                    "name_english": lang_info.get("name_english", ""),
+                    "country": lang_info.get("country_english", ""),
+                    "voices": [],
                 }
 
             # Añadimos la voz a este idioma
             voice_entry = {
-                'key': key,
-                'name': data.get('name', ''),
-                'quality': data.get('quality', ''),
-                'files': data.get('files', {}),
-                'num_speakers': data.get('num_speakers', 1),
-                'sample_url': self._generar_sample_url(data),
-                'has_rt': key in self.rt_mapping
+                "key": key,
+                "name": data.get("name", ""),
+                "quality": data.get("quality", ""),
+                "files": data.get("files", {}),
+                "num_speakers": data.get("num_speakers", 1),
+                "sample_url": self._generar_sample_url(data),
+                "has_rt": key in self.rt_mapping,
             }
-            self.languages[lang_code]['voices'].append(voice_entry)
+            self.languages[lang_code]["voices"].append(voice_entry)
 
     def _generar_sample_url(self, voice_data):
         """Genera la URL de la muestra de audio basándose en la estructura de Piper."""
         try:
-            lang_family = voice_data['language']['family'].lower()
-            lang_code = voice_data['language']['code']
-            voice_name = voice_data['name']
-            quality = voice_data['quality']
+            lang_family = voice_data["language"]["family"].lower()
+            lang_code = voice_data["language"]["code"]
+            voice_name = voice_data["name"]
+            quality = voice_data["quality"]
             # Por defecto usamos el speaker 0 para la muestra
             return f"{PIPER_SAMPLES_URL_PREFIX}/{lang_family}/{lang_code}/{voice_name}/{quality}/speaker_0.mp3"
         except:
@@ -167,23 +190,23 @@ class PiperManager(BaseDownloader):
         # Ejemplo: "Español (Argentina)"
         lista = []
         for code, info in self.languages.items():
-            nombre = info['name_native'].capitalize()
-            pais = info['country']
+            nombre = info["name_native"].capitalize()
+            pais = info["country"]
             if pais:
                 texto = f"{nombre} ({pais})"
             else:
                 texto = nombre
-            lista.append({'code': code, 'display': texto})
-        return sorted(lista, key=lambda x: x['display'])
+            lista.append({"code": code, "display": texto})
+        return sorted(lista, key=lambda x: x["display"])
 
     def get_voces_por_idiomas(self, codigos_idioma):
         """Retorna todas las voces de los idiomas seleccionados."""
         voces = []
         for code in codigos_idioma:
             if code in self.languages:
-                for v in self.languages[code]['voices']:
+                for v in self.languages[code]["voices"]:
                     v_info = v.copy()
-                    v_info['lang_code'] = code
+                    v_info["lang_code"] = code
                     voces.append(v_info)
         return voces
 
@@ -192,10 +215,10 @@ class PiperManager(BaseDownloader):
         Descarga el .onnx y el .json de una voz específica.
         """
         if voice_key not in self.voices_data:
-            return {'success': False, 'data': 'Voz no encontrada en el catálogo.'}
+            return {"success": False, "data": "Voz no encontrada en el catálogo."}
 
         data = self.voices_data[voice_key]
-        archivos = data.get('files', {})
+        archivos = data.get("files", {})
         dest_dir = str(VOICES_DIR / f"voice-{voice_key}")
         self.ensure_dir(dest_dir)
 
@@ -216,13 +239,13 @@ class PiperManager(BaseDownloader):
             tasks.append(self.download_file(url, local_path + ".part", cb))
 
         results = await asyncio.gather(*tasks)
-        if not all(r['success'] for r in results):
+        if not all(r["success"] for r in results):
             for parte, _final in partes:
                 try:
                     os.remove(parte)
                 except OSError:
                     pass
-            return next(r for r in results if not r['success'])
+            return next(r for r in results if not r["success"])
         # El renombrado va dentro del try: un fallo aquí (fichero retenido por
         # el antivirus, voz que se está reinstalando) reventaba la corrutina y
         # dejaba el descargador congelado sin decir nada.
@@ -233,9 +256,9 @@ class PiperManager(BaseDownloader):
             _limpiar_variante(dest_dir, quitar_rt=True)
         except Exception as e:
             traceback.print_exc()
-            return {'success': False, 'data': str(e)}
+            return {"success": False, "data": str(e)}
 
-        return {'success': True, 'data': dest_dir}
+        return {"success": True, "data": dest_dir}
 
     async def instalar_voz_rt(self, voice_key, progress_callback=None):
         """
@@ -243,7 +266,7 @@ class PiperManager(BaseDownloader):
         """
         rt_key = self.rt_mapping.get(voice_key)
         if not rt_key:
-            return {'success': False, 'data': 'No existe variante RT para esta voz.'}
+            return {"success": False, "data": "No existe variante RT para esta voz."}
 
         url = f"{RT_VOICE_DOWNLOAD_URL_PREFIX}/{rt_key}.tar.gz"
         temp_dir = tempfile.mkdtemp()
@@ -252,7 +275,8 @@ class PiperManager(BaseDownloader):
         try:
             # Descargar el comprimido
             res = await self.download_file(url, tar_path, progress_callback)
-            if not res['success']: return res
+            if not res["success"]:
+                return res
 
             # Se extrae a un directorio de paso, NO a la carpeta de la voz: si
             # la extracción se corta a media faena (apagón, disco lleno, cierre
@@ -291,9 +315,9 @@ class PiperManager(BaseDownloader):
 
             # Esta carpeta pudo tener antes la variante estándar de la misma voz.
             _limpiar_variante(dest_dir, quitar_rt=False)
-            return {'success': True, 'data': dest_dir}
+            return {"success": True, "data": dest_dir}
         except Exception as e:
             traceback.print_exc()
-            return {'success': False, 'data': str(e)}
+            return {"success": False, "data": str(e)}
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)

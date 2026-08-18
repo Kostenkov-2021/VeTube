@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 import wx
+
 from . import utils
 from .channel import get_channel, set_channel
 
@@ -30,15 +30,11 @@ def channel_selection_dialog() -> bool:
     dlg = wx.Dialog(None, title=_("Canal de actualizaciones"), size=(420, 260))
     vbox = wx.BoxSizer(wx.VERTICAL)
 
-    header = wx.StaticText(
-        dlg, label=_("Elige qué actualizaciones quieres recibir:")
-    )
+    header = wx.StaticText(dlg, label=_("Elige qué actualizaciones quieres recibir:"))
     header.SetFont(header.GetFont().Bold())
     vbox.Add(header, 0, wx.ALL | wx.EXPAND, 12)
 
-    radio_stable = wx.RadioButton(
-        dlg, label=_("Estable"), style=wx.RB_GROUP
-    )
+    radio_stable = wx.RadioButton(dlg, label=_("Estable"), style=wx.RB_GROUP)
     vbox.Add(radio_stable, 0, wx.LEFT | wx.RIGHT, 24)
     desc_stable = wx.StaticText(
         dlg, label=_("Solo versiones oficiales. Lo recomendado para la mayoría.")
@@ -50,7 +46,9 @@ def channel_selection_dialog() -> bool:
     vbox.Add(radio_beta, 0, wx.LEFT | wx.RIGHT, 24)
     desc_beta = wx.StaticText(
         dlg,
-        label=_("Incluye versiones previas y novedades tempranas. Puede ser inestable."),
+        label=_(
+            "Incluye versiones previas y novedades tempranas. Puede ser inestable."
+        ),
     )
     desc_beta.SetForegroundColour(wx.Colour(100, 100, 100))
     vbox.Add(desc_beta, 0, wx.LEFT | wx.BOTTOM, 24)
@@ -159,8 +157,7 @@ def no_updates_dialog(version: str) -> None:
         ch = _nombre_canal()
         wx.MessageDialog(
             None,
-            _("Ya tienes la última versión (v%s), canal %s.")
-            % (version, ch),
+            _("Ya tienes la última versión (v%s), canal %s.") % (version, ch),
             _("No hay actualizaciones"),
             style=wx.OK | wx.ICON_INFORMATION,
         ).ShowModal()

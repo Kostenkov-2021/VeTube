@@ -4,7 +4,6 @@ import logging
 import os
 import shutil
 from pathlib import Path
-from typing import Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ def _dir_size(path: str) -> int:
     return total
 
 
-def check_disk_space(install_dir: str) -> Tuple[bool, int]:
+def check_disk_space(install_dir: str) -> tuple[bool, int]:
     """Check if there is enough disk space for a backup.
 
     Requires free space >= 2x the install directory size (one copy for the

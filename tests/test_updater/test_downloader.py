@@ -1,6 +1,6 @@
 """Tests for update.downloader module."""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -62,6 +62,7 @@ class TestDownload:
     @patch("update.downloader.httpx.Client")
     def test_http_error_propagated(self, mock_client_cls, tmp_path):
         import httpx
+
         dest = str(tmp_path / "out.zip")
 
         mock_response = MagicMock()

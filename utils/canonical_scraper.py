@@ -1,7 +1,9 @@
-import httpx
 import re
-import asyncio
-from setup import network
+
+import httpx
+
+from utils.network import network_manager as network
+
 
 async def get_simplified_tiktok_live_url(url):
     """
@@ -11,16 +13,16 @@ async def get_simplified_tiktok_live_url(url):
     try:
         # Usamos un User-Agent de navegador real para evitar bloqueos (403 Forbidden)
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
-        
+
         # Usamos el cliente global de setup.network.client pero con headers personalizados
         response = await network.client.get(url, follow_redirects=True, headers=headers)
         response.raise_for_status()
         final_url = str(response.url)
 
         # Extract username from the URL
-        match = re.search(r'@([^/]+)', final_url)
+        match = re.search(r"@([^/]+)", final_url)
         if match:
             username = match.group(1)
             simplified_url = f"https://www.tiktok.com/@{username}/live"
@@ -32,7 +34,7 @@ async def get_simplified_tiktok_live_url(url):
     except httpx.HTTPStatusError as e:
         # Try to extract the URL from the response
         failed_url = str(e.response.url)
-        match = re.search(r'@([^/]+)', failed_url)
+        match = re.search(r"@([^/]+)", failed_url)
         if match:
             username = match.group(1)
             simplified_url = f"https://www.tiktok.com/@{username}/live"

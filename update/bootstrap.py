@@ -3,7 +3,6 @@
 import logging
 import subprocess
 import time
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +25,11 @@ def _is_process_running(name: str) -> bool:
             ["tasklist", "/FI", f"IMAGENAME eq {name}", "/NH"],
             capture_output=True,
             text=True,
+            check=False,
             timeout=5,
         )
         return name.lower() in result.stdout.lower()
-    except (subprocess.SubprocessError, OSError):
+    except subprocess.SubprocessError, OSError:
         logger.debug("Failed to check process '%s'", name, exc_info=True)
         return False
 
@@ -60,9 +60,7 @@ def launch_bootstrap(
     import win32con
 
     args = _build_args(pid, source_dir, dest_dir, exe_path)
-    logger.info(
-        "Launching bootstrap: '%s' %s", bootstrap_exe, args
-    )
+    logger.info("Launching bootstrap: '%s' %s", bootstrap_exe, args)
 
     try:
         result = win32api.ShellExecute(
@@ -81,11 +79,17 @@ def launch_bootstrap(
         logger.error("ShellExecute failed with code: %s", result)
         return _EXIT_FAILURE
 
-    logger.info("Bootstrap launched, waiting for completion (timeout=%ds)", _WAIT_TIMEOUT_SECONDS)
+    logger.info(
+        "Bootstrap launched, waiting for completion (timeout=%ds)",
+        _WAIT_TIMEOUT_SECONDS,
+    )
 
     deadline = time.monotonic() + _WAIT_TIMEOUT_SECONDS
     while time.monotonic() < deadline:
-        if not _is_process_running("bootstrap.exe"):
+        if not (
+            _is_process_running("bootstrap.exe")
+            or _is_process_running("bootstrap.next.exe")
+        ):
             logger.info("Bootstrap process completed")
             return _EXIT_SUCCESS
         time.sleep(0.5)

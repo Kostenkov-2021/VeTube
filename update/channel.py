@@ -2,9 +2,8 @@
 
 import logging
 import re
-from typing import List
 
-from utils.fajustes import leerConfiguracion, guardarConfiguracion
+from utils.fajustes import guardarConfiguracion, leerConfiguracion
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,9 @@ def get_channel() -> str:
     configs = leerConfiguracion()
     channel = configs.get("update_channel", DEFAULT_CHANNEL)
     if channel not in VALID_CHANNELS:
-        logger.warning("Invalid channel '%s', falling back to '%s'", channel, DEFAULT_CHANNEL)
+        logger.warning(
+            "Invalid channel '%s', falling back to '%s'", channel, DEFAULT_CHANNEL
+        )
         return DEFAULT_CHANNEL
     return channel
 
@@ -37,14 +38,16 @@ def set_channel(channel: str) -> None:
         ValueError: If channel is not a valid value.
     """
     if channel not in VALID_CHANNELS:
-        raise ValueError(f"Invalid channel '{channel}'. Must be one of {VALID_CHANNELS}")
+        raise ValueError(
+            f"Invalid channel '{channel}'. Must be one of {VALID_CHANNELS}"
+        )
     configs = leerConfiguracion()
     configs["update_channel"] = channel
     guardarConfiguracion(configs)
     logger.info("Update channel set to '%s'", channel)
 
 
-def filter_releases(releases: List[dict], channel: str) -> List[dict]:
+def filter_releases(releases: list[dict], channel: str) -> list[dict]:
     """Filter GitHub releases by channel.
 
     Stable: only releases whose tag matches v* with no prerelease suffix.

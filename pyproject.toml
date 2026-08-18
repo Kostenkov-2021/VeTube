@@ -43,6 +43,8 @@ dev = [
     "cx-freeze>=8.6.4",
     "poethepoet>=0.48.0",
     "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
     "ruff>=0.16.2",
     "ty>=0.0.69",
 ]
@@ -78,6 +80,11 @@ target_name = "VeTube.exe"
 shortcut_name = "VeTube"
 shortcut_dir = "ProgramMenuFolder"
 copyright = "Copyright (C) 2026 VeTube Team"
+
+[[tool.cxfreeze.executables]]
+script = "update/bootstrap_fix.py"
+base = "gui"
+target_name = "bootstrap.exe"
 
 [tool.cxfreeze.build_exe]
 optimize = 2
@@ -155,7 +162,6 @@ bin_excludes = ["api-ms-win-*.dll"]
 include_msvcr = false
 include_files = [
     ["data.json", "data.json"],
-    ["bootstrap.exe", "bootstrap.exe"],
     ["VERSION", "VERSION"],
 
     ["translates/", "translates/"],

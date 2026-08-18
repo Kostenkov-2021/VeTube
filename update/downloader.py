@@ -1,7 +1,7 @@
 """Streaming file downloader with progress reporting."""
 
 import logging
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import httpx
 
@@ -13,7 +13,7 @@ _CHUNK_SIZE = 128 * 1024
 def download(
     url: str,
     dest_path: str,
-    progress_callback: Optional[Callable[[int, int], None]] = None,
+    progress_callback: Callable[[int, int], None] | None = None,
 ) -> str:
     """Download file from URL to dest_path with optional progress reporting.
 

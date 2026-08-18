@@ -3,9 +3,10 @@
 import logging
 import time
 from dataclasses import dataclass
-from typing import Dict, Optional
+from enum import Enum
 
 import httpx
+from packaging.version import InvalidVersion, Version
 
 from update.channel import filter_releases, get_channel
 
@@ -29,28 +30,67 @@ class ReleaseInfo:
     zip_name: str
 
 
+class ReleaseLookupStatus(Enum):
+    """Outcome of querying GitHub for a compatible release."""
+
+    SUCCESS = "success"
+    NO_COMPATIBLE_RELEASE = "no_compatible_release"
+    FAILURE = "failure"
+
+
+@dataclass
+class ReleaseLookupResult:
+    """Release lookup outcome, including an explicit non-release status."""
+
+    status: ReleaseLookupStatus
+    release: ReleaseInfo | None = None
+
+
 class _ReleaseCache:
     """In-memory cache with TTL and ETag support."""
 
     def __init__(self) -> None:
-        self.data: Optional[ReleaseInfo] = None
+        self.data: ReleaseInfo | None = None
         self.timestamp: float = 0
-        self.etag: Optional[str] = None
+        self.etag: str | None = None
+        self._data_by_channel: dict[str, ReleaseInfo | None] = {}
+        self._timestamps_by_channel: dict[str, float] = {}
+        self.releases: list[dict] | None = None
 
-    def is_fresh(self) -> bool:
-        return self.data is not None and (time.time() - self.timestamp) < CACHE_TTL_SECONDS
+    def is_fresh(self, channel: str | None = None) -> bool:
+        if channel is None:
+            return (
+                self.data is not None
+                and (time.time() - self.timestamp) < CACHE_TTL_SECONDS
+            )
+        timestamp = self._timestamps_by_channel.get(channel)
+        return timestamp is not None and (time.time() - timestamp) < CACHE_TTL_SECONDS
 
-    def store(self, release: Optional[ReleaseInfo], etag: Optional[str]) -> None:
+    def store(
+        self,
+        release: ReleaseInfo | None,
+        etag: str | None,
+        channel: str | None = None,
+        releases: list[dict] | None = None,
+    ) -> None:
         self.data = release
         self.timestamp = time.time()
+        if channel is not None:
+            self._data_by_channel[channel] = release
+            self._timestamps_by_channel[channel] = self.timestamp
+        if releases is not None:
+            self.releases = releases
         if etag:
             self.etag = etag
+
+    def get(self, channel: str) -> ReleaseInfo | None:
+        return self._data_by_channel.get(channel)
 
 
 _cache = _ReleaseCache()
 
 
-def _parse_release(release: dict) -> Optional[ReleaseInfo]:
+def _parse_release(release: dict) -> ReleaseInfo | None:
     """Extract ReleaseInfo from a GitHub release dict.
 
     Returns None if required assets (zip + checksum) are missing.
@@ -64,20 +104,38 @@ def _parse_release(release: dict) -> Optional[ReleaseInfo]:
     zip_name = ""
     checksum_url = ""
 
-    for asset in assets:
-        name = asset.get("name", "")
-        url = asset.get("browser_download_url", "")
-        if name.endswith(".zip") and not zip_url:
-            zip_url = url
-            zip_name = name
-        elif name.endswith(".sha256") and not checksum_url:
-            checksum_url = url
+    zip_assets = {
+        asset.get("name", ""): asset
+        for asset in assets
+        if asset.get("name", "").endswith(".zip")
+    }
+    checksum_assets = {
+        asset.get("name", ""): asset
+        for asset in assets
+        if asset.get("name", "").endswith(".sha256")
+    }
 
+    for name, asset in zip_assets.items():
+        checksum = checksum_assets.get(f"{name}.sha256")
+        if checksum is None:
+            continue
+        zip_url = asset.get("browser_download_url", "")
+        zip_name = name
+        checksum_url = checksum.get("browser_download_url", "")
+        if zip_url and checksum_url:
+            break
+
+    # Keep the pairing exact: a checksum for another ZIP is invalid.
     if not zip_url or not checksum_url:
-        logger.debug("Release '%s' missing zip or checksum asset, skipping", tag)
+        logger.debug("Release '%s' missing matching zip/checksum assets, skipping", tag)
         return None
 
-    version = tag.lstrip("v")
+    version = tag[1:] if tag[:1].lower() == "v" else tag
+    try:
+        Version(version)
+    except InvalidVersion, TypeError:
+        logger.debug("Release '%s' has an invalid semantic version, skipping", tag)
+        return None
 
     return ReleaseInfo(
         tag=tag,
@@ -90,14 +148,14 @@ def _parse_release(release: dict) -> Optional[ReleaseInfo]:
     )
 
 
-def _fetch_releases(client: httpx.Client) -> tuple[list[dict], Optional[str], bool]:
+def _fetch_releases(client: httpx.Client) -> tuple[list[dict], str | None, bool]:
     """Fetch releases from GitHub API.
 
     Returns:
         Tuple of (releases_list, etag, not_modified).
         If not_modified is True, releases_list is empty.
     """
-    headers: Dict[str, str] = {"User-Agent": _USER_AGENT}
+    headers: dict[str, str] = {"User-Agent": _USER_AGENT}
     if _cache.etag:
         headers["If-None-Match"] = _cache.etag
 
@@ -111,7 +169,7 @@ def _fetch_releases(client: httpx.Client) -> tuple[list[dict], Optional[str], bo
     return response.json(), etag, False
 
 
-def get_latest_release(channel: Optional[str] = None) -> Optional[ReleaseInfo]:
+def get_latest_release(channel: str | None = None) -> ReleaseInfo | None:
     """Fetch latest release from GitHub API.
 
     Uses in-memory cache with 5-min TTL and ETag for conditional requests.
@@ -123,43 +181,66 @@ def get_latest_release(channel: Optional[str] = None) -> Optional[ReleaseInfo]:
         ReleaseInfo for the latest matching release, or None if no update
         available or on error.
     """
+    return get_latest_release_result(channel).release
+
+
+def get_latest_release_result(channel: str | None = None) -> ReleaseLookupResult:
+    """Fetch the latest compatible release and preserve the lookup outcome.
+
+    The legacy :func:`get_latest_release` API intentionally remains a nullable
+    release accessor. Callers that need to distinguish an empty result from a
+    failed request should use this function.
+    """
     if channel is None:
         channel = get_channel()
 
-    if _cache.is_fresh():
+    if _cache.is_fresh(channel):
         logger.debug("Returning cached release info")
-        return _cache.data
+        release = _cache.get(channel)
+        return ReleaseLookupResult(
+            ReleaseLookupStatus.SUCCESS
+            if release is not None
+            else ReleaseLookupStatus.NO_COMPATIBLE_RELEASE,
+            release,
+        )
 
     try:
         with httpx.Client() as client:
             releases, etag, not_modified = _fetch_releases(client)
 
             if not_modified:
-                _cache.timestamp = time.time()
-                return _cache.data
+                filtered = filter_releases(_cache.releases or [], channel)
+                release_info = _select_highest_release(filtered)
+                _cache.store(release_info, None, channel=channel)
+                return ReleaseLookupResult(
+                    ReleaseLookupStatus.SUCCESS
+                    if release_info is not None
+                    else ReleaseLookupStatus.NO_COMPATIBLE_RELEASE,
+                    release_info,
+                )
 
             filtered = filter_releases(releases, channel)
             if not filtered:
                 logger.info("No releases found for channel '%s'", channel)
-                _cache.store(None, etag)
-                return None
+                _cache.store(None, etag, channel=channel, releases=releases)
+                return ReleaseLookupResult(ReleaseLookupStatus.NO_COMPATIBLE_RELEASE)
 
-            # Iterate through filtered releases to find one with required assets
-            release_info = None
-            for release in filtered:
-                release_info = _parse_release(release)
-                if release_info is not None:
-                    break
-            
-            _cache.store(release_info, etag)
-            return release_info
+            release_info = _select_highest_release(filtered)
+
+            _cache.store(release_info, etag, channel=channel, releases=releases)
+            return ReleaseLookupResult(
+                ReleaseLookupStatus.SUCCESS
+                if release_info is not None
+                else ReleaseLookupStatus.NO_COMPATIBLE_RELEASE,
+                release_info,
+            )
 
     except httpx.HTTPError:
         logger.exception("Failed to fetch releases from GitHub")
-        return None
+        return ReleaseLookupResult(ReleaseLookupStatus.FAILURE)
     except Exception:
         logger.exception("Unexpected error fetching releases")
-        return None
+        return ReleaseLookupResult(ReleaseLookupStatus.FAILURE)
 
 
 def clear_cache() -> None:
@@ -167,3 +248,22 @@ def clear_cache() -> None:
     _cache.data = None
     _cache.timestamp = 0
     _cache.etag = None
+    _cache._data_by_channel.clear()
+    _cache._timestamps_by_channel.clear()
+    _cache.releases = None
+
+
+def _select_highest_release(releases: list[dict]) -> ReleaseInfo | None:
+    """Return the highest valid release, independent of API ordering."""
+    candidates: list[tuple[Version, ReleaseInfo]] = []
+    for release in releases:
+        info = _parse_release(release)
+        if info is None:
+            continue
+        try:
+            candidates.append((Version(info.version), info))
+        except InvalidVersion, TypeError:
+            continue
+    return (
+        max(candidates, key=lambda candidate: candidate[0])[1] if candidates else None
+    )

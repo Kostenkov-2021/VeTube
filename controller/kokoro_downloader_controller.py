@@ -1,10 +1,12 @@
-# -*- coding: utf-8 -*-
 import wx
-from setup import network, reader
+
 from globals.data_store import config, motor_de_interfaz
-from servicios.kokoro_manager import KokoroManager, TAMANO_DESCARGA
-from ui.kokoro_downloader import KokoroDownloaderDialog
+from servicios.kokoro_manager import TAMANO_DESCARGA, KokoroManager
+from setup import reader
 from TTS.sherpa_handler import kokoro_model_instalado, kokoro_voice_config
+from ui.kokoro_downloader import KokoroDownloaderDialog
+from utils.network import network_manager as network
+
 
 class KokoroDownloaderController:
     def __init__(self, parent):
@@ -19,7 +21,9 @@ class KokoroDownloaderController:
         self.view.Bind(wx.EVT_CLOSE, self.on_close)
 
         if kokoro_model_instalado():
-            self.view.set_status(_("Las voces Kokoro ya están instaladas en este equipo."))
+            self.view.set_status(
+                _("Las voces Kokoro ya están instaladas en este equipo.")
+            )
             self.view.btn_descargar.Disable()
             self.view.btn_cerrar.SetFocus()
         else:
@@ -60,16 +64,20 @@ class KokoroDownloaderController:
         if isinstance(resultado, Exception):
             exito, cancelado, detalle = False, False, str(resultado)
         else:
-            exito = resultado.get('success', False)
-            cancelado = resultado.get('cancelado', False)
-            detalle = resultado.get('data', '')
+            exito = resultado.get("success", False)
+            cancelado = resultado.get("cancelado", False)
+            detalle = resultado.get("data", "")
 
         if exito:
             self.view.set_status(_("Instalación completada."))
             self._recargar_voz_activa()
             wx.MessageBox(
-                _("Las voces Kokoro se han instalado correctamente. Ya puedes seleccionarlas en los Ajustes de Voz."),
-                _("Éxito"), parent=self.view)
+                _(
+                    "Las voces Kokoro se han instalado correctamente. Ya puedes seleccionarlas en los Ajustes de Voz."
+                ),
+                _("Éxito"),
+                parent=self.view,
+            )
             self.view.EndModal(wx.ID_OK)
         elif cancelado:
             self.view.EndModal(wx.ID_CANCEL)
@@ -80,14 +88,16 @@ class KokoroDownloaderController:
             self.view.btn_descargar.SetFocus()
             wx.MessageBox(
                 _("No se pudieron instalar las voces Kokoro: %s") % detalle,
-                _("Error"), parent=self.view)
+                _("Error"),
+                parent=self.view,
+            )
 
     def _recargar_voz_activa(self):
         """Si Kokoro es el sistema activo, carga la voz recién instalada para
         que funcione al momento, sin tener que reabrir los Ajustes."""
         if motor_de_interfaz() != "kokoro":
             return
-        config_kokoro = kokoro_voice_config(config.get('voz', 0))
+        config_kokoro = kokoro_voice_config(config.get("voz", 0))
         if config_kokoro is not None:
             reader._lector.load_model(config_kokoro)
 

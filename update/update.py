@@ -21,7 +21,9 @@ from update.extractor import extract
 logger = logging.getLogger(__name__)
 
 
-async def async_check_update(endpoint: str = "", current_version: str = "") -> dict | Exception | None:
+async def async_check_update(
+    endpoint: str = "", current_version: str = ""
+) -> dict | Exception | None:
     """Check for updates using GitHub Releases API.
 
     Args:
@@ -35,7 +37,7 @@ async def async_check_update(endpoint: str = "", current_version: str = "") -> d
         if DATA_FILE.exists():
             with open(DATA_FILE) as file:
                 resultado = json.load(file)
-            donations = resultado.get('donations', True)
+            donations = resultado.get("donations", True)
         else:
             donations = True
 
@@ -47,18 +49,21 @@ async def async_check_update(endpoint: str = "", current_version: str = "") -> d
             return None
 
         from update.updater import VERSION
+
         current = Version(VERSION)
         latest = Version(release.version)
 
         if latest <= current:
-            logger.debug("No update available (current=%s, latest=%s)", VERSION, release.version)
+            logger.debug(
+                "No update available (current=%s, latest=%s)", VERSION, release.version
+            )
             return None
 
         return {
-            'update_url': release.zip_url,
-            'available_version': release.version,
-            'available_description': release.description,
-            'donations': donations,
+            "update_url": release.zip_url,
+            "available_version": release.version,
+            "available_description": release.description,
+            "donations": donations,
         }
 
     except Exception as e:
@@ -84,8 +89,8 @@ def perform_update(
     """
     try:
         base_path = tempfile.mkdtemp()
-        download_path = os.path.join(base_path, 'update.zip')
-        update_path = os.path.join(base_path, 'update')
+        download_path = os.path.join(base_path, "update.zip")
+        update_path = os.path.join(base_path, "update")
 
         logger.info("Starting simplified update from %s", update_url)
 
@@ -108,10 +113,14 @@ def donation() -> None:
     """Show donation dialog."""
     dlg = wx.MessageDialog(
         None,
-        _("Con tu apoyo contribuyes a que este programa siga siendo gratuito. ¿Te unes a nuestra causa?"),
+        _(
+            "Con tu apoyo contribuyes a que este programa siga siendo gratuito. ¿Te unes a nuestra causa?"
+        ),
         _("Atención:"),
         wx.YES_NO | wx.ICON_ASTERISK,
     )
     dlg.SetYesNoLabels(_("&Aceptar"), _("&Cancelar"))
     if dlg.ShowModal() == wx.ID_YES:
-        wx.LaunchDefaultBrowser('https://www.paypal.com/donate/?hosted_button_id=5ZV23UDDJ4C5U')
+        wx.LaunchDefaultBrowser(
+            "https://www.paypal.com/donate/?hosted_button_id=5ZV23UDDJ4C5U"
+        )

@@ -1,16 +1,18 @@
 """Tests for update.channel module."""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 
-from update.channel import get_channel, set_channel, filter_releases, VALID_CHANNELS
+from update.channel import filter_releases, get_channel, set_channel
 
 
 @pytest.fixture
 def mock_config():
-    with patch("update.channel.leerConfiguracion") as leer, \
-         patch("update.channel.guardarConfiguracion") as guardar:
+    with (
+        patch("update.channel.leerConfiguracion") as leer,
+        patch("update.channel.guardarConfiguracion") as guardar,
+    ):
         leer.return_value = {}
         yield leer, guardar
 
@@ -42,7 +44,9 @@ class TestSetChannel:
         leer, guardar = mock_config
         leer.return_value = {"existing_key": "value"}
         set_channel("beta")
-        guardar.assert_called_once_with({"existing_key": "value", "update_channel": "beta"})
+        guardar.assert_called_once_with(
+            {"existing_key": "value", "update_channel": "beta"}
+        )
 
     def test_raises_for_invalid_channel(self, mock_config):
         _, guardar = mock_config

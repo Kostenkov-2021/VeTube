@@ -2,7 +2,6 @@
 
 import hashlib
 import logging
-from typing import Dict
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,7 @@ def compute_sha256(file_path: str) -> str:
     return sha256.hexdigest().lower()
 
 
-def parse_checksum_file(content: str) -> Dict[str, str]:
+def parse_checksum_file(content: str) -> dict[str, str]:
     """Parse sha256sum format: '{hash}  {filename}' per line.
 
     Handles both two-space and single-space separators.
@@ -40,7 +39,7 @@ def parse_checksum_file(content: str) -> Dict[str, str]:
     Returns:
         Dict mapping filename -> hash (lowercase).
     """
-    result: Dict[str, str] = {}
+    result: dict[str, str] = {}
     for line in content.splitlines():
         line = line.strip()
         if not line:

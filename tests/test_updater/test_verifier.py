@@ -1,8 +1,6 @@
 """Tests for update.verifier module."""
 
 import hashlib
-import os
-import tempfile
 
 import pytest
 

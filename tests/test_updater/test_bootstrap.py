@@ -1,11 +1,9 @@
 """Tests for update.bootstrap module."""
 
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-import pytest
-
-from update.bootstrap import launch_bootstrap, _build_args, _is_process_running
+from update.bootstrap import _build_args, _is_process_running, launch_bootstrap
 
 
 class TestBuildArgs:
@@ -14,7 +12,9 @@ class TestBuildArgs:
         assert result == '"1234" "C:\\source" "C:\\dest" "C:\\app.exe"'
 
     def test_handles_spaces_in_paths(self):
-        result = _build_args(1, "C:\\my app\\src", "C:\\my app\\dst", "C:\\my app\\run.exe")
+        result = _build_args(
+            1, "C:\\my app\\src", "C:\\my app\\dst", "C:\\my app\\run.exe"
+        )
         assert '"C:\\my app\\src"' in result
         assert '"C:\\my app\\dst"' in result
 
@@ -22,7 +22,9 @@ class TestBuildArgs:
 class TestIsProcessRunning:
     @patch("update.bootstrap.subprocess.run")
     def test_process_found(self, mock_run):
-        mock_run.return_value = MagicMock(stdout="bootstrap.exe  1234  Console  1  1,000 K")
+        mock_run.return_value = MagicMock(
+            stdout="bootstrap.exe  1234  Console  1  1,000 K"
+        )
         assert _is_process_running("bootstrap.exe") is True
 
     @patch("update.bootstrap.subprocess.run")
@@ -33,6 +35,7 @@ class TestIsProcessRunning:
     @patch("update.bootstrap.subprocess.run")
     def test_subprocess_error_returns_false(self, mock_run):
         import subprocess
+
         mock_run.side_effect = subprocess.SubprocessError("fail")
         assert _is_process_running("bootstrap.exe") is False
 
@@ -46,11 +49,13 @@ class TestLaunchBootstrap:
         mock_win32con = MagicMock()
         mock_win32con.SW_SHOW = 1
 
-        mock_is_running.side_effect = [True, False]
+        mock_is_running.side_effect = [True, False, False]
         mock_time.monotonic.side_effect = [0, 0.5, 1.0]
         mock_time.sleep = MagicMock()
 
-        with patch.dict(sys.modules, {"win32api": mock_win32api, "win32con": mock_win32con}):
+        with patch.dict(
+            sys.modules, {"win32api": mock_win32api, "win32con": mock_win32con}
+        ):
             result = launch_bootstrap("bootstrap.exe", 1234, "src", "dst", "app.exe")
         assert result == 0
 
@@ -66,7 +71,9 @@ class TestLaunchBootstrap:
         mock_time.monotonic.side_effect = [0, 10, 20, 31]
         mock_time.sleep = MagicMock()
 
-        with patch.dict(sys.modules, {"win32api": mock_win32api, "win32con": mock_win32con}):
+        with patch.dict(
+            sys.modules, {"win32api": mock_win32api, "win32con": mock_win32con}
+        ):
             result = launch_bootstrap("bootstrap.exe", 1234, "src", "dst", "app.exe")
         assert result == -1
 
@@ -76,7 +83,9 @@ class TestLaunchBootstrap:
         mock_win32con = MagicMock()
         mock_win32con.SW_SHOW = 1
 
-        with patch.dict(sys.modules, {"win32api": mock_win32api, "win32con": mock_win32con}):
+        with patch.dict(
+            sys.modules, {"win32api": mock_win32api, "win32con": mock_win32con}
+        ):
             result = launch_bootstrap("bootstrap.exe", 1234, "src", "dst", "app.exe")
         assert result == 2
 
@@ -86,6 +95,8 @@ class TestLaunchBootstrap:
         mock_win32con = MagicMock()
         mock_win32con.SW_SHOW = 1
 
-        with patch.dict(sys.modules, {"win32api": mock_win32api, "win32con": mock_win32con}):
+        with patch.dict(
+            sys.modules, {"win32api": mock_win32api, "win32con": mock_win32con}
+        ):
             result = launch_bootstrap("bootstrap.exe", 1234, "src", "dst", "app.exe")
         assert result == 1

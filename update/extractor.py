@@ -4,7 +4,7 @@ import logging
 import os
 import shutil
 import zipfile
-from typing import Callable, Optional
+from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def extract(
     zip_path: str,
     dest_dir: str,
-    progress_callback: Optional[Callable[[int, int], None]] = None,
+    progress_callback: Callable[[int, int], None] | None = None,
 ) -> None:
     """Extract a zip file to dest_dir.
 

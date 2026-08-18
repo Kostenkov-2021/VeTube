@@ -1,31 +1,33 @@
-# -*- coding: utf-8 -*-
-import wx
-import asyncio
 import os
 import shutil
-from setup import network, player, reader
-from servicios.piper_manager import PiperManager
-from ui.piper_downloader import PiperDownloaderDialog
-from TTS.list_voices import piper_list_voices, obtener_ruta_voz, es_voz_rt
+
+import wx
+
 from globals.paths import VOICES_DIR
+from servicios.piper_manager import PiperManager
+from setup import player, reader
+from TTS.list_voices import es_voz_rt, obtener_ruta_voz, piper_list_voices
+from ui.piper_downloader import PiperDownloaderDialog
+from utils.network import network_manager as network
+
 
 class PiperDownloaderController:
     def __init__(self, parent):
         self.parent = parent
         self.manager = PiperManager()
         self.view = PiperDownloaderDialog(parent)
-        
-        self.idiomas_data = [] # Lista de {'code': ..., 'display': ...}
-        self.voces_actuales = [] # Lista de voces filtradas actualmente
-        self.voces_locales = [] # Nombres de archivos .onnx locales
-        
+
+        self.idiomas_data = []  # Lista de {'code': ..., 'display': ...}
+        self.voces_actuales = []  # Lista de voces filtradas actualmente
+        self.voces_locales = []  # Nombres de archivos .onnx locales
+
         self.play_timer = wx.Timer(self.view)
         self.view.Bind(wx.EVT_TIMER, self.on_check_play_status, self.play_timer)
         self.reproduciendo_muestra = False
-        
+
         self._bind_events()
         self._refrescar_instaladas()
-        
+
         # Iniciar carga de catálogo
         network.execute(self.manager.cargar_catalogo(), self.on_catalogo_cargado)
 
@@ -35,11 +37,11 @@ class PiperDownloaderController:
         self.view.lang_list.Bind(wx.EVT_LIST_ITEM_UNCHECKED, self.on_lang_checked)
         self.view.btn_reproducir.Bind(wx.EVT_BUTTON, self.on_reproducir)
         self.view.btn_descargar.Bind(wx.EVT_BUTTON, self.on_descargar)
-        
+
         # Eventos de la pestaña Instaladas
         self.view.btn_probar_local.Bind(wx.EVT_BUTTON, self.on_probar_local)
         self.view.btn_eliminar.Bind(wx.EVT_BUTTON, self.on_eliminar)
-        
+
         # Sincronización de visibilidad de botones según pestaña
         self.view.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_page_changed)
         self._actualizar_botones_visibles()
@@ -62,92 +64,134 @@ class PiperDownloaderController:
             # el mismo nombre y no se distinguían de ninguna manera. La lista
             # voces_locales guarda el nombre real, que es lo que usan probar y
             # eliminar.
-            self.view.list_instaladas.Set([
-                f"{v} (RT)" if es_voz_rt(v) else v for v in self.voces_locales])
+            self.view.list_instaladas.Set(
+                [f"{v} (RT)" if es_voz_rt(v) else v for v in self.voces_locales]
+            )
         else:
             self.view.list_instaladas.Append(_("No hay voces instaladas"))
 
     def on_probar_local(self, event):
         selection = self.view.list_instaladas.GetSelection()
-        if selection == -1 or self.view.list_instaladas.GetString(selection) == _("No hay voces instaladas"):
+        if selection == -1 or self.view.list_instaladas.GetString(selection) == _(
+            "No hay voces instaladas"
+        ):
             return
-        
+
         voz_nombre = self.voces_locales[selection]
         ruta_modelo = obtener_ruta_voz(voz_nombre)
-        
+
         self.view.set_status(_("Probando voz local: %s") % voz_nombre)
-        
+
         # Usamos el lector Piper directamente para la prueba
         # Guardamos el modelo actual para restaurarlo después si fuera necesario
         try:
             reader._lector.load_model(ruta_modelo)
-            reader._lector.speak(_("Hola, esta es una prueba de la voz %s instalada localmente.") % voz_nombre)
+            reader._lector.speak(
+                _("Hola, esta es una prueba de la voz %s instalada localmente.")
+                % voz_nombre
+            )
         except Exception as e:
-            wx.MessageBox(_("Error al cargar la voz para prueba: %s") % str(e), _("Error"))
+            wx.MessageBox(
+                _("Error al cargar la voz para prueba: %s") % str(e), _("Error")
+            )
 
     def on_eliminar(self, event):
         selection = self.view.list_instaladas.GetSelection()
-        if selection == -1 or self.view.list_instaladas.GetString(selection) == _("No hay voces instaladas"):
+        if selection == -1 or self.view.list_instaladas.GetString(selection) == _(
+            "No hay voces instaladas"
+        ):
             return
-        
+
         voz_nombre = self.voces_locales[selection]
         # wx.MessageBox devuelve wx.YES/wx.NO, no wx.ID_YES (eso es ShowModal):
         # con wx.ID_YES la comparación nunca era cierta y el Sí no hacía nada.
-        if wx.MessageBox(_("¿Estás seguro de que deseas eliminar la voz %s? Esta acción no se puede deshacer.") % voz_nombre,
-                         _("Confirmar eliminación"), wx.YES_NO | wx.ICON_WARNING) == wx.YES:
-            
+        if (
+            wx.MessageBox(
+                _(
+                    "¿Estás seguro de que deseas eliminar la voz %s? Esta acción no se puede deshacer."
+                )
+                % voz_nombre,
+                _("Confirmar eliminación"),
+                wx.YES_NO | wx.ICON_WARNING,
+            )
+            == wx.YES
+        ):
             # piper_list_voices() ya devuelve el nombre de la carpeta (voice-...)
             path_to_remove = str(VOICES_DIR / voz_nombre)
-            
+
             try:
                 if os.path.exists(path_to_remove):
                     shutil.rmtree(path_to_remove)
-                    self.view.set_status(_("Voz %s eliminada correctamente.") % voz_nombre)
+                    self.view.set_status(
+                        _("Voz %s eliminada correctamente.") % voz_nombre
+                    )
                     self._refrescar_instaladas()
                 else:
-                    wx.MessageBox(_("No se pudo encontrar la carpeta de la voz."), _("Error"))
+                    wx.MessageBox(
+                        _("No se pudo encontrar la carpeta de la voz."), _("Error")
+                    )
             except Exception as e:
-                wx.MessageBox(_("No se pudo eliminar la voz: %s. Asegúrate de que no esté en uso.") % str(e), _("Error"))
+                wx.MessageBox(
+                    _(
+                        "No se pudo eliminar la voz: %s. Asegúrate de que no esté en uso."
+                    )
+                    % str(e),
+                    _("Error"),
+                )
 
     def on_catalogo_cargado(self, result):
-        if isinstance(result, Exception) or not result.get('success'):
+        if isinstance(result, Exception) or not result.get("success"):
             self.view.set_status(_("Error al cargar el catálogo de voces."))
-            wx.MessageBox(_("No se pudo conectar con Hugging Face para obtener las voces."), _("Error"), wx.ICON_ERROR)
+            wx.MessageBox(
+                _("No se pudo conectar con Hugging Face para obtener las voces."),
+                _("Error"),
+                wx.ICON_ERROR,
+            )
             return
 
         self.idiomas_data = self.manager.get_idiomas_disponibles()
         self.view.lang_list.DeleteAllItems()
         for i, info in enumerate(self.idiomas_data):
-            self.view.lang_list.InsertItem(i, info['display'])
-        
+            self.view.lang_list.InsertItem(i, info["display"])
+
         if self.manager.rt_disponible:
-            self.view.set_status(_("Catálogo cargado. Selecciona idiomas para ver las voces."))
+            self.view.set_status(
+                _("Catálogo cargado. Selecciona idiomas para ver las voces.")
+            )
         else:
             # Sin catálogo RT la columna «Variante rápida» sale vacía en todas
             # las voces, igual que si ninguna tuviera variante: hay que avisar.
-            self.view.set_status(_("Catálogo cargado, pero no se pudo consultar la lista de variantes rápidas (RT). Selecciona idiomas para ver las voces."))
+            self.view.set_status(
+                _(
+                    "Catálogo cargado, pero no se pudo consultar la lista de variantes rápidas (RT). Selecciona idiomas para ver las voces."
+                )
+            )
 
     def on_lang_checked(self, event):
         codigos_seleccionados = []
         for i in range(self.view.lang_list.GetItemCount()):
             if self.view.lang_list.IsItemChecked(i):
-                codigos_seleccionados.append(self.idiomas_data[i]['code'])
-        
+                codigos_seleccionados.append(self.idiomas_data[i]["code"])
+
         self.voces_actuales = self.manager.get_voces_por_idiomas(codigos_seleccionados)
         self._actualizar_lista_voces()
 
     def _actualizar_lista_voces(self):
         self.view.voice_list.DeleteAllItems()
         for i, v in enumerate(self.voces_actuales):
-            self.view.voice_list.InsertItem(i, v['name'])
-            self.view.voice_list.SetItem(i, 1, v['quality'])
-            self.view.voice_list.SetItem(i, 2, v['lang_code'])
-            self.view.voice_list.SetItem(i, 3, "RT" if v.get('has_rt') else "")
+            self.view.voice_list.InsertItem(i, v["name"])
+            self.view.voice_list.SetItem(i, 1, v["quality"])
+            self.view.voice_list.SetItem(i, 2, v["lang_code"])
+            self.view.voice_list.SetItem(i, 3, "RT" if v.get("has_rt") else "")
 
     def on_reproducir(self, event):
         if self.reproduciendo_muestra:
             self.play_timer.Stop()
-            if player.sound is not None and hasattr(player.sound, 'is_playing') and player.sound.is_playing:
+            if (
+                player.sound is not None
+                and hasattr(player.sound, "is_playing")
+                and player.sound.is_playing
+            ):
                 player.sound.stop()
             self.view.btn_reproducir.SetLabel(_("&Reproducir muestra"))
             self.view.set_status(_("Reproducción de muestra detenida."))
@@ -156,13 +200,18 @@ class PiperDownloaderController:
 
         item = self.view.voice_list.GetFocusedItem()
         if item == -1:
-            wx.MessageBox(_("Por favor, selecciona una voz de la lista para escuchar la muestra."), _("Aviso"))
+            wx.MessageBox(
+                _(
+                    "Por favor, selecciona una voz de la lista para escuchar la muestra."
+                ),
+                _("Aviso"),
+            )
             return
-        
+
         voice = self.voces_actuales[item]
-        url = voice.get('sample_url')
+        url = voice.get("sample_url")
         if url:
-            self.view.set_status(_("Reproduciendo muestra de %s...") % voice['name'])
+            self.view.set_status(_("Reproduciendo muestra de %s...") % voice["name"])
             # Usamos el SoundPlayer global para reproducir la URL directamente
             player.play(url)
             self.view.btn_reproducir.SetLabel(_("&Detener"))
@@ -172,7 +221,7 @@ class PiperDownloaderController:
             wx.MessageBox(_("Esta voz no dispone de muestra de audio."), _("Error"))
 
     def on_check_play_status(self, event):
-        if not player.sound or not getattr(player.sound, 'is_playing', False):
+        if not player.sound or not getattr(player.sound, "is_playing", False):
             self.play_timer.Stop()
             self.view.btn_reproducir.SetLabel(_("&Reproducir muestra"))
             self.view.set_status(_("Reproducción de muestra finalizada."))
@@ -183,29 +232,47 @@ class PiperDownloaderController:
         for i in range(self.view.voice_list.GetItemCount()):
             if self.view.voice_list.IsItemChecked(i):
                 checked_indices.append(i)
-        
+
         # Si no hay nada marcado con checkbox, probamos con el elemento enfocado
         if not checked_indices:
             focused = self.view.voice_list.GetFocusedItem()
             if focused != -1:
                 checked_indices = [focused]
-        
+
         if not checked_indices:
-            wx.MessageBox(_("Por favor, selecciona al menos una voz para descargar."), _("Aviso"))
+            wx.MessageBox(
+                _("Por favor, selecciona al menos una voz para descargar."), _("Aviso")
+            )
             return
-        
+
         voces_seleccionadas = [self.voces_actuales[i] for i in checked_indices]
-        tiene_rt = any(v.get('has_rt') for v in voces_seleccionadas)
-        
+        tiene_rt = any(v.get("has_rt") for v in voces_seleccionadas)
+
         if tiene_rt:
             # Mostrar menú para elegir variante global para el lote
             menu = wx.Menu()
-            item_normal = menu.Append(wx.ID_ANY, _("Descargar variantes de Calidad Normal (Alta)"))
-            item_rt = menu.Append(wx.ID_ANY, _("Descargar variantes Rápidas (RT) donde estén disponibles"))
-            
-            self.view.Bind(wx.EVT_MENU, lambda evt: self._iniciar_descarga_multiple(voces_seleccionadas, es_rt=False), item_normal)
-            self.view.Bind(wx.EVT_MENU, lambda evt: self._iniciar_descarga_multiple(voces_seleccionadas, es_rt=True), item_rt)
-            
+            item_normal = menu.Append(
+                wx.ID_ANY, _("Descargar variantes de Calidad Normal (Alta)")
+            )
+            item_rt = menu.Append(
+                wx.ID_ANY, _("Descargar variantes Rápidas (RT) donde estén disponibles")
+            )
+
+            self.view.Bind(
+                wx.EVT_MENU,
+                lambda evt: self._iniciar_descarga_multiple(
+                    voces_seleccionadas, es_rt=False
+                ),
+                item_normal,
+            )
+            self.view.Bind(
+                wx.EVT_MENU,
+                lambda evt: self._iniciar_descarga_multiple(
+                    voces_seleccionadas, es_rt=True
+                ),
+                item_rt,
+            )
+
             self.view.PopupMenu(menu)
             menu.Destroy()
         else:
@@ -216,44 +283,54 @@ class PiperDownloaderController:
         self.view.btn_descargar.Disable()
         self.view.lang_list.Disable()
         self.view.voice_list.Disable()
-        
+
         network.execute(self._descargar_lote(voces, es_rt))
 
     async def _descargar_lote(self, voces, preferir_rt):
         total = len(voces)
         completadas = 0
-        
+
         for voice in voces:
-            usar_rt = preferir_rt and voice.get('has_rt')
+            usar_rt = preferir_rt and voice.get("has_rt")
             # «RT» se deja tal cual (es la sigla, como en la lista de instaladas),
             # pero «Normal» es una palabra y tiene que traducirse: se lee en voz
             # alta dentro de un mensaje que sí está traducido.
             tipo_str = "RT" if usar_rt else _("Normal")
-            
-            wx.CallAfter(self.view.set_status, _("Descargando %s (%s) [%d/%d]...") % (voice['name'], tipo_str, completadas + 1, total))
-            
+
+            wx.CallAfter(
+                self.view.set_status,
+                _("Descargando %s (%s) [%d/%d]...")
+                % (voice["name"], tipo_str, completadas + 1, total),
+            )
+
             def cb(p):
                 wx.CallAfter(self.view.update_progress, p)
 
             if usar_rt:
-                res = await self.manager.instalar_voz_rt(voice['key'], cb)
+                res = await self.manager.instalar_voz_rt(voice["key"], cb)
             else:
-                res = await self.manager.instalar_voz(voice['key'], cb)
-            
-            if res['success']:
+                res = await self.manager.instalar_voz(voice["key"], cb)
+
+            if res["success"]:
                 completadas += 1
             else:
-                wx.CallAfter(wx.MessageBox, _("Error al descargar %s: %s") % (voice['name'], res['data']), _("Error"))
-        
+                wx.CallAfter(
+                    wx.MessageBox,
+                    _("Error al descargar %s: %s") % (voice["name"], res["data"]),
+                    _("Error"),
+                )
+
         wx.CallAfter(self._finalizar_descargas, completadas, total)
 
     def _finalizar_descargas(self, completadas, total):
-        self.view.set_status(_("Proceso finalizado. %d de %d voces instaladas.") % (completadas, total))
+        self.view.set_status(
+            _("Proceso finalizado. %d de %d voces instaladas.") % (completadas, total)
+        )
         self.view.btn_descargar.Enable()
         self.view.lang_list.Enable()
         self.view.voice_list.Enable()
         self.view.update_progress(100)
-        
+
         if completadas > 0:
             # La lista de instaladas solo se rellenaba al abrir el diálogo y al
             # eliminar una voz, nunca al terminar una descarga. Con la etiqueta
@@ -263,14 +340,23 @@ class PiperDownloaderController:
             # instalación ha fallado. Una voz nueva ni siquiera aparecía.
             # Se refresca ANTES del aviso: al cerrarlo, la lista ya es correcta.
             self._refrescar_instaladas()
-            wx.MessageBox(_("Las voces se han instalado correctamente. Ya puedes seleccionarlas en los Ajustes de Voz."), _("Éxito"))
+            wx.MessageBox(
+                _(
+                    "Las voces se han instalado correctamente. Ya puedes seleccionarlas en los Ajustes de Voz."
+                ),
+                _("Éxito"),
+            )
 
     def show(self):
         res = self.view.ShowModal()
         if self.play_timer.IsRunning():
             self.play_timer.Stop()
         if self.reproduciendo_muestra:
-            if player.sound is not None and hasattr(player.sound, 'is_playing') and player.sound.is_playing:
+            if (
+                player.sound is not None
+                and hasattr(player.sound, "is_playing")
+                and player.sound.is_playing
+            ):
                 player.sound.stop()
             self.reproduciendo_muestra = False
         return res

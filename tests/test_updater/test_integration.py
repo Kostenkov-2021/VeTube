@@ -1,6 +1,6 @@
 """Integration tests for the full update flow."""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -59,7 +59,9 @@ class TestInstallUpdateFlow:
         _install_update(release)
 
         mock_download.assert_called_once()
-        mock_fetch_checksum.assert_called_once_with("https://example.com/VeTube.zip.sha256")
+        mock_fetch_checksum.assert_called_once_with(
+            "https://example.com/VeTube.zip.sha256"
+        )
         mock_verify.assert_called_once()
         mock_backup.assert_called_once()
         mock_extract.assert_called_once()
@@ -161,24 +163,29 @@ class TestInstallUpdateFlow:
 
         _install_update(release)
 
-        mock_restore.assert_called_once_with(str(tmp_path / "backup"), mock_backup.call_args[0][0])
+        mock_restore.assert_called_once_with(
+            str(tmp_path / "backup"), mock_backup.call_args[0][0]
+        )
 
 
 class TestVersionComparison:
     def test_newer_version_is_detected(self):
         from packaging.version import Version
+
         current = Version("1.0")
         latest = Version("99.0")
         assert latest > current
 
     def test_same_version_no_update(self):
         from packaging.version import Version
+
         current = Version("1.0")
         latest = Version("1.0")
         assert latest <= current
 
     def test_older_version_no_update(self):
         from packaging.version import Version
+
         current = Version("1.0")
         latest = Version("0.5")
         assert latest <= current
@@ -195,8 +202,14 @@ class TestChannelFiltering:
                 "prerelease": True,
                 "body": "",
                 "assets": [
-                    {"name": "VeTube.zip", "browser_download_url": "https://example.com/VeTube.zip"},
-                    {"name": "VeTube.zip.sha256", "browser_download_url": "https://example.com/VeTube.zip.sha256"},
+                    {
+                        "name": "VeTube.zip",
+                        "browser_download_url": "https://example.com/VeTube.zip",
+                    },
+                    {
+                        "name": "VeTube.zip.sha256",
+                        "browser_download_url": "https://example.com/VeTube.zip.sha256",
+                    },
                 ],
             },
             {
@@ -204,8 +217,14 @@ class TestChannelFiltering:
                 "prerelease": False,
                 "body": "",
                 "assets": [
-                    {"name": "VeTube.zip", "browser_download_url": "https://example.com/VeTube.zip"},
-                    {"name": "VeTube.zip.sha256", "browser_download_url": "https://example.com/VeTube.zip.sha256"},
+                    {
+                        "name": "VeTube.zip",
+                        "browser_download_url": "https://example.com/VeTube.zip",
+                    },
+                    {
+                        "name": "VeTube.zip.sha256",
+                        "browser_download_url": "https://example.com/VeTube.zip.sha256",
+                    },
                 ],
             },
         ]
