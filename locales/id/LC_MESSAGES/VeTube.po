@@ -2098,3 +2098,13 @@ msgstr "&Periksa pembaruan"
 #: controller/ajustes_controller.py:667
 msgid "Cargando las voces de Edge TTS, espera un momento."
 msgstr "Memuat suara Edge TTS, mohon tunggu sebentar."
+
+#: servicios/language_updater.py:66
+#, python-format
+msgid "El servidor de idiomas respondió con el error HTTP %d. Inténtalo de nuevo más tarde."
+msgstr "Server bahasa merespons dengan kesalahan HTTP %d. Coba lagi nanti."
+
+#: update/updater.py:117
+#, python-format
+msgid "No hay una versión compatible disponible para el canal %s. El canal Stable puede no tener una versión compatible; el canal Beta también puede incluir versiones preliminares."
+msgstr "Tidak ada versi yang kompatibel untuk saluran %s. Saluran Stable mungkin tidak memiliki versi yang kompatibel; saluran Beta juga dapat menyertakan versi pra-rilis."

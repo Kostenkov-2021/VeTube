@@ -61,7 +61,13 @@ class GestorRepositorios(BaseDownloader):
             response = await network.client.get(url)
             if response.status_code == 200:
                 return {"success": True, "data": response.json()}
-            return {"success": False, "data": f"HTTP {response.status_code}"}
+            return {
+                "success": False,
+                "data": _(
+                    "El servidor de idiomas respondió con el error HTTP %d. Inténtalo de nuevo más tarde."
+                )
+                % response.status_code,
+            }
         except Exception:
             traceback.print_exc()
             return {"success": False, "data": _("Error de conexión con el servidor.")}

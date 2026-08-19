@@ -10,6 +10,7 @@ data.json
 languages.json
 venv/
 favoritos.json
+mensajes_destacados.json
 keys.txt
 .vscode
 logs/

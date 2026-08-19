@@ -2092,3 +2092,13 @@ msgstr "&Check for updates"
 #: controller/ajustes_controller.py:667
 msgid "Cargando las voces de Edge TTS, espera un momento."
 msgstr "Loading the Edge TTS voices, please wait a moment."
+
+#: servicios/language_updater.py:66
+#, python-format
+msgid "El servidor de idiomas respondió con el error HTTP %d. Inténtalo de nuevo más tarde."
+msgstr "The language server responded with HTTP error %d. Try again later."
+
+#: update/updater.py:117
+#, python-format
+msgid "No hay una versión compatible disponible para el canal %s. El canal Stable puede no tener una versión compatible; el canal Beta también puede incluir versiones preliminares."
+msgstr "No compatible version is available for the %s channel. The Stable channel may not have a compatible version; the Beta channel may also include pre-release versions."
