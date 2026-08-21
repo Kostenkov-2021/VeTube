@@ -207,8 +207,16 @@ class ServicioDiscord:
         logger.info("Deteniendo servicio de Discord...")
 
         if self.loop and self.loop.is_running():
-            if self.client:
-                asyncio.run_coroutine_threadsafe(self.client.close(), self.loop)
-            self.loop.call_soon_threadsafe(self.loop.stop)
+            asyncio.run_coroutine_threadsafe(self._cerrar_cliente(), self.loop)
 
-        logger.info("Servicio de Discord detenido completamente.")
+    async def _cerrar_cliente(self):
+        # Parar el loop antes de que close() termine cortaba la despedida al
+        # primer await y dejaba la conexión con Discord a medio cerrar.
+        try:
+            if self.client:
+                await self.client.close()
+        except Exception:
+            logger.exception("Error al cerrar el cliente de Discord")
+        finally:
+            asyncio.get_running_loop().stop()
+            logger.info("Servicio de Discord detenido completamente.")

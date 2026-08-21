@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-19 12:12+0200\n"
+"POT-Creation-Date: 2026-08-22 00:17+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -147,11 +147,11 @@ msgstr ""
 
 #: controller/chat_controller.py:179 controller/estadisticas_controller.py:88
 #: controller/kokoro_downloader_controller.py:91
-#: controller/main_controller.py:104 controller/main_controller.py:216
-#: controller/main_controller.py:246 controller/main_controller.py:254
-#: controller/main_controller.py:313 controller/main_controller.py:352
-#: controller/main_controller.py:368 controller/main_controller.py:506
-#: controller/main_controller.py:514
+#: controller/main_controller.py:104 controller/main_controller.py:219
+#: controller/main_controller.py:249 controller/main_controller.py:257
+#: controller/main_controller.py:316 controller/main_controller.py:355
+#: controller/main_controller.py:371 controller/main_controller.py:509
+#: controller/main_controller.py:517
 #: controller/piper_downloader_controller.py:95
 #: controller/piper_downloader_controller.py:131
 #: controller/piper_downloader_controller.py:139
@@ -198,8 +198,8 @@ msgid "Mensaje agregado a favoritos"
 msgstr ""
 
 #: controller/chat_controller.py:379 controller/main_controller.py:67
-#: controller/main_controller.py:163 controller/main_controller.py:180
-#: controller/main_controller.py:194
+#: controller/main_controller.py:163 controller/main_controller.py:183
+#: controller/main_controller.py:197
 #: controller/menus/chat_item_controller.py:72
 msgid "Tus mensajes archivados aparecerán aquí"
 msgstr ""
@@ -425,73 +425,73 @@ msgstr ""
 msgid "Borrar el favorito seleccionado"
 msgstr ""
 
-#: controller/main_controller.py:174
+#: controller/main_controller.py:177
 msgid "No hay más elementos que borrar"
 msgstr ""
 
-#: controller/main_controller.py:177 controller/main_controller.py:197
+#: controller/main_controller.py:180 controller/main_controller.py:200
 msgid "No hay mensajes que borrar"
 msgstr ""
 
-#: controller/main_controller.py:185
+#: controller/main_controller.py:188
 msgid "¿Estás seguro de que quieres borrar todos los mensajes?"
 msgstr ""
 
-#: controller/main_controller.py:214
+#: controller/main_controller.py:217
 msgid ""
 "No se puede acceder porque el campo de texto está vacío, debe escribir "
 "algo."
 msgstr ""
 
-#: controller/main_controller.py:243
+#: controller/main_controller.py:246
 #, python-brace-format
 msgid "Error al simplificar URL de TikTok: {}"
 msgstr ""
 
-#: controller/main_controller.py:253 servicios/tiktok.py:118
+#: controller/main_controller.py:256 servicios/tiktok.py:118
 msgid "No se pudo obtener la URL real de TikTok."
 msgstr ""
 
-#: controller/main_controller.py:311
+#: controller/main_controller.py:314
 msgid ""
 "Para Discord pega el enlace del canal de texto: haz clic derecho sobre el"
 " canal y elige «Copiar enlace»."
 msgstr ""
 
-#: controller/main_controller.py:350
+#: controller/main_controller.py:353
 msgid ""
 "El enlace de Discord no es válido. Copia el enlace del canal de texto "
 "(clic derecho sobre el canal, «Copiar enlace») y pégalo en VeTube."
 msgstr ""
 
-#: controller/main_controller.py:366
+#: controller/main_controller.py:369
 msgid ""
 "¡Parece que el enlace al cual está intentando acceder no es un enlace "
 "válido."
 msgstr ""
 
-#: controller/main_controller.py:426
+#: controller/main_controller.py:429
 msgid "Conectando..."
 msgstr ""
 
-#: controller/main_controller.py:504
+#: controller/main_controller.py:507
 msgid ""
 "El token no es válido. Comprueba que lo copiaste completo desde el portal"
 " de desarrolladores de Discord."
 msgstr ""
 
-#: controller/main_controller.py:512
+#: controller/main_controller.py:515
 msgid ""
 "No se pudo comprobar el token por un fallo de red. Revisa tu conexión a "
 "internet e inténtalo de nuevo."
 msgstr ""
 
-#: controller/main_controller.py:563
+#: controller/main_controller.py:566
 #: controller/menus/main_menu_controller.py:121
 msgid "¿está seguro que desea salir del programa?"
 msgstr ""
 
-#: controller/main_controller.py:563
+#: controller/main_controller.py:566
 #: controller/menus/main_menu_controller.py:121
 msgid "¡atención!"
 msgstr ""
@@ -1024,7 +1024,7 @@ msgstr ""
 msgid "Cuando alguien envía un cofre  en tiktok"
 msgstr ""
 
-#: globals/resources.py:59 servicios/twich.py:186
+#: globals/resources.py:59
 msgid "Por defecto"
 msgstr ""
 
@@ -1264,7 +1264,7 @@ msgid "General"
 msgstr ""
 
 #: ui/ajustes/__init__.py:53 ui/chat_ui.py:42 ui/chat_ui.py:60
-#: ui/chat_ui.py:102
+#: ui/chat_ui.py:101
 msgid "Eventos"
 msgstr ""
 
@@ -1288,7 +1288,7 @@ msgstr ""
 msgid "&Opciones"
 msgstr ""
 
-#: ui/chat_ui.py:103
+#: ui/chat_ui.py:102
 msgid "&Filtrar por"
 msgstr ""
 
@@ -1524,11 +1524,11 @@ msgstr ""
 msgid "reproducción"
 msgstr ""
 
-#: ui/ajustes/__init__.py:45
+#: ui/ajustes/__init__.py:45 ui/ajustes/categorias.py:13
 msgid "Categorías"
 msgstr ""
 
-#: ui/ajustes/__init__.py:49
+#: ui/ajustes/__init__.py:49 ui/ajustes/sonidos.py:31
 msgid "Sonidos"
 msgstr ""
 
@@ -1540,7 +1540,7 @@ msgstr ""
 msgid "&Cancelar"
 msgstr ""
 
-#: ui/ajustes/categorias.py:12
+#: ui/ajustes/categorias.py:14
 msgid "Categoría"
 msgstr ""
 
@@ -1640,27 +1640,27 @@ msgstr ""
 msgid "cambio de volumen con las teclas de volumen (1-25)"
 msgstr ""
 
-#: ui/ajustes/sonidos.py:13
+#: ui/ajustes/sonidos.py:14
 msgid "Activar sonidos"
 msgstr ""
 
-#: ui/ajustes/sonidos.py:16
+#: ui/ajustes/sonidos.py:17
 msgid "Tema de sonidos"
 msgstr ""
 
-#: ui/ajustes/sonidos.py:28
+#: ui/ajustes/sonidos.py:32
 msgid "Sonido"
 msgstr ""
 
-#: ui/ajustes/sonidos.py:32
+#: ui/ajustes/sonidos.py:36
 msgid "&Reproducir"
 msgstr ""
 
-#: ui/ajustes/sonidos.py:36
+#: ui/ajustes/sonidos.py:40
 msgid "Seleccionar dispositivo de audio"
 msgstr ""
 
-#: ui/ajustes/sonidos.py:45
+#: ui/ajustes/sonidos.py:49
 msgid "&Establecer"
 msgstr ""
 
