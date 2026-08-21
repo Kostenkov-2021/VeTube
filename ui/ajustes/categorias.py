@@ -2,6 +2,7 @@ import wx
 
 from globals.data_store import config
 from globals.mensajes import mensajes_categorias
+from utils.menu_accesible import AccesibleConNombre
 
 
 class PanelCategorias(wx.Panel):
@@ -9,6 +10,7 @@ class PanelCategorias(wx.Panel):
         super().__init__(parent, wx.ID_ANY)
         sizer_categoriza = wx.BoxSizer(wx.VERTICAL)
         self.categoriza = wx.ListCtrl(self, wx.ID_ANY, style=wx.LC_REPORT)
+        self.categoriza.SetAccessible(AccesibleConNombre(_("Categorías")))
         self.categoriza.InsertColumn(0, _("Categoría"))
         self.categoriza.EnableCheckBoxes()
         sizer_categoriza.Add(self.categoriza, 1, wx.EXPAND | wx.ALL, 5)

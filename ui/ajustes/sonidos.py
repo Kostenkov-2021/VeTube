@@ -4,6 +4,7 @@ from globals.data_store import config
 from globals.mensajes import mensajes_sonidos
 from globals.resources import listar_temas_sonidos, recargar_rutasonidos
 from setup import player
+from utils.menu_accesible import AccesibleConNombre
 
 
 class PanelSonidos(wx.Panel):
@@ -25,6 +26,9 @@ class PanelSonidos(wx.Panel):
             recargar_rutasonidos()
         sizer_soniditos.Add(self.lista_temas, 0, wx.EXPAND | wx.ALL, 5)
         self.soniditos = wx.ListCtrl(self, wx.ID_ANY, style=wx.LC_REPORT)
+        # Sin esto el lector de pantalla toma el StaticText anterior
+        # ("Tema de sonidos") como nombre de la lista
+        self.soniditos.SetAccessible(AccesibleConNombre(_("Sonidos")))
         self.soniditos.InsertColumn(0, _("Sonido"))
         self.soniditos.EnableCheckBoxes()
         sizer_soniditos.Add(self.soniditos, 1, wx.EXPAND | wx.ALL, 5)
