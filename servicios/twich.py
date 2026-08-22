@@ -183,7 +183,7 @@ class ServicioTwich:
                     # Sumamos todos los bits encontrados en el mensaje
                     bits_total = sum(int(b) for b in cheer_matches)
 
-                    if data_store.divisa != _("Por defecto"):
+                    if data_store.divisa != "Por defecto":
                         total_local = exchange.from_bits(bits_total)
                         dinero = f"{total_local} {data_store.divisa}"
                     else:

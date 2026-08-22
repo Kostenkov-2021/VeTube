@@ -163,6 +163,9 @@ class MainController:
             if not lf.GetStrings()[0] == _("Tus mensajes archivados aparecerán aquí"):
                 if len(mensajes_destacados) > 0:
                     sel = lf.GetSelection()
+                    if sel == wx.NOT_FOUND:
+                        lf.SetFocus()
+                        return
                     lf.Delete(sel)
                     mensajes_destacados.pop(sel)
                     funciones.escribirJsonLista(
