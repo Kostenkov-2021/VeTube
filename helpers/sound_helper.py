@@ -5,24 +5,35 @@ from sound_lib.output import Output
 
 class playsound:
     def __init__(self):
+        # Sin dispositivo de audio (o con BASS roto), la app debe ARRANCAR
+        # muda en vez de morir: las máquinas de validación de winget no tienen
+        # tarjeta de sonido, y un usuario con el audio averiado se comía un
+        # UnboundLocalError antes de que la app dijera nada.
+        output = None
         try:
             output = Output(device=-1)
         except BassError as e:
-            # print(e)
             if e.code == 14:
-                # print("Already initialized.")
-                Output.free()
-                output = Output(device=-1)
-            else:
-                pass
-        output.start()
+                # Ya estaba inicializado: liberar y reintentar.
+                try:
+                    Output.free()
+                    output = Output(device=-1)
+                except BassError:
+                    output = None
+        if output is not None:
+            try:
+                output.start()
+            except BassError:
+                output = None
         # Setup:
         self.output = output
         self.sound = None
-        self.devicenames = self.output.get_device_names()
+        self.devicenames = output.get_device_names() if output else []
         self.device = 1
 
     def setdevice(self, device):
+        if self.output is None:
+            return
         if device > 0 or device < len(self.devicenames):
             self.device = device
         else:
@@ -31,6 +42,8 @@ class playsound:
             )
 
     def playsound(self, filename, block=False):
+        if self.output is None:
+            return
         if (
             self.sound is not None
             and hasattr(self.sound, "is_playing")
