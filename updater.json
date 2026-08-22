@@ -1,0 +1,7 @@
+{
+    "current_version": "3.95",
+    "description": "VeTube 3.95: la app arranca sin tarjeta de sonido, actualizador nuevo, motores de voz Piper/Kokoro/Edge y decenas de correcciones.",
+    "downloads": {
+        "Windows64": "https://github.com/metalalchemist/VeTube/releases/download/v3.95/vetube-v3.95-transicion.zip"
+    }
+}
