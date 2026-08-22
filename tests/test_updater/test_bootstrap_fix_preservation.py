@@ -50,20 +50,23 @@ def test_copies_new_sounds_without_overwriting_existing_files(tmp_path):
     assert (destination / "sounds" / "theme" / "new.wav").read_text(encoding="utf-8") == "new"
 
 
-def test_preserves_existing_locale_files(tmp_path):
+def test_refreshes_existing_locale_files(tmp_path):
+    # locales/ are program files, not user data: updates must refresh them or
+    # existing installs keep stale catalogs and show Spanish for new strings
+    # (decided by César on 2026-08-22 after a real NVDA repro).
     source = tmp_path / "source"
     destination = tmp_path / "destination"
     (source / "locales").mkdir(parents=True)
     (destination / "locales").mkdir(parents=True)
     (source / "locales" / "es.json").write_text("packaged", encoding="utf-8")
-    (destination / "locales" / "es.json").write_text("custom", encoding="utf-8")
+    (destination / "locales" / "es.json").write_text("stale", encoding="utf-8")
 
     _copy_update_files(str(source), str(destination))
 
-    assert (destination / "locales" / "es.json").read_text(encoding="utf-8") == "custom"
+    assert (destination / "locales" / "es.json").read_text(encoding="utf-8") == "packaged"
 
 
-def test_copies_new_locale_files_without_overwriting_existing_files(tmp_path):
+def test_copies_new_locale_files(tmp_path):
     source = tmp_path / "source"
     destination = tmp_path / "destination"
     (source / "locales").mkdir(parents=True)

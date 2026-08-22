@@ -21,6 +21,7 @@ LOG_FILE = os.path.join(
     os.environ.get("TEMP", os.path.expanduser("~")), "vetube_bootstrap_debug.txt"
 )
 ROLLBACK_SIGNAL = "_rollback_needed"
+APP_EXECUTABLE = "VeTube.exe"
 BOOTSTRAP_NAME = "bootstrap.exe"
 STAGED_BOOTSTRAP_NAME = "bootstrap.next.exe"
 FINALIZE_MODE = "--finalize"
@@ -68,7 +69,11 @@ def _copy_update_files(source: str, dest: str) -> None:
         if name in {"data.json", "keymaps", BOOTSTRAP_NAME, STAGED_BOOTSTRAP_NAME}:
             continue
 
-        if name in {"locales", "sounds"}:
+        # locales/ son archivos del programa: se copian SIEMPRE (decisión de
+        # César, 22-08), si no los usuarios existentes se quedan con catálogos
+        # viejos y ven en español toda cadena nueva.  sounds/ sí se preserva:
+        # ahí viven los packs personalizados del usuario.
+        if name == "sounds":
             if not os.path.isdir(source_path):
                 continue
             for root, dirs, files in os.walk(source_path):
@@ -152,7 +157,15 @@ def _wait_for_process_exit(pid: int, timeout: float = 30.0) -> bool:
             handle = ctypes.windll.kernel32.OpenProcess(0x100000, False, pid)
             if not handle:
                 return True
-            ctypes.windll.kernel32.CloseHandle(handle)
+            try:
+                # OpenProcess also succeeds on a TERMINATED process while any
+                # other handle to it survives (an antivirus is enough), which
+                # used to read as "still running" until the timeout and end in
+                # a needless rollback.  Ask for the real termination signal.
+                if ctypes.windll.kernel32.WaitForSingleObject(handle, 0) == 0:
+                    return True
+            finally:
+                ctypes.windll.kernel32.CloseHandle(handle)
         except Exception:
             # A missing process is the desired state; continue briefly when
             # the platform/API is unavailable so tests and non-Windows runs
@@ -163,6 +176,24 @@ def _wait_for_process_exit(pid: int, timeout: float = 30.0) -> bool:
                 return True
         time.sleep(0.1)
     return False
+
+
+def _resolve_app_executable(dest: str, exe_path: str) -> str:
+    """Prefer the packaged app executable over an outdated requested one.
+
+    Las 3.94 y anteriores (PyInstaller) piden relanzar run_main_window.exe, que
+    sigue existiendo en el disco porque la actualización nunca borra nada:
+    relanzarlo devolvería al usuario a la versión VIEJA con la actualización ya
+    copiada al lado.  Si el paquete nuevo trae su ejecutable canónico
+    (VeTube.exe) en el destino, ese es el que hay que relanzar.
+    """
+    if os.path.basename(os.path.normpath(exe_path)).lower() == APP_EXECUTABLE.lower():
+        return exe_path
+    candidate = os.path.join(dest, APP_EXECUTABLE)
+    if os.path.isfile(candidate):
+        log(f"Exe pedido obsoleto ({exe_path}); relanzando la app nueva: {candidate}")
+        return candidate
+    return exe_path
 
 
 def _launch_executable(exe_path: str) -> bool:
@@ -208,6 +239,7 @@ def _finalize_bootstrap(pid: int, dest: str, exe_path: str, active_path: str, st
                 os.replace(backup_path, active_path)
             raise
 
+        exe_path = _resolve_app_executable(dest, exe_path)
         if not _launch_executable(exe_path):
             raise OSError(f"Failed to relaunch application: {exe_path}")
 
@@ -345,6 +377,7 @@ def main() -> None:
 
         exe_path = os.path.normpath(exe_path)
         log(f"Ruta exe original: {exe_path}")
+        exe_path = _resolve_app_executable(dest, exe_path)
 
         final_exe_path = exe_path
         if not os.path.exists(final_exe_path):
