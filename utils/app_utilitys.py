@@ -38,6 +38,10 @@ def fijar_dispositivo_lector():
     Los nombres que ya tiene el player valen de known_devices: así no hay que
     volver a abrir el subsistema de audio solo para enumerar los dispositivos."""
     nombres_dispositivos = player.devicenames
+    if not nombres_dispositivos:
+        # Arranque mudo (sin dispositivo de audio): no hay nada que fijar, y la
+        # línea de abajo reventaría con IndexError al indexar la lista vacía.
+        return
     dispositivos_formateados = [
         {"name": n, "id": i} for i, n in enumerate(nombres_dispositivos)
     ]

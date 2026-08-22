@@ -7,7 +7,9 @@ languageHandler.setLanguage(config["idioma"])
 player = SoundPlayer()
 # Si el dispositivo guardado ya no existe (por ejemplo, auriculares USB/Bluetooth desconectados),
 # volvemos al primero: los índices fuera de rango rompen el arranque con Piper al indexar devicenames.
-if not (1 <= config["dispositivo"] <= len(player.devicenames)):
+# Con la lista VACÍA (arranque mudo, sin dispositivo de audio) no se toca nada: ningún valor
+# sería válido y una avería pasajera machacaría la preferencia guardada del usuario.
+if player.devicenames and not (1 <= config["dispositivo"] <= len(player.devicenames)):
     config["dispositivo"] = 1
 reader = ReaderHandler()
 reader._leer.set_rate(config["speed"])
