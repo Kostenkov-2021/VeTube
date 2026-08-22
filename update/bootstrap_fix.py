@@ -69,7 +69,11 @@ def _copy_update_files(source: str, dest: str) -> None:
         if name in {"data.json", "keymaps", BOOTSTRAP_NAME, STAGED_BOOTSTRAP_NAME}:
             continue
 
-        if name in {"locales", "sounds"}:
+        # locales/ son archivos del programa: se copian SIEMPRE (decisión de
+        # César, 22-08), si no los usuarios existentes se quedan con catálogos
+        # viejos y ven en español toda cadena nueva.  sounds/ sí se preserva:
+        # ahí viven los packs personalizados del usuario.
+        if name == "sounds":
             if not os.path.isdir(source_path):
                 continue
             for root, dirs, files in os.walk(source_path):
