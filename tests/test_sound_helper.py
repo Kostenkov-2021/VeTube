@@ -121,6 +121,41 @@ def test_codigo_14_sigue_reintentando(module, cls_name):
     assert player.devicenames == ["Altavoces"]
 
 
+def test_sin_audio_fijar_dispositivo_lector_no_revienta():
+    """Muted mode: fijar_dispositivo_lector must not index the empty list.
+
+    Found by the PR #130 code review: setup.py clamps config["dispositivo"] to
+    1 even for an empty device list, and fijar_dispositivo_lector then does
+    nombres_dispositivos[0] on [] -> IndexError, reached at startup whenever
+    the configured engine is piper/kokoro (with a model) or edge.  The muted
+    fix must cover that path too, or a user with broken audio and one of those
+    engines still dies at startup.
+    """
+    from utils import app_utilitys
+
+    with (
+        patch.object(app_utilitys, "player") as fake_player,
+        patch.object(app_utilitys, "reader") as fake_reader,
+    ):
+        fake_player.devicenames = []
+        app_utilitys.fijar_dispositivo_lector()
+    fake_reader._lector.set_device.assert_not_called()
+
+
+def test_con_audio_fijar_dispositivo_lector_sigue_fijando():
+    """Normal mode keeps its behaviour: the configured device is applied."""
+    from utils import app_utilitys
+
+    with (
+        patch.object(app_utilitys, "player") as fake_player,
+        patch.object(app_utilitys, "reader") as fake_reader,
+        patch.dict(app_utilitys.config, {"dispositivo": 1}),
+    ):
+        fake_player.devicenames = ["Altavoces"]
+        app_utilitys.fijar_dispositivo_lector()
+    fake_reader._lector.set_device.assert_called_once()
+
+
 @pytest.mark.parametrize(
     ("module", "cls_name"),
     [(players_sound, "SoundPlayer"), (helpers_sound, "playsound")],
