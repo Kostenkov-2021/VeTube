@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-22 00:17+0200\n"
+"POT-Creation-Date: 2026-08-30 19:53+0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,7 +26,7 @@ msgstr ""
 #: controller/piper_downloader_controller.py:71
 #: controller/piper_downloader_controller.py:76
 #: controller/piper_downloader_controller.py:101 globals/resources.py:62
-#: run_main_window.py:50 utils/app_utilitys.py:70
+#: run_main_window.py:50 utils/app_utilitys.py:74
 msgid "No hay voces instaladas"
 msgstr ""
 
@@ -145,13 +145,17 @@ msgstr ""
 msgid "Error al conectar con el chat: "
 msgstr ""
 
-#: controller/chat_controller.py:179 controller/estadisticas_controller.py:88
+#: controller/chat_controller.py:179 controller/editor_controller.py:109
+#: controller/editor_controller.py:129 controller/editor_controller.py:157
+#: controller/estadisticas_controller.py:88
 #: controller/kokoro_downloader_controller.py:91
-#: controller/main_controller.py:104 controller/main_controller.py:219
-#: controller/main_controller.py:249 controller/main_controller.py:257
-#: controller/main_controller.py:316 controller/main_controller.py:355
-#: controller/main_controller.py:371 controller/main_controller.py:509
-#: controller/main_controller.py:517
+#: controller/main_controller.py:104 controller/main_controller.py:177
+#: controller/main_controller.py:180 controller/main_controller.py:200
+#: controller/main_controller.py:219 controller/main_controller.py:249
+#: controller/main_controller.py:257 controller/main_controller.py:316
+#: controller/main_controller.py:355 controller/main_controller.py:371
+#: controller/main_controller.py:439 controller/main_controller.py:513
+#: controller/main_controller.py:521
 #: controller/piper_downloader_controller.py:95
 #: controller/piper_downloader_controller.py:131
 #: controller/piper_downloader_controller.py:139
@@ -160,7 +164,7 @@ msgstr ""
 #: controller/piper_downloader_controller.py:320
 #: controller/update_languages_controller.py:97
 #: controller/update_languages_controller.py:111 ui/discord_token_dialog.py:56
-#: update/updater.py:133 update/updater.py:173
+#: ui/list_urls.py:47 update/updater.py:133 update/updater.py:173
 msgid "Error"
 msgstr ""
 
@@ -437,6 +441,10 @@ msgstr ""
 msgid "¿Estás seguro de que quieres borrar todos los mensajes?"
 msgstr ""
 
+#: controller/main_controller.py:189
+msgid "Confirmación"
+msgstr ""
+
 #: controller/main_controller.py:217
 msgid ""
 "No se puede acceder porque el campo de texto está vacío, debe escribir "
@@ -474,24 +482,29 @@ msgstr ""
 msgid "Conectando..."
 msgstr ""
 
-#: controller/main_controller.py:507
+#: controller/main_controller.py:438
+#, python-format
+msgid "Error al iniciar el chat: %s"
+msgstr ""
+
+#: controller/main_controller.py:511
 msgid ""
 "El token no es válido. Comprueba que lo copiaste completo desde el portal"
 " de desarrolladores de Discord."
 msgstr ""
 
-#: controller/main_controller.py:515
+#: controller/main_controller.py:519
 msgid ""
 "No se pudo comprobar el token por un fallo de red. Revisa tu conexión a "
 "internet e inténtalo de nuevo."
 msgstr ""
 
-#: controller/main_controller.py:566
+#: controller/main_controller.py:570
 #: controller/menus/main_menu_controller.py:121
 msgid "¿está seguro que desea salir del programa?"
 msgstr ""
 
-#: controller/main_controller.py:566
+#: controller/main_controller.py:570
 #: controller/menus/main_menu_controller.py:121
 msgid "¡atención!"
 msgstr ""
@@ -1343,6 +1356,7 @@ msgstr ""
 
 #: ui/editor/editor.py:35 ui/editor/nueva_combinacion.py:133
 #: ui/kokoro_downloader.py:36 ui/list_urls.py:38 ui/piper_downloader.py:89
+#: ui/show_comment.py:38
 msgid "&Cerrar"
 msgstr ""
 
@@ -2045,13 +2059,13 @@ msgstr ""
 msgid "¡Hecho!"
 msgstr ""
 
-#: utils/app_utilitys.py:68
+#: utils/app_utilitys.py:72
 msgid ""
 "Necesitas al menos una voz para poder usar el sintetizador Piper. ¿Deseas"
 " abrir el descargador de voces ahora para buscar e instalar una?"
 msgstr ""
 
-#: utils/app_utilitys.py:83
+#: utils/app_utilitys.py:87
 msgid "Lector Piper inicializado correctamente."
 msgstr ""
 
